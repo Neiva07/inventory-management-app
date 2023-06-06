@@ -8,6 +8,7 @@ export interface Supplier extends DocumentData {
     providersIDs?: Array<string>;
     name: string;
     description: string;
+    productIDs?: Array<string>;
     createdAt?: string;
     updatedAt?: string;
     status: string;

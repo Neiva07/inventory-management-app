@@ -28,19 +28,9 @@
 
 import './index.css';
 import './app';
-import { db } from './firebase';
-import { disableNetwork, enableNetwork } from 'firebase/firestore';
-
-
 
 
 const updateOnlineStatus = () => {
-
-  if(navigator.onLine) {
-    enableNetwork(db);
-  } else {
-    disableNetwork(db);
-  }
 
     document.getElementById('status').innerHTML = navigator.onLine ? 'online' : 'offline'
   }
