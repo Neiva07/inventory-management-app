@@ -93,16 +93,16 @@ export const Navbar = () => {
               onClick={handleCloseNavMenu}
               sx={{ my: 2, color: "white", display: "block" }}
             >
-              Pordutos
+              Produtos
             </Button>
 
-            <Button
+            {/* <Button
               key={"fornecedores"}
               onClick={handleCloseNavMenu}
               sx={{ my: 2, color: "white", display: "block" }}
             >
-              Pordutos
-            </Button>
+              Fornecedores
+            </Button> */}
           </Box>
         </Toolbar>
       </Container>

@@ -11,16 +11,11 @@ import { Navbar } from "./pages/routes/navbar";
 import { ProdutForm } from "./pages/product/productForm";
 
 const App = () => {
-  let location = useLocation();
-
-  console.log(location);
   return (
     <>
       <h1>
         <Navbar />
-        Connection status: <strong id="status"></strong>
       </h1>
-      {location.pathname}
       <Outlet />
     </>
   );

@@ -2,15 +2,34 @@ import { DocumentData, collection, getDocs, where, query, setDoc, doc } from "fi
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 
+export interface SellOption extends DocumentData {
+    name: string;
+    price: number;
+    profit: number;
+    unit: Unit;
+}
+//temporary, probably will be separated entity
+export interface Unit extends DocumentData {
+    name: string;
+    id: string;
+}
+
 export interface Product extends DocumentData {
     productID?: string;
     userID: string;
     providersIDs?: Array<string>;
-    name: string;
+    title: string;
     description: string;
-    createdAt?: string;
-    updatedAt?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+    deletedAt?: Date;
     status: string;
+    sellPrices: Array<SellOption>;
+    weight: number;
+    inventory: number;
+    buyUnit: Unit;
+    cost: number;
+    productCategory: string //entity
 }
 
 
@@ -30,5 +49,8 @@ export const createProduct = (productInfo: Product) => {
 
     const newProduct = doc(db, PRODUCTS_COLLECTION, productID);
 
-    return setDoc(newProduct,  {productID, ...productInfo});
+    return setDoc(newProduct,  {productID, 
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        ...productInfo});
 }
