@@ -30,14 +30,14 @@ import './index.css';
 import './app';
 
 
-const updateOnlineStatus = () => {
+// const updateOnlineStatus = () => {
 
-    document.getElementById('status').innerHTML = navigator.onLine ? 'online' : 'offline'
-  }
+//     document.getElementById('status').innerHTML = navigator.onLine ? 'online' : 'offline'
+//   }
   
-  window.addEventListener('online', updateOnlineStatus)
-  window.addEventListener('offline', updateOnlineStatus)
+//   window.addEventListener('online', updateOnlineStatus)
+//   window.addEventListener('offline', updateOnlineStatus)
   
-  updateOnlineStatus()
+//   updateOnlineStatus()
 
 console.log('👋 This message is being logged by "renderer.js", included via webpack');

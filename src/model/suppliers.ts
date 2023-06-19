@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from "uuid";
 export interface Supplier extends DocumentData {
     supplierID?: string;
     userID: string;
-    providersIDs?: Array<string>;
     name: string;
     description: string;
     productIDs?: Array<string>;

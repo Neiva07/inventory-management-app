@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React from "react";
 import Button from "@mui/material/Button";
 
 import {
@@ -6,18 +6,30 @@ import {
   Divider,
   FormControl,
   Grid,
-  InputLabel,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
   TextField,
+  Typography,
 } from "@mui/material";
-import { Control, Controller, FormProvider } from "react-hook-form";
-import {
-  ProductFormDataInterface,
-  SelectField,
-  useProductCreateForm,
-} from "./useProductCreateForm";
+import { Controller, FormProvider } from "react-hook-form";
+import { SelectField, useProductCreateForm } from "./useProductCreateForm";
+
+const suppliers = [
+  {
+    id: "1",
+    name: "Ambev",
+  },
+  {
+    id: "2",
+    name: "Atacadão",
+  },
+  {
+    id: "3",
+    name: "Assaí",
+  },
+  {
+    id: "4",
+    name: "Heineken",
+  },
+];
 
 const units = [
   {
@@ -51,259 +63,312 @@ const categories = [
 
 export const ProdutForm = () => {
   const { register, onFormSubmit, ...formMethods } = useProductCreateForm();
-  const [productCategory, setProductCategory] = useState<SelectField>();
 
+  console.log(formMethods.formState.errors);
   return (
     <FormProvider register={register} {...formMethods}>
-      <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <FormControl fullWidth>
-            <Controller
-              control={formMethods.control}
-              render={({ field: { value: title, onChange, onBlur } }) => {
-                console.log(title);
-                return (
-                  <TextField
-                    variant="outlined"
-                    label="Nome do produto"
-                    value={title}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                  />
-                );
-              }}
-              name="title"
-            />
-          </FormControl>
-        </Grid>
+      <form onSubmit={onFormSubmit}>
+        <>
+          <Typography variant="h5" gutterBottom>
+            Cadastro do produto
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <Controller
+                  control={formMethods.control}
+                  render={({ field: { value: title, onChange, onBlur } }) => {
+                    console.log(title);
+                    return (
+                      <TextField
+                        variant="outlined"
+                        label="Nome do produto"
+                        value={title}
+                        onChange={onChange}
+                        onBlur={onBlur}
+                      />
+                    );
+                  }}
+                  name="title"
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <Controller
+                  control={formMethods.control}
+                  render={({ field: { value: productCategory, ...props } }) => {
+                    const handleChange = (
+                      e: React.SyntheticEvent<Element, Event>,
+                      value: SelectField
+                    ) => {
+                      props.onChange(value);
+                    };
 
-        <Grid item xs={6}>
-          <FormControl fullWidth>
-            <Controller
-              control={formMethods.control}
-              render={({ field: { value: description, onChange } }) => {
-                return (
-                  <TextField
-                    label="descrição"
-                    variant="outlined"
-                    style={{
-                      width: "100%",
-                    }}
-                    value={description}
-                    onChange={onChange}
-                  />
-                );
-              }}
-              name="description"
-            />
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={8}>
-          <FormControl fullWidth>
-            <Controller
-              control={formMethods.control}
-              render={({ field: { value: productCategory, ...props } }) => {
-                return (
-                  <>
-                    <Autocomplete
-                      id="tags-standard"
-                      // @ts-ignore
-                      options={categories.map((c) => {
-                        return {
-                          label: c.name,
-                          value: c.id,
-                        } as SelectField;
-                      })}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Categoria"
+                    return (
+                      <>
+                        <Autocomplete
+                          {...props}
+                          id="tags-standard"
+                          // @ts-ignore
+                          options={categories.map((c) => {
+                            return {
+                              label: c.name,
+                              value: c.id,
+                            } as SelectField;
+                          })}
+                          getOptionLabel={(option) => option.label}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              variant="outlined"
+                              label="Categoria"
+                              error={
+                                !!formMethods.formState.errors.productCategory
+                              }
+                            />
+                          )}
+                          isOptionEqualToValue={(option, value) =>
+                            option.value === value.value
+                          }
+                          onChange={handleChange}
                         />
-                      )}
-                      isOptionEqualToValue={(option, value) =>
-                        option.value === value.value
-                      }
-                      // renderTags={(list) => {
-                      //   let displayList = list
-                      //     .map((item) => item.label)
-                      //     .join(", ");
+                      </>
+                    );
+                  }}
+                  name="productCategory"
+                />
+              </FormControl>
+            </Grid>
 
-                      //   // Render <span> elements instead of <Chip> components.
-                      //   return <span>{displayList}</span>;
-                      // }}
-                      {...props}
-                    />
-                  </>
-                );
-              }}
-              name="productCategory"
-            />
-          </FormControl>
-        </Grid>
-        <Grid item xs={4}>
-          <FormControl fullWidth>
-            <Controller
-              control={formMethods.control}
-              render={({ field: { value: buyUnit, ...props } }) => {
-                return (
-                  <>
-                    <Autocomplete
-                      id="tags-standard"
-                      options={units.map((c) => {
-                        return {
-                          label: c.name,
-                          value: c.id,
-                        } as SelectField;
-                      })}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Unidade"
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <Controller
+                  control={formMethods.control}
+                  render={({ field: { value: description, onChange } }) => {
+                    return (
+                      <TextField
+                        label="descrição"
+                        variant="outlined"
+                        style={{
+                          width: "100%",
+                        }}
+                        value={description}
+                        onChange={onChange}
+                      />
+                    );
+                  }}
+                  name="description"
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormControl fullWidth>
+                <Controller
+                  control={formMethods.control}
+                  render={({ field: { ...props } }) => {
+                    return (
+                      <TextField
+                        {...props}
+                        variant="outlined"
+                        label="Comissão do vendedor"
+                      />
+                    );
+                  }}
+                  name="sailsmanComission"
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={8}>
+              <FormControl fullWidth>
+                <Controller
+                  control={formMethods.control}
+                  render={({ field: { value, ...props } }) => {
+                    console.log(props);
+                    const handleChange = (
+                      e: React.SyntheticEvent<Element, Event>,
+                      value: SelectField[]
+                    ) => {
+                      props.onChange(value);
+                    };
+                    return (
+                      <Autocomplete
+                        multiple
+                        id="suppliers"
+                        {...props}
+                        options={suppliers.map(
+                          (s) => ({ label: s.name, value: s.id } as SelectField)
+                        )}
+                        getOptionLabel={(option) => option.label}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            variant="outlined"
+                            label="Fornecedores"
+                          />
+                        )}
+                        onChange={handleChange}
+                        isOptionEqualToValue={(option, value) =>
+                          option.value === value.value
+                        }
+                        renderTags={(list) => {
+                          let displayList = list
+                            .map((item) => item.label)
+                            .join(", ");
+
+                          return <span>{displayList}</span>;
+                        }}
+                      />
+                    );
+                  }}
+                  name="suppliers"
+                />
+              </FormControl>
+            </Grid>
+          </Grid>
+        </>
+
+        <Divider
+          style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }}
+        />
+        <>
+          <Typography variant="h6" gutterBottom>
+            Unidade de compra
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={4}>
+              <FormControl fullWidth>
+                <Controller
+                  control={formMethods.control}
+                  render={({ field: { value: buyUnit, ...props } }) => {
+                    const handleChange = (
+                      e: React.SyntheticEvent<Element, Event>,
+                      value: SelectField
+                    ) => {
+                      props.onChange(value);
+                    };
+                    return (
+                      <>
+                        <Autocomplete
+                          {...props}
+                          id="tags-standard"
+                          options={units.map((c) => {
+                            return {
+                              label: c.name,
+                              value: c.id,
+                            } as SelectField;
+                          })}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              variant="outlined"
+                              label="Unidade"
+                            />
+                          )}
+                          isOptionEqualToValue={(option, value) =>
+                            option.value === value.value
+                          }
+                          onChange={handleChange}
                         />
-                      )}
-                      isOptionEqualToValue={(option, value) =>
-                        option.value === value.value
-                      }
-                      {...props}
-                    />
-                  </>
-                );
-              }}
-              name="buyUnit"
-            />
-          </FormControl>
-        </Grid>
-        <Divider variant="middle" />
+                      </>
+                    );
+                  }}
+                  name="buyUnit"
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={4}>
+              <FormControl fullWidth>
+                <Controller
+                  control={formMethods.control}
+                  render={({ field: { value: inventory, ...props } }) => {
+                    return (
+                      <TextField
+                        variant="outlined"
+                        label="Estoque"
+                        value={inventory}
+                        {...props}
+                      />
+                    );
+                  }}
+                  name="inventory"
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={4}>
+              <FormControl fullWidth>
+                <Controller
+                  control={formMethods.control}
+                  render={({ field: { ...props } }) => {
+                    return (
+                      <TextField
+                        variant="outlined"
+                        label="Estoque Mínimo"
+                        {...props}
+                      />
+                    );
+                  }}
+                  name="minInventory"
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <Controller
+                  control={formMethods.control}
+                  render={({ field: { ...props } }) => {
+                    return (
+                      <TextField
+                        variant="outlined"
+                        label="Custo de compra"
+                        {...props}
+                      />
+                    );
+                  }}
+                  name="cost"
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <Controller
+                  control={formMethods.control}
+                  render={({ field: { ...props } }) => {
+                    return (
+                      <TextField
+                        variant="outlined"
+                        label="Peso (kg)"
+                        {...props}
+                      />
+                    );
+                  }}
+                  name="weight"
+                />
+              </FormControl>
+            </Grid>
+          </Grid>
+        </>
+        {/* <Divider
+        style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }}
+      /> */}
+        <></>
 
-        {/* <div>
-          <div>
-            <TextField
-              variant="outlined"
-              value={inventory}
-              label="Estoque"
-              onChange={handleChange<number, ChangeEvent<HTMLInputElement>>(
-                setInventory
-              )}
-            />
-          </div>
-          <div>
-            <TextField
-              variant="outlined"
-              value={minInventory}
-              label="Estoque Mínimo"
-              onChange={handleChange<number, ChangeEvent<HTMLInputElement>>(
-                setMinInventory
-              )}
-            />
-          </div>
-          <div>
-            <TextField
-              variant="outlined"
-              value={cost}
-              label="Custo $"
-              onChange={handleChange<number, ChangeEvent<HTMLInputElement>>(
-                setCost
-              )}
-            />
-          </div>
-        </div>
-        <div>
-          <TextField
-            variant="outlined"
-            value={weight}
-            label="Peso"
-            onChange={handleChange<number, ChangeEvent<HTMLInputElement>>(
-              setWeight
-            )}
-          />
-        </div>
-
-        <div>
-          <TextField
-            variant="outlined"
-            value={conversionWholesomeUnit}
-            label="Conversão"
-            onChange={handleChange<string, ChangeEvent<HTMLInputElement>>(
-              setWholesomeUnit
-            )}
-          />
-        </div>
-
-        <div>
-          <TextField
-            variant="outlined"
-            value={sellWholesomeInventory}
-            label="Estoque"
-            onChange={handleChange<number, ChangeEvent<HTMLInputElement>>(
-              setWholesomeInventory
-            )}
-          />
-        </div>
-        <div>
-          <TextField
-            variant="outlined"
-            value={sellCost}
-            label="Custo $"
-            onChange={handleChange<number, ChangeEvent<HTMLInputElement>>(
-              setSellCost
-            )}
-          />
-        </div>
-
-        <div>
-          <TextField
-            variant="outlined"
-            value={retailProfit}
-            label="Lucro %"
-            onChange={handleChange<number, ChangeEvent<HTMLInputElement>>(
-              setRetailProfit
-            )}
-          />
-        </div>
-        <div>
-          <TextField
-            variant="outlined"
-            value={retailPrice}
-            label="Preço R$"
-            onChange={handleChange<number, ChangeEvent<HTMLInputElement>>(
-              setRetailPrice
-            )}
-          />
-        </div>
-
-        <div>
-          <TextField
-            variant="outlined"
-            value={creditProfit}
-            label="Lucro"
-            onChange={handleChange<number, ChangeEvent<HTMLInputElement>>(
-              setCreditProfit
-            )}
-          />
-        </div>
-        <div>
-          <TextField
-            variant="outlined"
-            value={sellCost}
-            label="Custo $"
-            onChange={handleChange<number, ChangeEvent<HTMLInputElement>>(
-              setSellCost
-            )}
-          />
-        </div>
-        <Button onClick={} variant="contained">
+        <Button
+          onClick={onFormSubmit}
+          variant="contained"
+          style={{ marginTop: "12px" }}
+        >
           Criar produto
-        </Button> */}
-        {/* 
+        </Button>
+      </form>
+
+      {/* 
         <ol>
           {products.map((d) => (
             <li>{d.name}</li>
           ))}
         </ol> */}
-      </Grid>
     </FormProvider>
   );
 };

@@ -1,23 +1,36 @@
 import { DocumentData, collection, getDocs, where, query, setDoc, doc } from "firebase/firestore";
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
+import { Supplier } from "./suppliers";
 
 export interface SellOption extends DocumentData {
     name: string;
     price: number;
     profit: number;
-    unit: Unit;
+    unit: ProductUnit;
 }
-//temporary, probably will be separated entity
-export interface Unit extends DocumentData {
+//temporary, probably will be separated entity -> should extends Partial Unit
+export interface ProductUnit extends DocumentData {
     name: string;
     id: string;
+}
+
+//temporary entity
+export interface ProductCategory extends DocumentData {
+    name: string;
+    id: string;
+}
+
+export interface ProductSupplier extends Partial<Supplier> {
+    supplierID: string;
+    name: string;
+    description: string;
+    status: string;
 }
 
 export interface Product extends DocumentData {
     productID?: string;
     userID: string;
-    providersIDs?: Array<string>;
     title: string;
     description: string;
     createdAt?: Date;
@@ -27,9 +40,12 @@ export interface Product extends DocumentData {
     sellPrices: Array<SellOption>;
     weight: number;
     inventory: number;
-    buyUnit: Unit;
+    minInventory?: number;
+    buyUnit: ProductUnit;
+    sailsmanComission?: number;
+    suppliers: Array<ProductSupplier>;
     cost: number;
-    productCategory: string //entity
+    productCategory: ProductCategory; //entity
 }
 
 
@@ -49,7 +65,8 @@ export const createProduct = (productInfo: Product) => {
 
     const newProduct = doc(db, PRODUCTS_COLLECTION, productID);
 
-    return setDoc(newProduct,  {productID, 
+    return setDoc(newProduct,  {
+        productID,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         ...productInfo});
