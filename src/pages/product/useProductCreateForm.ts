@@ -2,7 +2,7 @@ import { FieldValue, FieldValues, useForm } from "react-hook-form";
 import  useProductFormValidationSchema  from "./useProductFormValidationSchema";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useCallback } from "react";
-import { ProductCategory, ProductSupplier, ProductUnit, createProduct } from "../../model/products";
+import { Price, ProductCategory, ProductSupplier, ProductUnit, SellingOption, createProduct } from "../../model/products";
 import { Supplier } from "../../model/suppliers";
 
 export interface SelectField {
@@ -10,20 +10,17 @@ export interface SelectField {
     value: string;
 }
 
-export interface Price {
-    profit: number;
-    price: number;
-}
 
-export interface SellingOption {
+export interface FormSellingOption {
     unit: SelectField;
     conversionRate: number;
+    inventory: number;
     unitCost: number;
     prices: Array<Price>;
 }
 
 export interface ProductFormDataInterface {
-    // sellingOptions: Array<SellingOption>;
+    sellingOptions: Array<FormSellingOption>;
     weight: number;
     inventory: number;
     buyUnit: SelectField;
@@ -36,10 +33,28 @@ export interface ProductFormDataInterface {
     suppliers: Array<SelectField>;
 }
 
+export const DEFAULT_PRICE : Price = {
+    profit: 0,
+    value: 0,
+    title: "",
+}
+
+export const DEFAULT_SELLING_OPTION_VALUE: FormSellingOption = {
+    unit: {
+        label: "",
+        value: "",
+    } ,
+    inventory: 0,
+    conversionRate: 0,
+    unitCost: 0,
+    prices: [DEFAULT_PRICE],
+
+}
+
 const INITIAL_PRODUCT_FORM_STATE = {
     title: "",
     description: "",
-    // sellingOptions: [],
+    sellingOptions: [DEFAULT_SELLING_OPTION_VALUE],
     cost: 0,
     productCategory: {
         label: "",
@@ -68,7 +83,6 @@ export const useProductCreateForm = () => {
 
   const onSubmit = useCallback((data: ProductFormDataInterface) => {
 
-    console.log('test')
     createProduct({
         productCategory: {
             name: data.productCategory.label,
@@ -85,7 +99,18 @@ export const useProductCreateForm = () => {
         } as ProductUnit,
         userID: "my-id",
         status: "active",
-        sellPrices: [],
+        sellingOptions: data.sellingOptions.map(so => {
+
+            const {unit, ...rest} = so;
+            return {
+                unit: {
+                    id: unit.value,
+                    name: unit.label,
+                } as ProductUnit,
+                ...rest,
+
+            } as SellingOption
+        }),
         weight: data.weight,
         minInventory: data.minInventory,
         suppliers: data.suppliers.map(s => {

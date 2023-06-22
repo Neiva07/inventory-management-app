@@ -3,11 +3,18 @@ import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 import { Supplier } from "./suppliers";
 
-export interface SellOption extends DocumentData {
-    name: string;
-    price: number;
-    profit: number;
+export interface SellingOption extends DocumentData {
     unit: ProductUnit;
+    conversionRate: number;
+    inventory: number;
+    unitCost: number;
+    prices: Array<Price>;
+}
+
+export interface Price {
+    profit: number;
+    value: number;
+    title: string;
 }
 //temporary, probably will be separated entity -> should extends Partial Unit
 export interface ProductUnit extends DocumentData {
@@ -37,7 +44,7 @@ export interface Product extends DocumentData {
     updatedAt?: Date;
     deletedAt?: Date;
     status: string;
-    sellPrices: Array<SellOption>;
+    sellingOptions: Array<SellingOption>;
     weight: number;
     inventory: number;
     minInventory?: number;
