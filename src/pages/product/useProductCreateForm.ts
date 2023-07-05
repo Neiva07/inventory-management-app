@@ -5,9 +5,9 @@ import { useCallback } from "react";
 import { Price, ProductCategory, ProductSupplier, ProductUnit, SellingOption, createProduct } from "../../model/products";
 import { Supplier } from "../../model/suppliers";
 
-export interface SelectField {
+export interface SelectField<T = string> {
     label: string;
-    value: string;
+    value: T;
 }
 
 

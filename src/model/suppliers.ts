@@ -1,16 +1,34 @@
-import { DocumentData, collection, getDocs, where, query, setDoc, doc } from "firebase/firestore";
+import {  collection, getDocs, where, query, setDoc, doc } from "firebase/firestore";
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
+import { ProductCategory } from "./products";
 
-export interface Supplier extends DocumentData {
+export interface Address {
+    region: string;
+    country: string;
+    street: string;
+    city: string;
+    postalCode: string;
+}
+
+
+export interface Supplier  {
     supplierID?: string;
     userID: string;
-    name: string;
+    tradeName: string;
+    legalName: string;
+    entityID: string;
     description: string;
-    productIDs?: Array<string>;
     createdAt?: string;
     updatedAt?: string;
     status: string;
+    address?: Address;
+    daysToPay: number;
+    companyPhone: string;
+    contactPhone: string;
+    productCategories: Array<Partial<ProductCategory>>;
+    contactName: string;
+
 }
 
 const SUPPLIERS_COLLECTION = "suppliers"
