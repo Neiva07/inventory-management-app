@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 
 import {
@@ -12,25 +12,8 @@ import {
 import { Controller, FormProvider } from "react-hook-form";
 import { SelectField, useProductCreateForm } from "./useProductCreateForm";
 import { SellingOptions } from "./sellingOptions";
-
-const suppliers = [
-  {
-    id: "1",
-    name: "Ambev",
-  },
-  {
-    id: "2",
-    name: "Atacadão",
-  },
-  {
-    id: "3",
-    name: "Assaí",
-  },
-  {
-    id: "4",
-    name: "Heineken",
-  },
-];
+import { getProductCategories, ProductCategory } from "../../model/productCategories";
+import { Supplier, getSuppliers } from "../../model/suppliers";
 
 const units = [
   {
@@ -47,23 +30,21 @@ const units = [
   },
 ];
 
-const categories = [
-  {
-    id: "1",
-    name: "cerveja",
-  },
-  {
-    id: "2",
-    name: "carnes",
-  },
-  {
-    id: "3",
-    name: "fraldas",
-  },
-];
-
 export const ProdutForm = () => {
   const { register, onFormSubmit, ...formMethods } = useProductCreateForm();
+  const [categories, setCategories] = useState<Array<ProductCategory>>([]);
+  const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
+
+
+  useEffect(() => {
+    getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
+  }, []);
+
+  useEffect(() => {
+    getSuppliers().then(queryResult => setSuppliers(queryResult.docs.map(qr => qr.data() as Supplier)))
+  }, []);
+
+  console.log(suppliers)
 
   return (
     <FormProvider register={register} {...formMethods}>
@@ -107,7 +88,6 @@ export const ProdutForm = () => {
                       <Autocomplete
                         {...props}
                         id="tags-standard"
-                        // @ts-ignore
                         options={categories.map((c) => {
                           return {
                             label: c.name,
@@ -182,7 +162,6 @@ export const ProdutForm = () => {
               <Controller
                 control={formMethods.control}
                 render={({ field: { value, ...props } }) => {
-                  console.log(props);
                   const handleChange = (
                     e: React.SyntheticEvent<Element, Event>,
                     value: SelectField[]
@@ -195,7 +174,7 @@ export const ProdutForm = () => {
                       id="suppliers"
                       {...props}
                       options={suppliers.map(
-                        (s) => ({ label: s.name, value: s.id } as SelectField)
+                        (s) => ({ label: s.tradeName, value: s.id } as SelectField)
                       )}
                       getOptionLabel={(option) => option.label}
                       renderInput={(params) => (
@@ -210,7 +189,7 @@ export const ProdutForm = () => {
                         option.value === value.value
                       }
                       renderTags={(list) => {
-                        let displayList = list
+                        const displayList = list
                           .map((item) => item.label)
                           .join(", ");
 

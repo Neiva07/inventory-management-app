@@ -22,6 +22,25 @@ export const Navbar = () => {
     navigate("products");
   };
 
+  const handleClickSuppliers = () => {
+
+    setAnchorElNav(null);
+    navigate("suppliers");
+  }
+  const handleClickProductCategories = () => {
+
+    setAnchorElNav(null);
+    navigate("productCategories");
+  }
+
+  const handleClickUnits = () => {
+
+    setAnchorElNav(null);
+    navigate("units");
+  }
+
+
+
   return (
     <AppBar position="static">
       <Container maxWidth="xl">
@@ -96,13 +115,28 @@ export const Navbar = () => {
               Produtos
             </Button>
 
-            {/* <Button
+            <Button
               key={"fornecedores"}
-              onClick={handleCloseNavMenu}
+              onClick={handleClickSuppliers}
               sx={{ my: 2, color: "white", display: "block" }}
             >
               Fornecedores
-            </Button> */}
+            </Button>
+            <Button
+              key={"productCategories"}
+              onClick={handleClickProductCategories}
+              sx={{ my: 2, color: "white", display: "block" }}
+            >
+              Categoria de Produtos
+            </Button>
+            <Button
+              key={"units"}
+              onClick={handleClickUnits}
+              sx={{ my: 2, color: "white", display: "block" }}
+            >
+              Unidades
+            </Button>
+
           </Box>
         </Toolbar>
       </Container>

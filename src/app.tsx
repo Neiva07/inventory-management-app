@@ -1,14 +1,15 @@
 import * as ReactDOM from "react-dom";
-import { Home } from "./home";
 import {
   Outlet,
   RouterProvider,
   createHashRouter,
-  useLocation,
 } from "react-router-dom";
 import React from "react";
 import { Navbar } from "./pages/routes/navbar";
 import { ProdutForm } from "./pages/product/productForm";
+import { SupplierForm } from "./pages/supplier/supplierForm";
+import { ProductCategories } from "./pages/productCategory/productCategory";
+import { Units } from "./pages/unit/Unit";
 
 const App = () => {
   return (
@@ -29,6 +30,18 @@ const router = createHashRouter([
       {
         path: "products",
         element: <ProdutForm />,
+      },
+      {
+        path: "suppliers",
+        element: <SupplierForm />,
+      },
+      {
+        path: "productCategories",
+        element: <ProductCategories />,
+      },
+      {
+        path: "units",
+        element: <Units />,
       },
     ],
   },
