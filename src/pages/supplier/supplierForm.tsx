@@ -21,7 +21,6 @@ const regions = [
   },
 ];
 
-
 export const SupplierForm = () => {
 
   const { register, onFormSubmit, ...formMethods } = useSupplierCreateForm();

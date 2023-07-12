@@ -14,26 +14,13 @@ import { SelectField, useProductCreateForm } from "./useProductCreateForm";
 import { SellingOptions } from "./sellingOptions";
 import { getProductCategories, ProductCategory } from "../../model/productCategories";
 import { Supplier, getSuppliers } from "../../model/suppliers";
-
-const units = [
-  {
-    id: "1",
-    name: "pacotes",
-  },
-  {
-    id: "2",
-    name: "lata",
-  },
-  {
-    id: "3",
-    name: "kilo",
-  },
-];
+import { getUnits, Unit } from "../../model/units";
 
 export const ProdutForm = () => {
   const { register, onFormSubmit, ...formMethods } = useProductCreateForm();
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
   const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
+  const [units, setUnits] = useState<Array<Unit>>([]);
 
 
   useEffect(() => {
@@ -44,7 +31,10 @@ export const ProdutForm = () => {
     getSuppliers().then(queryResult => setSuppliers(queryResult.docs.map(qr => qr.data() as Supplier)))
   }, []);
 
-  console.log(suppliers)
+  useEffect(() => {
+    getUnits().then(queryResult => setUnits(queryResult.docs.map(qr => qr.data() as Unit)))
+  }, []);
+
 
   return (
     <FormProvider register={register} {...formMethods}>
@@ -333,13 +323,6 @@ export const ProdutForm = () => {
       >
         Criar produto
       </Button>
-
-      {/* 
-        <ol>
-          {products.map((d) => (
-            <li>{d.name}</li>
-          ))}
-        </ol> */}
     </FormProvider>
   );
 };
