@@ -10,14 +10,17 @@ import { ProdutForm } from "./pages/product/productForm";
 import { SupplierForm } from "./pages/supplier/supplierForm";
 import { ProductCategories } from "./pages/productCategory/productCategory";
 import { Units } from "./pages/unit/Unit";
+import { Box } from "@mui/system";
 
 const App = () => {
   return (
     <>
-      <h1>
-        <Navbar />
-      </h1>
-      <Outlet />
+      <Navbar />
+      <Box style={{
+        marginTop: "60px"
+      }}>
+        <Outlet />
+      </Box>
     </>
   );
 };

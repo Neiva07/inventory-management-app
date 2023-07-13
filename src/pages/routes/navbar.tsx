@@ -42,14 +42,14 @@ export const Navbar = () => {
 
 
   return (
-    <AppBar position="static">
+    <AppBar position="fixed">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <Typography
             variant="h6"
             noWrap
             component="a"
-            href="/"
+            href=""
             sx={{
               mr: 2,
               display: { xs: "none", md: "flex" },
@@ -62,82 +62,36 @@ export const Navbar = () => {
           >
             LOGO
           </Typography>
-          <Typography
-            variant="h5"
-            noWrap
-            component="a"
-            href="/"
-            sx={{
-              mr: 2,
-              display: { xs: "flex", md: "none" },
-              flexGrow: 1,
-              fontFamily: "monospace",
-              fontWeight: 700,
-              letterSpacing: ".3rem",
-              color: "inherit",
-              textDecoration: "none",
-            }}
+          <Button
+            key={"product"}
+            onClick={handleCloseNavMenu}
+            sx={{ my: 2, color: "white", display: "block" }}
           >
-            LOGO
-          </Typography>
-          <Menu
-            id="menu-appbar"
-            anchorEl={anchorElNav}
-            anchorOrigin={{
-              vertical: "bottom",
-              horizontal: "left",
-            }}
-            keepMounted
-            transformOrigin={{
-              vertical: "top",
-              horizontal: "left",
-            }}
-            open={Boolean(anchorElNav)}
-            onClose={handleCloseNavMenu}
-            sx={{
-              display: { xs: "block", md: "none" },
-            }}
-          >
-            <MenuItem key={"products"} onClick={handleCloseNavMenu}>
-              <Typography textAlign="center">Produtos</Typography>
-            </MenuItem>
-          </Menu>
-          <Box
-            sx={{
-              flexGrow: 1,
-            }}
-          >
-            <Button
-              key={"product"}
-              onClick={handleCloseNavMenu}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              Produtos
-            </Button>
+            Produtos
+          </Button>
 
-            <Button
-              key={"fornecedores"}
-              onClick={handleClickSuppliers}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              Fornecedores
-            </Button>
-            <Button
-              key={"productCategories"}
-              onClick={handleClickProductCategories}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              Categoria de Produtos
-            </Button>
-            <Button
-              key={"units"}
-              onClick={handleClickUnits}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              Unidades
-            </Button>
+          <Button
+            key={"fornecedores"}
+            onClick={handleClickSuppliers}
+            sx={{ my: 2, color: "white", display: "block" }}
+          >
+            Fornecedores
+          </Button>
+          <Button
+            key={"productCategories"}
+            onClick={handleClickProductCategories}
+            sx={{ my: 2, color: "white", display: "block" }}
+          >
+            Categoria de Produtos
+          </Button>
+          <Button
+            key={"units"}
+            onClick={handleClickUnits}
+            sx={{ my: 2, color: "white", display: "block" }}
+          >
+            Unidades
+          </Button>
 
-          </Box>
         </Toolbar>
       </Container>
     </AppBar>

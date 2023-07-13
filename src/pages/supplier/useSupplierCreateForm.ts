@@ -4,7 +4,7 @@ import useSupplierFormValidationSchema from './useSupplierFormValidationSchema';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useCallback } from 'react';
 import { Supplier, createSupplier } from '../../model/suppliers';
-import { ProductCategory } from '../../model/products';
+import { ProductCategory } from '../../model/productCategories';
 
 export interface AddressFormDataInterface {
   city: string;

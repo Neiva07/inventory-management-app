@@ -61,7 +61,7 @@ export const getProducts = (name: string = '') => {
   return getDocs(q);
 }
 
-export const createProduct = (productInfo: Product) => {
+export const createProduct = (productInfo: Partial<Product>) => {
 
   const productID = uuidv4();
 

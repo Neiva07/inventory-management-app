@@ -1,4 +1,4 @@
-import { Button, Grid, TextField } from "@mui/material"
+import { Box, Button, Grid, TextField, Typography } from "@mui/material"
 import { ChangeEvent, useEffect, useState } from "react"
 import { createProductCategories, getProductCategories, ProductCategory } from "../../model/productCategories";
 
@@ -26,13 +26,21 @@ export const ProductCategories = () => {
   }
   return (
     <>
-      {
-        productCategories.map(category => {
-          return <ol key={category.id}>
-            {category.name}
-          </ol>
-        })
-      }
+      <Box>
+        <Typography variant="h5" gutterBottom>
+          Lista de Categorias de Produto
+        </Typography>
+
+
+        {
+          productCategories.map(category => {
+            return <ol key={category.id}>
+              {category.name}
+            </ol>
+          })
+        }
+      </Box>
+
       <Grid container spacing={2}>
         <Grid item xs={4}>
           <TextField
@@ -55,7 +63,6 @@ export const ProductCategories = () => {
         </Grid>
       </Grid>
       <Button onClick={submitNewProductCategory}> Criar Categoria </Button>
-
     </>
   )
 }

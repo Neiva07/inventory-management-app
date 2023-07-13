@@ -1,4 +1,4 @@
-import { Button, Grid, TextField } from "@mui/material"
+import { Box, Button, Grid, TextField, Typography } from "@mui/material"
 import { ChangeEvent, useEffect, useState } from "react"
 import { createUnit, getUnits, Unit } from "../../model/units";
 
@@ -24,15 +24,23 @@ export const Units = () => {
     createUnit({ name, description })
     getUnits().then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)));
   }
+
+  console.log(units)
   return (
     <>
-      {
-        units.map(unit => {
-          return <ol key={unit.id}>
-            {unit.name}
-          </ol>
-        })
-      }
+      <Box>
+        <Typography variant="h5" gutterBottom>
+          Lista de Unidades
+        </Typography>
+
+        {
+          units.map(unit => {
+            return <ol key={unit.id}>
+              {unit.name}
+            </ol>
+          })
+        }
+      </Box>
       <Grid container spacing={2}>
         <Grid item xs={4}>
           <TextField

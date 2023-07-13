@@ -1,7 +1,7 @@
 import { collection, getDocs, where, query, setDoc, doc } from "firebase/firestore";
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
-import { ProductCategory } from "./products";
+import { ProductCategory } from "./productCategories";
 
 export interface Address {
   region: string;
