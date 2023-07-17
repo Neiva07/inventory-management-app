@@ -3,6 +3,7 @@ import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 import { Supplier } from "./suppliers";
 import { ProductCategory } from "./productCategories";
+import { triGram } from "../lib/search";
 
 export interface SellingOption extends DocumentData {
   unit: ProductUnit;
@@ -56,8 +57,8 @@ const PRODUCTS_COLLECTION = "products"
 
 const productColletion = collection(db, PRODUCTS_COLLECTION)
 
-export const getProducts = (name: string = '') => {
-  const q = query(productColletion, where("userID", "==", userID), where("name", ">=", name), where('name', '<=', name + '\uf8ff'));
+export const getProducts = (title: string = '') => {
+  const q = query(productColletion, where("userID", "==", userID), where("title", ">=", title), where('title', '<=', title + '\uf8ff'));
   return getDocs(q);
 }
 

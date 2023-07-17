@@ -11,6 +11,7 @@ import { SupplierForm } from "./pages/supplier/supplierForm";
 import { ProductCategories } from "./pages/productCategory/productCategory";
 import { Units } from "./pages/unit/Unit";
 import { Box } from "@mui/system";
+import { ProductList } from "./pages/product/ProductList";
 
 const App = () => {
   return (
@@ -46,6 +47,10 @@ const router = createHashRouter([
         path: "units",
         element: <Units />,
       },
+      {
+        path: "productList",
+        element: <ProductList />,
+      }
     ],
   },
 ]);

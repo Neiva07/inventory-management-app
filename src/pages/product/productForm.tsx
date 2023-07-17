@@ -22,7 +22,6 @@ export const ProdutForm = () => {
   const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
   const [units, setUnits] = useState<Array<Unit>>([]);
 
-
   useEffect(() => {
     getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
   }, []);

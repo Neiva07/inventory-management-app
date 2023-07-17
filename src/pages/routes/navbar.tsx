@@ -40,6 +40,11 @@ export const Navbar = () => {
   }
 
 
+  const handleClickProductList = () => {
+    setAnchorElNav(null);
+    navigate("productList")
+  }
+
 
   return (
     <AppBar position="fixed">
@@ -91,6 +96,14 @@ export const Navbar = () => {
           >
             Unidades
           </Button>
+          <Button
+            key={"productList"}
+            onClick={handleClickProductList}
+            sx={{ my: 2, color: "white", display: "block" }}
+          >
+            Lista de Produtos
+          </Button>
+
 
         </Toolbar>
       </Container>
