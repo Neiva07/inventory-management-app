@@ -1,4 +1,4 @@
-import { DocumentData, collection, getDocs, where, query, setDoc, doc } from "firebase/firestore";
+import { DocumentData, collection, getDocs, where, query, setDoc, doc, QueryConstraint, limit, startAt, orderBy, startAfter, getCountFromServer } from "firebase/firestore";
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 import { Supplier } from "./suppliers";
@@ -51,20 +51,46 @@ export interface Product extends DocumentData {
   productCategory: Partial<ProductCategory>;
 }
 
+export interface ProductSearchParams {
+  cursor?: Product;
+  pageSize: number;
+  title?: string;
+  productCategory?: ProductCategory;
+}
+
 
 const userID = "my-id";
 const PRODUCTS_COLLECTION = "products"
 
 const productColletion = collection(db, PRODUCTS_COLLECTION)
 
-export const getProducts = (title: string = '', category?: ProductCategory) => {
-  const constrains = []
+export const getProducts = (searchParams: ProductSearchParams) => {
+  const constrains: QueryConstraint[] = [where("userID", "==", userID)]
+
+
+  const category = searchParams.productCategory;
+  const title = searchParams?.title || ''
+
 
   if (category && category.id) {
     constrains.push(where("productCategory.id", "==", category.id))
   }
-  const q = query(productColletion, where("userID", "==", userID), ...constrains, where("title", ">=", title), where('title', '<=', title + '\uf8ff'));
-  return getDocs(q);
+
+
+  constrains.push(orderBy("title"))
+
+  if (searchParams.cursor) {
+    constrains.push(startAfter(searchParams.cursor.title))
+  }
+
+  constrains.push(where("title", ">=", title), where('title', '<=', title + '\uf8ff'))
+
+  const countQuery = query(productColletion, ...constrains)
+
+  constrains.push(limit(searchParams.pageSize))
+
+  const q = query(productColletion, ...constrains);
+  return Promise.all([getDocs(q), getCountFromServer(countQuery)])
 }
 
 export const createProduct = (productInfo: Partial<Product>) => {

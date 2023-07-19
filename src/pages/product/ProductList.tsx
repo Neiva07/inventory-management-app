@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DataGrid, GridCallbackDetails, GridCellParams, GridColDef, GridPaginationModel, GridSearchIcon, GridValueGetterParams } from '@mui/x-data-grid';
+import { DataGrid, GridCallbackDetails, GridCellParams, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon, GridValueGetterParams } from '@mui/x-data-grid';
 import { getProducts, Product } from '../../model/products';
 import { Autocomplete, Grid, InputAdornment, TextField } from '@mui/material';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
@@ -54,36 +54,40 @@ const columns: GridColDef[] = [
 
 ];
 
-const rows = [
-  { id: 1, lastName: 'Snow', firstName: 'Jon', age: 35 },
-  { id: 2, lastName: 'Lannister', firstName: 'Cersei', age: 42 },
-  { id: 3, lastName: 'Lannister', firstName: 'Jaime', age: 45 },
-  { id: 4, lastName: 'Stark', firstName: 'Arya', age: 16 },
-  { id: 5, lastName: 'Targaryen', firstName: 'Daenerys', age: null },
-  { id: 6, lastName: 'Melisandre', firstName: null, age: 150 },
-  { id: 7, lastName: 'Clifford', firstName: 'Ferrara', age: 44 },
-  { id: 8, lastName: 'Frances', firstName: 'Rossini', age: 36 },
-  { id: 9, lastName: 'Roxie', firstName: 'Harvey', age: 65 },
-];
-
 export const ProductList = () => {
 
   const [products, setProducts] = React.useState<Array<Product>>([]);
+  const [count, setCount] = React.useState<number>();
   const [searchTitle, setSearchTitle] = React.useState<string>('');
+  const [selectedRowID, setSelectedRowID] = React.useState<string>();
 
   const [categories, setCategories] = React.useState<Array<ProductCategory>>([]);
   const [categorySelected, setCategorySelected] = React.useState<ProductCategory>();
-  const [page, setPage] = React.useState<number>(0);
   const [pageSize, setPageSize] = React.useState<number>(10);
+  console.log(products)
 
   React.useEffect(() => {
     getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
   }, []);
 
+  // const productsByID = React.useMemo(() => products.reduce((acc, curr) => {
+  //   acc.set(curr.id, curr)
+  // }, new Map<string, Product>()), [products])
+  console.log(count)
 
   React.useEffect(() => {
-    getProducts(searchTitle, categorySelected).then(queryResult => setProducts(queryResult.docs.map(qr => qr.data() as Product)))
-  }, [searchTitle, categorySelected, page, pageSize]);
+    getProducts({
+      pageSize,
+      title: searchTitle,
+      productCategory: categorySelected,
+      cursor: products[-1],
+    }).then(result => {
+
+      setProducts(result[0].docs.map(qr => qr.data() as Product))
+      setCount(result[1].data().count)
+    }
+    )
+  }, [searchTitle, categorySelected, pageSize]);
 
   const handleSearchTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTitle(e.target.value)
@@ -92,64 +96,79 @@ export const ProductList = () => {
   const handleCategorySelect = (event: React.SyntheticEvent<Element, Event>, value: ProductCategory) => {
     setCategorySelected(value)
   }
-  const handlePaginationModelChange = (model: GridPaginationModel, details: GridCallbackDetails) => {
-    setPage(model.page)
+  const handlePaginationModelChange = (model: GridPaginationModel) => {
     setPageSize(model.pageSize)
+  }
+  const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
+    const id = String(rowSelection[0])
+    if (id === selectedRowID) {
+      setSelectedRowID(null);
+    } else {
+      setSelectedRowID(id);
+    }
   }
 
   return (
     <>
       <Grid spacing={2} container>
-        <Grid spacing={2} container marginTop="20px">
 
-          <Grid xs={4}>
-            <TextField
-              value={searchTitle}
-              onChange={handleSearchTitle}
-              placeholder={"Busque pelo nome do produto..."}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <GridSearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid xs={4}>
-            <Autocomplete
-              id="category-filter"
-              options={categories}
-              getOptionLabel={(option) => option.name}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  variant="outlined"
-                  label="Categoria"
-                />
-              )}
-              isOptionEqualToValue={(option, value) =>
-                option.id === value.id
-              }
-              onChange={handleCategorySelect}
-            />
+        <Grid item xs={6}>
+          <TextField
+            value={searchTitle}
+            fullWidth
+            onChange={handleSearchTitle}
+            placeholder={"Busque pelo nome do produto..."}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <GridSearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <Autocomplete
+            id="category-filter"
+            options={categories}
+            getOptionLabel={(option) => option.name}
+            fullWidth
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                fullWidth
+                variant="outlined"
+                label="Categoria"
+              />
+            )}
+            isOptionEqualToValue={(option, value) =>
+              option.id === value.id
+            }
+            onChange={handleCategorySelect}
+          />
 
-          </Grid>
         </Grid>
 
-        <Grid xs={12} marginTop="20px">
-          <div style={{ minHeight: 600, width: 1000 }}>
+        <Grid xs={12} item marginTop="20px">
+          <div style={{ height: 600, width: 1200 }}>
             <DataGrid
               rows={products}
               columns={columns}
               initialState={{
                 pagination: {
-                  paginationModel: { page, pageSize },
+                  paginationModel: { page: 0, pageSize },
                 },
               }}
               pageSizeOptions={[10, 20]}
               pagination
+              onRowSelectionModelChange={handleRowSelection}
               onPaginationModelChange={handlePaginationModelChange}
+              hideFooterSelectedRowCount
+              rowCount={count}
+              rowSelectionModel={[selectedRowID]}
+              paginationMode="server"
+            // local text is the prop in which defines the text to translate
+            // localeText={}
             // checkboxSelection
             />
           </div>

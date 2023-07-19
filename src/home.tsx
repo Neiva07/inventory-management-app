@@ -1,6 +1,6 @@
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useState } from "react";
 import Button from "@mui/material/Button";
-import { Product, createProduct, getProducts } from "./model/products";
+import { Product, createProduct } from "./model/products";
 import { Input } from "@mui/material";
 
 export const Home = () => {
@@ -10,12 +10,6 @@ export const Home = () => {
   const [description, setDescription] = useState<string>("");
   const [searchText, setSearchText] = useState<string>("");
 
-  useEffect(() => {
-    getProducts(searchText).then((results) =>
-      setProducts(results.docs.map((v) => v.data() as Product))
-    );
-  }, [searchText]);
-
   const handleCreateProduct = () => {
     createProduct({
       name,
@@ -24,10 +18,6 @@ export const Home = () => {
       userID: "my-id",
       // providersIDs,
     });
-
-    getProducts(searchText).then((results) =>
-      setProducts(results.docs.map((v) => v.data() as Product))
-    );
   };
 
   const handleChangeName = (e: ChangeEvent<HTMLInputElement>) => {
