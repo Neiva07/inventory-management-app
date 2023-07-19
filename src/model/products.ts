@@ -57,8 +57,13 @@ const PRODUCTS_COLLECTION = "products"
 
 const productColletion = collection(db, PRODUCTS_COLLECTION)
 
-export const getProducts = (title: string = '') => {
-  const q = query(productColletion, where("userID", "==", userID), where("title", ">=", title), where('title', '<=', title + '\uf8ff'));
+export const getProducts = (title: string = '', category?: ProductCategory) => {
+  const constrains = []
+
+  if (category && category.id) {
+    constrains.push(where("productCategory.id", "==", category.id))
+  }
+  const q = query(productColletion, where("userID", "==", userID), ...constrains, where("title", ">=", title), where('title', '<=', title + '\uf8ff'));
   return getDocs(q);
 }
 

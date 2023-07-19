@@ -1,5 +1,5 @@
 export const triGram = (txt: string) => {
-  const set = new Set();
+  const set = new Set<string>();
   const s1 = (txt || '').toLowerCase();
   const n = 3;
   for (let k = 0; k <= s1.length - n; k++)
