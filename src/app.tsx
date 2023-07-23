@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import React from "react";
 import { Navbar } from "./pages/routes/navbar";
-import { ProdutForm } from "./pages/product/productForm";
+import { ProductForm } from "./pages/product/productForm";
 import { SupplierForm } from "./pages/supplier/supplierForm";
 import { ProductCategories } from "./pages/productCategory/productCategory";
 import { Units } from "./pages/unit/Unit";
@@ -33,7 +33,13 @@ const router = createHashRouter([
     children: [
       {
         path: "products",
-        element: <ProdutForm />,
+        element: <ProductForm />,
+        children: [
+          {
+            path: ":productID",
+            element: <ProductForm />,
+          }
+        ]
       },
       {
         path: "suppliers",

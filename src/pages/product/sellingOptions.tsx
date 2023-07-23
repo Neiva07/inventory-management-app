@@ -2,7 +2,6 @@ import {
   Autocomplete,
   Box,
   Button,
-  Divider,
   FormControl,
   Grid,
   TextField,
@@ -98,13 +97,12 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
         <FormControl fullWidth>
           <Controller
             control={formMethods.control}
-            render={({ field: { value, ...props } }) => {
+            render={({ field: props }) => {
               return (
                 <TextField
                   {...props}
                   variant="outlined"
                   label="Preço"
-                  value={value}
                 />
               );
             }}
@@ -131,7 +129,7 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
           <FormControl fullWidth>
             <Controller
               control={formMethods.control}
-              render={({ field: { value: buyUnit, ...props } }) => {
+              render={({ field: { value: unit, ...props } }) => {
                 const handleChange = (
                   e: React.SyntheticEvent<Element, Event>,
                   value: SelectField
@@ -160,6 +158,7 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
                         option.value === value.value
                       }
                       onChange={handleChange}
+                      value={unit}
                     />
                   </>
                 );
@@ -278,7 +277,7 @@ export const SellingOptions = (
           render={(formControlProps) => {
             return (
               <>
-                {formControlProps.field.value.map((so, index) => {
+                {formControlProps.field.value?.map((so, index) => {
                   return (
                     <SellingOption
                       key={index}

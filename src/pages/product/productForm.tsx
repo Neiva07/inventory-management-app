@@ -15,9 +15,12 @@ import { SellingOptions } from "./sellingOptions";
 import { getProductCategories, ProductCategory } from "../../model/productCategories";
 import { Supplier, getSuppliers } from "../../model/suppliers";
 import { getUnits, Unit } from "../../model/units";
+import { useParams } from "react-router-dom";
 
-export const ProdutForm = () => {
-  const { register, onFormSubmit, ...formMethods } = useProductCreateForm();
+export const ProductForm = () => {
+
+  const { productID } = useParams();
+  const { register, onFormSubmit, onFormUpdate, onDeactiveProduct, onDelete, ...formMethods } = useProductCreateForm(productID);
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
   const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
   const [units, setUnits] = useState<Array<Unit>>([]);
@@ -35,12 +38,27 @@ export const ProdutForm = () => {
   }, []);
 
 
+
   return (
     <FormProvider register={register} {...formMethods}>
       <>
-        <Typography variant="h5" gutterBottom>
-          Cadastro do produto
-        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Typography variant="h5" gutterBottom>
+              {productID ? "Editar Produto" : "Cadastro de Produto"}
+            </Typography>
+          </Grid>
+          {productID && <Grid item xs={4}>
+            <Button fullWidth hidden={!productID} onClick={onDelete}
+            > Deletar Produto </Button>
+          </Grid>}
+          {productID && <Grid item xs={4}>
+            <Button fullWidth hidden={!productID} onClick={onDeactiveProduct}
+            > Desativar Produto </Button>
+          </Grid>}
+        </Grid>
+
+
         <Grid container spacing={2}>
           <Grid item xs={6}>
             <FormControl fullWidth>
@@ -75,6 +93,7 @@ export const ProdutForm = () => {
                   return (
                     <>
                       <Autocomplete
+                        value={productCategory}
                         {...props}
                         id="tags-standard"
                         options={categories.map((c) => {
@@ -177,6 +196,7 @@ export const ProdutForm = () => {
                       isOptionEqualToValue={(option, value) =>
                         option.value === value.value
                       }
+                      value={value}
                       renderTags={(list) => {
                         const displayList = list
                           .map((item) => item.label)
@@ -218,6 +238,7 @@ export const ProdutForm = () => {
                       <Autocomplete
                         {...props}
                         id="tags-standard"
+                        value={buyUnit}
                         options={units.map((c) => {
                           return {
                             label: c.name,
@@ -314,14 +335,23 @@ export const ProdutForm = () => {
         style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }}
       />
       <SellingOptions {...formMethods} />
+      {
+        productID ?
+          <Button
+            onClick={onFormUpdate}
+            variant="contained"
+            style={{ marginTop: "12px" }}
+          > Atualizar Produto </Button>
+          :
+          <Button
 
-      <Button
-        onClick={onFormSubmit}
-        variant="contained"
-        style={{ marginTop: "12px" }}
-      >
-        Criar produto
-      </Button>
+            onClick={onFormSubmit}
+            variant="contained"
+            style={{ marginTop: "12px" }}
+          >
+            Criar produto
+          </Button>
+      }
     </FormProvider>
   );
 };

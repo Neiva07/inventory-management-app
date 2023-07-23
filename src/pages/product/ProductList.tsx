@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { DataGrid, GridCallbackDetails, GridCellParams, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon, GridValueGetterParams } from '@mui/x-data-grid';
-import { getProducts, Product } from '../../model/products';
-import { Autocomplete, Grid, InputAdornment, TextField } from '@mui/material';
+import { DataGrid, GridCellParams, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
+import { deactiveProduct, deleteProduct, getProducts, Product } from '../../model/products';
+import { Autocomplete, Button, Grid, InputAdornment, TextField } from '@mui/material';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
+import { useNavigate } from 'react-router-dom';
+import { SelectField } from './useProductCreateForm';
 
 const columns: GridColDef[] = [
   // { field: 'id', headerName: 'ID', width: 200 },
@@ -49,10 +51,29 @@ const columns: GridColDef[] = [
     headerName: 'Estoque Mínimo',
     type: 'number',
     width: 140,
+  },
+  {
+    field: 'status',
+    headerName: 'Status',
+    type: 'string',
+    width: 140,
   }
-
-
 ];
+
+const statuses = [
+  {
+    label: "Ativo",
+    value: "active",
+  },
+  {
+    label: "Inativo",
+    value: "inactive",
+  },
+  {
+    label: "Todos",
+    value: "",
+  }
+] as SelectField<string>[]
 
 export const ProductList = () => {
 
@@ -63,31 +84,36 @@ export const ProductList = () => {
 
   const [categories, setCategories] = React.useState<Array<ProductCategory>>([]);
   const [categorySelected, setCategorySelected] = React.useState<ProductCategory>();
+  const [statusSelected, setStatusSelected] = React.useState<SelectField<string>>();
   const [pageSize, setPageSize] = React.useState<number>(10);
-  console.log(products)
+
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
   }, []);
 
-  // const productsByID = React.useMemo(() => products.reduce((acc, curr) => {
-  //   acc.set(curr.id, curr)
-  // }, new Map<string, Product>()), [products])
-  console.log(count)
 
-  React.useEffect(() => {
+  const queryProducts = React.useCallback(() => {
     getProducts({
       pageSize,
       title: searchTitle,
       productCategory: categorySelected,
       cursor: products[-1],
+      status: statusSelected?.value
     }).then(result => {
 
       setProducts(result[0].docs.map(qr => qr.data() as Product))
       setCount(result[1].data().count)
     }
     )
-  }, [searchTitle, categorySelected, pageSize]);
+
+  }, [searchTitle, categorySelected, pageSize, statusSelected])
+
+
+  React.useEffect(() => {
+    queryProducts();
+  }, [searchTitle, categorySelected, pageSize, statusSelected]);
 
   const handleSearchTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTitle(e.target.value)
@@ -96,6 +122,10 @@ export const ProductList = () => {
   const handleCategorySelect = (event: React.SyntheticEvent<Element, Event>, value: ProductCategory) => {
     setCategorySelected(value)
   }
+  const handleStatusSelection = (event: React.SyntheticEvent<Element, Event>, value: SelectField) => {
+    setStatusSelected(value)
+  }
+
   const handlePaginationModelChange = (model: GridPaginationModel) => {
     setPageSize(model.pageSize)
   }
@@ -107,12 +137,20 @@ export const ProductList = () => {
       setSelectedRowID(id);
     }
   }
+  const handleDeactivateProduct = () => {
+    deactiveProduct(selectedRowID)
+    queryProducts();
+  }
+  const handleDeleteProduct = () => {
+    deleteProduct(selectedRowID)
+    queryProducts();
+  }
 
   return (
     <>
       <Grid spacing={2} container>
 
-        <Grid item xs={6}>
+        <Grid item xs={4}>
           <TextField
             value={searchTitle}
             fullWidth
@@ -127,7 +165,7 @@ export const ProductList = () => {
             }}
           />
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={4}>
           <Autocomplete
             id="category-filter"
             options={categories}
@@ -146,8 +184,40 @@ export const ProductList = () => {
             }
             onChange={handleCategorySelect}
           />
-
         </Grid>
+        <Grid item xs={4}>
+          <Autocomplete
+            id="status-filter"
+            options={statuses}
+            getOptionLabel={(option) => option.label}
+            fullWidth
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                fullWidth
+                variant="outlined"
+                label="Status"
+              />
+            )}
+            isOptionEqualToValue={(option, value) =>
+              option.value === value.value
+            }
+            onChange={handleStatusSelection}
+          />
+        </Grid>
+        <Grid item xs={4}>
+          <Button fullWidth disabled={!selectedRowID} onClick={() => navigate(`/products/${selectedRowID}`)}
+          > Editar Produto </Button>
+        </Grid>
+        <Grid item xs={4}>
+          <Button fullWidth disabled={!selectedRowID} onClick={handleDeleteProduct}
+          > Deletar Produto </Button>
+        </Grid>
+        <Grid item xs={4}>
+          <Button fullWidth disabled={!selectedRowID} onClick={handleDeactivateProduct}
+          > Desativar Produto </Button>
+        </Grid>
+
 
         <Grid xs={12} item marginTop="20px">
           <div style={{ height: 600, width: 1200 }}>
