@@ -1,57 +1,17 @@
 import * as React from 'react';
-import { DataGrid, GridCellParams, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
-import { deactiveProduct, deleteProduct, getProducts, Product } from '../../model/products';
+import { DataGrid, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
 import { Autocomplete, Button, Grid, InputAdornment, TextField } from '@mui/material';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
 import { useNavigate } from 'react-router-dom';
-import { SelectField } from './useProductCreateForm';
+import { SelectField } from '../product/useProductCreateForm';
+import { Supplier, getSuppliers, deactiveSupplier, deleteSupplier } from '../../model/suppliers';
 
 const columns: GridColDef[] = [
   // { field: 'id', headerName: 'ID', width: 200 },
-  { field: 'title', headerName: 'Nome', width: 200 },
-  { field: 'description', headerName: 'Desrição', width: 200 },
-  {
-    field: 'inventory',
-    headerName: 'Estoque',
-    type: 'number',
-    width: 140,
-  },
-  {
-    field: 'productCategory.name',
-    headerName: 'Categoria',
-    type: 'string',
-    width: 140,
-    valueGetter: (params: GridCellParams<Product>) => {
-      return params.row.productCategory.name
-    }
-  },
-  {
-    field: 'cost',
-    headerName: 'Custo de compra',
-    type: 'number',
-    sortable: false,
-    width: 140,
-    renderCell: (params) => {
-
-      return <h5>{params.row.cost}</h5>
-    }
-  },
-  {
-    field: 'buyUnit',
-    headerName: 'Unidade de compra',
-    sortable: false,
-    width: 140,
-    renderCell: (params: GridCellParams<Product>) => {
-
-      return <h5>{params.row.buyUnit.name}</h5>
-    }
-  },
-  {
-    field: 'minInventory',
-    headerName: 'Estoque Mínimo',
-    type: 'number',
-    width: 140,
-  },
+  { field: 'tradeName', headerName: 'Nome Fantasia', width: 200 },
+  { field: 'legalName', headerName: 'Razão Social', width: 200 },
+  { field: 'description', headerName: 'Descrição', width: 200 },
+  { field: 'companyPhone', headerName: 'Telefone', width: 200 },
   {
     field: 'status',
     headerName: 'Status',
@@ -75,9 +35,9 @@ const statuses = [
   }
 ] as SelectField<string>[]
 
-export const ProductList = () => {
+export const SupplierList = () => {
 
-  const [products, setProducts] = React.useState<Array<Product>>([]);
+  const [suppliers, setSuppliers] = React.useState<Array<Supplier>>([]);
   const [count, setCount] = React.useState<number>();
   const [searchTitle, setSearchTitle] = React.useState<string>('');
   const [selectedRowID, setSelectedRowID] = React.useState<string>();
@@ -94,16 +54,16 @@ export const ProductList = () => {
   }, []);
 
 
-  const queryProducts = React.useCallback(() => {
-    getProducts({
+  const querySuppliers = React.useCallback(() => {
+    getSuppliers({
       pageSize,
-      title: searchTitle,
+      tradeName: searchTitle,
       productCategory: categorySelected,
-      cursor: products[-1],
+      cursor: suppliers[-1],
       status: statusSelected?.value
     }).then(result => {
 
-      setProducts(result[0].docs.map(qr => qr.data() as Product))
+      setSuppliers(result[0].docs.map(qr => qr.data() as Supplier))
       setCount(result[1].data().count)
     }
     )
@@ -112,7 +72,7 @@ export const ProductList = () => {
 
 
   React.useEffect(() => {
-    queryProducts();
+    querySuppliers();
   }, [searchTitle, categorySelected, pageSize, statusSelected]);
 
   const handleSearchTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,13 +99,13 @@ export const ProductList = () => {
       }
     }
   }
-  const handleDeactivateProduct = () => {
-    deactiveProduct(selectedRowID)
-    queryProducts();
+  const handleDeactivateSupplier = () => {
+    deactiveSupplier(selectedRowID)
+    querySuppliers();
   }
-  const handleDeleteProduct = () => {
-    deleteProduct(selectedRowID)
-    queryProducts();
+  const handleDeleteSupplier = () => {
+    deleteSupplier(selectedRowID)
+    querySuppliers();
   }
 
   return (
@@ -157,7 +117,7 @@ export const ProductList = () => {
             value={searchTitle}
             fullWidth
             onChange={handleSearchTitle}
-            placeholder={"Busque pelo nome do produto..."}
+            placeholder={"Busque pelo nome do fornecedor..."}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -208,23 +168,23 @@ export const ProductList = () => {
           />
         </Grid>
         <Grid item xs={4}>
-          <Button fullWidth disabled={!selectedRowID} onClick={() => navigate(`/products/${selectedRowID}`)}
-          > Editar Produto </Button>
+          <Button fullWidth disabled={!selectedRowID} onClick={() => navigate(`/suppliers/${selectedRowID}`)}
+          > Editar Fornecedor </Button>
         </Grid>
         <Grid item xs={4}>
-          <Button fullWidth disabled={!selectedRowID} onClick={handleDeleteProduct}
-          > Deletar Produto </Button>
+          <Button fullWidth disabled={!selectedRowID} onClick={handleDeleteSupplier}
+          > Deletar Fornecedor </Button>
         </Grid>
         <Grid item xs={4}>
-          <Button fullWidth disabled={!selectedRowID} onClick={handleDeactivateProduct}
-          > Desativar Produto </Button>
+          <Button fullWidth disabled={!selectedRowID} onClick={handleDeactivateSupplier}
+          > Desativar Fornecedor </Button>
         </Grid>
 
 
         <Grid xs={12} item marginTop="20px">
           <div style={{ height: 600, width: 1200 }}>
             <DataGrid
-              rows={products}
+              rows={suppliers}
               columns={columns}
               initialState={{
                 pagination: {

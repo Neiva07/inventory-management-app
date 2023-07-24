@@ -5,6 +5,7 @@ import { SelectField } from '../product/useProductCreateForm';
 import ReactInputMask from 'react-input-mask';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 const regions = [
   {
@@ -23,25 +24,36 @@ const regions = [
 
 
 export const SupplierForm = () => {
+  const { supplierID } = useParams();
 
-  const { register, onFormSubmit, ...formMethods } = useSupplierCreateForm();
+  const { register, onFormSubmit, onFormUpdate, onDelete, onDeactivate, ...formMethods } = useSupplierCreateForm(supplierID);
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
-
 
   useEffect(() => {
     getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
   }, []);
 
 
-  console.log(formMethods.formState.errors.productCategories)
-
-
   return (
     <FormProvider register={register} {...formMethods}>
       <>
-        <Typography variant="h5" gutterBottom>
-          Cadastro do Fornecedor
-        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Typography variant="h5" gutterBottom>
+              {supplierID ? "Editar Fornecedor" : "Cadastro de Fornecedor"}
+            </Typography>
+          </Grid>
+          {supplierID && <Grid item xs={4}>
+            <Button fullWidth hidden={!supplierID} onClick={onDelete}
+            > Deletar Fornecedor </Button>
+          </Grid>}
+          {supplierID && <Grid item xs={4}>
+            <Button fullWidth hidden={!supplierID} onClick={onDeactivate}
+            > Desativar Fornecedor </Button>
+          </Grid>}
+        </Grid>
+
+
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <FormControl fullWidth>
@@ -200,6 +212,7 @@ export const SupplierForm = () => {
                             error={!!(formMethods.formState.errors.address?.region)}
                           />
                         )}
+                        value={region}
                         isOptionEqualToValue={(option, value) =>
                           option.value === value.value
                         }
@@ -314,6 +327,7 @@ export const SupplierForm = () => {
                           error={!!formMethods.formState.errors.productCategories}
                         />
                       )}
+                      value={value}
                       onChange={handleChange}
                       isOptionEqualToValue={(option, value) =>
                         option.value === value.value
@@ -351,13 +365,26 @@ export const SupplierForm = () => {
             </FormControl>
           </Grid>
         </Grid>
-        <Button
-          onClick={onFormSubmit}
-          variant="contained"
-          style={{ marginTop: "12px" }}
-        >
-          Criar Fornecedor
-        </Button>
+        {
+          supplierID ?
+            <Button
+              onClick={onFormUpdate}
+              variant="contained"
+              style={{ marginTop: "12px" }}
+            >
+              Editar Fornecedor
+            </Button>
+
+            :
+            <Button
+              onClick={onFormSubmit}
+              variant="contained"
+              style={{ marginTop: "12px" }}
+            >
+              Criar Fornecedor
+            </Button>
+
+        }
       </>
     </FormProvider>
   );

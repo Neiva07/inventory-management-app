@@ -77,7 +77,6 @@ export const useProductCreateForm = (productID?: string) => {
   const formValidationSchema = useProductFormValidationSchema();
   const formMethods = useForm<ProductFormDataInterface>({
     defaultValues: INITIAL_PRODUCT_FORM_STATE,
-    // defaultValues: async () => await INITIAL_PRODUCT_FORM_STATE,
     mode: 'onChange',
     resolver: yupResolver(formValidationSchema),
   });

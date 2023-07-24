@@ -16,6 +16,7 @@ export interface Price {
   value: number;
   title: string;
 }
+
 //temporary, probably will be separated entity -> should extends Partial Unit
 export interface ProductUnit extends DocumentData {
   name: string;

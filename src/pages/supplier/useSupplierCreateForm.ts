@@ -2,8 +2,8 @@ import { useForm } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import useSupplierFormValidationSchema from './useSupplierFormValidationSchema';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useCallback } from 'react';
-import { Supplier, createSupplier } from '../../model/suppliers';
+import React, { useCallback } from 'react';
+import { Supplier, createSupplier, getSupplier, updateSupplier, deleteSupplier, deactiveSupplier } from '../../model/suppliers';
 import { ProductCategory } from '../../model/productCategories';
 
 export interface AddressFormDataInterface {
@@ -49,13 +49,50 @@ const INITIAL_SUPPLIER_FORM_STATE: SupplierFormDataInterface = {
   daysToPay: 0,
 };
 
-export const useSupplierCreateForm = () => {
+export const useSupplierCreateForm = (supplierID?: string) => {
+  const [fetchedSupplierForm, setFetchedSupplierForm] = React.useState<SupplierFormDataInterface>();
   const formValidationSchema = useSupplierFormValidationSchema();
   const formMethods = useForm<SupplierFormDataInterface>({
     defaultValues: INITIAL_SUPPLIER_FORM_STATE,
     mode: 'onBlur',
     resolver: yupResolver(formValidationSchema),
   });
+
+
+  const getSupplierFormData = React.useCallback(async (supplierID?: string) => {
+
+    const doc = await getSupplier(supplierID)
+    const supplier = doc.data() as Supplier
+
+    const supplierForm = {
+      ...supplier,
+      address: {
+        ...supplier.address,
+        region: {
+          value: supplier.address.region,
+          label: '',
+        },
+      },
+      productCategories: supplier.productCategories.map(pc => ({
+        value: pc.id,
+        label: pc.name,
+      })),
+    } as SupplierFormDataInterface
+
+    setFetchedSupplierForm(supplierForm);
+  }, [supplierID]);
+
+  React.useEffect(() => {
+    if (supplierID) {
+      getSupplierFormData(supplierID)
+    }
+
+  }, [supplierID])
+  React.useEffect(() => {
+    formMethods.reset(fetchedSupplierForm)
+  }, [fetchedSupplierForm])
+
+
 
   const onSubmit = useCallback((data: SupplierFormDataInterface) => {
     const { productCategories, address, contactPhone, companyPhone, entityID, ...restData } = data;
@@ -67,7 +104,6 @@ export const useSupplierCreateForm = () => {
     const cleanedCompanyPhone = companyPhone.replace(/[^0-9]/gi, "");
     const cleanedContactPhone = contactPhone.replace(/[^0-9]/gi, "");
 
-    console.log(data)
 
     createSupplier({
       address: {
@@ -83,15 +119,58 @@ export const useSupplierCreateForm = () => {
       productCategories: productCategories.map(pc =>
       ({
         id: pc.value,
-        name: pc.value,
+        name: pc.label,
       } as Partial<ProductCategory>),
       ),
       ...restData,
     } as Supplier);
   }, []);
 
+  const onUpdate = useCallback((data: SupplierFormDataInterface) => {
+    const { productCategories, address, contactPhone, companyPhone, entityID, ...restData } = data;
+
+    const { region, postalCode, ...restAddress } = address;
+
+    const cleanedPostalCode = postalCode.replace(/[^0-9]/gi, "");
+    const cleanedEntityID = entityID.replace(/[^0-9]/gi, "");
+    const cleanedCompanyPhone = companyPhone.replace(/[^0-9]/gi, "");
+    const cleanedContactPhone = contactPhone.replace(/[^0-9]/gi, "");
+
+
+    updateSupplier(supplierID, {
+      address: {
+        country: 'Brazil',
+        region: region.value,
+        postalCode: cleanedPostalCode,
+        ...restAddress,
+      },
+      status: 'active',
+      entityID: cleanedEntityID,
+      companyPhone: cleanedCompanyPhone,
+      contactPhone: cleanedContactPhone,
+      productCategories: productCategories.map(pc =>
+      ({
+        id: pc.value,
+        name: pc.label,
+      } as Partial<ProductCategory>),
+      ),
+      ...restData,
+    } as Supplier);
+  }, [supplierID]);
+
+
+  const onDelete = useCallback(() => {
+    deleteSupplier(supplierID)
+  }, [supplierID])
+  const onDeactivate = useCallback(() => {
+    deactiveSupplier(supplierID)
+  }, [supplierID])
+
   return {
     ...formMethods,
     onFormSubmit: formMethods.handleSubmit(onSubmit),
+    onFormUpdate: formMethods.handleSubmit(onUpdate),
+    onDelete,
+    onDeactivate,
   };
 };

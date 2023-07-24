@@ -30,7 +30,7 @@ export const ProductForm = () => {
   }, []);
 
   useEffect(() => {
-    getSuppliers().then(queryResult => setSuppliers(queryResult.docs.map(qr => qr.data() as Supplier)))
+    getSuppliers({ pageSize: 1000 }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
   }, []);
 
   useEffect(() => {
