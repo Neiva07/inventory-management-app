@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import useProductFormValidationSchema from "./useProductFormValidationSchema";
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback } from "react";
-import { Product, Price, ProductSupplier, ProductUnit, SellingOption, createProduct, getProduct, updateProduct, deleteProduct, deactiveProduct } from "../../model/products";
+import { Product, Price, ProductSupplier, ProductUnit, SellingOption, createProduct, getProduct, updateProduct, deleteProduct, deactiveProduct, activeProduct } from "../../model/products";
 import { ProductCategory } from "../../model/productCategories";
 
 export interface SelectField<T = string> {
@@ -73,6 +73,7 @@ const INITIAL_PRODUCT_FORM_STATE = {
 
 export const useProductCreateForm = (productID?: string) => {
   const [fetchedProductForm, setFetchedProductForm] = React.useState<ProductFormDataInterface>();
+  const [product, setProduct] = React.useState<Product>();
 
   const formValidationSchema = useProductFormValidationSchema();
   const formMethods = useForm<ProductFormDataInterface>({
@@ -85,19 +86,21 @@ export const useProductCreateForm = (productID?: string) => {
   const getFormProductData = React.useCallback(async (productID?: string) => {
 
     const doc = await getProduct(productID)
-    const product = doc.data() as Product
+    const queriedProduct = doc.data() as Product
+
+    setProduct(queriedProduct)
 
     const productForm = {
-      ...product,
+      ...queriedProduct,
       productCategory: {
-        label: product.productCategory?.name,
-        value: product.productCategory?.id,
+        label: queriedProduct.productCategory?.name,
+        value: queriedProduct.productCategory?.id,
       },
       buyUnit: {
-        label: product.buyUnit?.name,
-        value: product.buyUnit?.id,
+        label: queriedProduct.buyUnit?.name,
+        value: queriedProduct.buyUnit?.id,
       },
-      sellingOptions: product.sellingOptions.map(so => {
+      sellingOptions: queriedProduct.sellingOptions.map(so => {
         return ({
           ...so,
           unit: {
@@ -109,7 +112,7 @@ export const useProductCreateForm = (productID?: string) => {
         })
 
       }),
-      suppliers: product.suppliers.map(s => ({ value: s.supplierID, label: s.name }))
+      suppliers: queriedProduct.suppliers.map(s => ({ value: s.supplierID, label: s.name }))
 
     } as ProductFormDataInterface
 
@@ -216,11 +219,18 @@ export const useProductCreateForm = (productID?: string) => {
     await deactiveProduct(productID);
   }, [productID])
 
+  const onActivateProduct = useCallback(async () => {
+    await activeProduct(productID);
+  }, [productID])
+
+
   return {
     ...formMethods,
     onFormSubmit: formMethods.handleSubmit(onSubmit),
     onFormUpdate: formMethods.handleSubmit(onUpdate),
-    onDelete: onDelete,
-    onDeactiveProduct: onDeactiveProduct
+    onDelete,
+    onDeactiveProduct,
+    product,
+    onActivateProduct,
   }
 }

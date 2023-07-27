@@ -144,6 +144,15 @@ export const deactiveProduct = async (productID: string) => {
   })
 }
 
+export const activeProduct = async (productID: string) => {
+
+  const productDoc = doc(db, PRODUCTS_COLLECTION, productID);
+
+  return updateDoc(productDoc, {
+    updatedAt: Date.now(),
+    status: "active",
+  })
+}
 export const updateProduct = (productID: string, productInfo: Partial<Product>) => {
   const productDoc = doc(db, PRODUCTS_COLLECTION, productID);
 

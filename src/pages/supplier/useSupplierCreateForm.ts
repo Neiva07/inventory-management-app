@@ -3,7 +3,7 @@ import { SelectField } from '../product/useProductCreateForm';
 import useSupplierFormValidationSchema from './useSupplierFormValidationSchema';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback } from 'react';
-import { Supplier, createSupplier, getSupplier, updateSupplier, deleteSupplier, deactiveSupplier } from '../../model/suppliers';
+import { Supplier, createSupplier, getSupplier, updateSupplier, deleteSupplier, deactiveSupplier, activeSupplier } from '../../model/suppliers';
 import { ProductCategory } from '../../model/productCategories';
 
 export interface AddressFormDataInterface {
@@ -51,6 +51,8 @@ const INITIAL_SUPPLIER_FORM_STATE: SupplierFormDataInterface = {
 
 export const useSupplierCreateForm = (supplierID?: string) => {
   const [fetchedSupplierForm, setFetchedSupplierForm] = React.useState<SupplierFormDataInterface>();
+  const [supplier, setSupplier] = React.useState<Supplier>();
+
   const formValidationSchema = useSupplierFormValidationSchema();
   const formMethods = useForm<SupplierFormDataInterface>({
     defaultValues: INITIAL_SUPPLIER_FORM_STATE,
@@ -62,18 +64,19 @@ export const useSupplierCreateForm = (supplierID?: string) => {
   const getSupplierFormData = React.useCallback(async (supplierID?: string) => {
 
     const doc = await getSupplier(supplierID)
-    const supplier = doc.data() as Supplier
+    const queriedSupplier = doc.data() as Supplier
+    setSupplier(queriedSupplier);
 
     const supplierForm = {
-      ...supplier,
+      ...queriedSupplier,
       address: {
-        ...supplier.address,
+        ...queriedSupplier.address,
         region: {
-          value: supplier.address.region,
+          value: queriedSupplier.address.region,
           label: '',
         },
       },
-      productCategories: supplier.productCategories.map(pc => ({
+      productCategories: queriedSupplier.productCategories.map(pc => ({
         value: pc.id,
         label: pc.name,
       })),
@@ -162,9 +165,15 @@ export const useSupplierCreateForm = (supplierID?: string) => {
   const onDelete = useCallback(() => {
     deleteSupplier(supplierID)
   }, [supplierID])
+
   const onDeactivate = useCallback(() => {
     deactiveSupplier(supplierID)
   }, [supplierID])
+
+  const onActivate = useCallback(() => {
+    activeSupplier(supplierID)
+  }, [supplierID])
+
 
   return {
     ...formMethods,
@@ -172,5 +181,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
     onFormUpdate: formMethods.handleSubmit(onUpdate),
     onDelete,
     onDeactivate,
+    onActivate,
+    supplier,
   };
 };

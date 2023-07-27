@@ -4,8 +4,9 @@ import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import ReactInputMask from 'react-input-mask';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { getSupplier, Supplier } from '../../model/suppliers';
 
 const regions = [
   {
@@ -26,13 +27,12 @@ const regions = [
 export const SupplierForm = () => {
   const { supplierID } = useParams();
 
-  const { register, onFormSubmit, onFormUpdate, onDelete, onDeactivate, ...formMethods } = useSupplierCreateForm(supplierID);
+  const { register, supplier, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, ...formMethods } = useSupplierCreateForm(supplierID);
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
 
   useEffect(() => {
     getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
   }, []);
-
 
   return (
     <FormProvider register={register} {...formMethods}>
@@ -47,10 +47,16 @@ export const SupplierForm = () => {
             <Button fullWidth hidden={!supplierID} onClick={onDelete}
             > Deletar Fornecedor </Button>
           </Grid>}
-          {supplierID && <Grid item xs={4}>
+          {supplier && supplier.status === 'active' && <Grid item xs={4}>
             <Button fullWidth hidden={!supplierID} onClick={onDeactivate}
             > Desativar Fornecedor </Button>
           </Grid>}
+          {supplier && supplier.status === 'inactive' && (
+            <Grid item xs={4}>
+              <Button fullWidth hidden={!supplierID} onClick={onActivate}
+              > Ativar Fornecedor</Button>
+            </Grid>
+          )}
         </Grid>
 
 
@@ -388,4 +394,4 @@ export const SupplierForm = () => {
       </>
     </FormProvider>
   );
-};
+}

@@ -121,6 +121,16 @@ export const deactiveSupplier = async (supplierID: string) => {
     status: "inactive",
   })
 }
+export const activeSupplier = async (supplierID: string) => {
+
+  const supplierDoc = doc(db, SUPPLIERS_COLLECTION, supplierID)
+
+  return updateDoc(supplierDoc, {
+    updatedAt: Date.now(),
+    status: "active",
+  })
+}
+
 
 export const updateSupplier = (supplierID: string, supplierInfo: Partial<Supplier>) => {
   const supplierDoc = doc(db, SUPPLIERS_COLLECTION, supplierID);

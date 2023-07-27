@@ -20,7 +20,7 @@ import { useParams } from "react-router-dom";
 export const ProductForm = () => {
 
   const { productID } = useParams();
-  const { register, onFormSubmit, onFormUpdate, onDeactiveProduct, onDelete, ...formMethods } = useProductCreateForm(productID);
+  const { register, product, onFormSubmit, onFormUpdate, onDeactiveProduct, onActivateProduct, onDelete, ...formMethods } = useProductCreateForm(productID);
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
   const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
   const [units, setUnits] = useState<Array<Unit>>([]);
@@ -37,8 +37,6 @@ export const ProductForm = () => {
     getUnits().then(queryResult => setUnits(queryResult.docs.map(qr => qr.data() as Unit)))
   }, []);
 
-
-
   return (
     <FormProvider register={register} {...formMethods}>
       <>
@@ -52,10 +50,17 @@ export const ProductForm = () => {
             <Button fullWidth hidden={!productID} onClick={onDelete}
             > Deletar Produto </Button>
           </Grid>}
-          {productID && <Grid item xs={4}>
+          {product && product.status === 'active' && <Grid item xs={4}>
             <Button fullWidth hidden={!productID} onClick={onDeactiveProduct}
             > Desativar Produto </Button>
           </Grid>}
+          {product && product.status === 'inactive' && (
+            <Grid item xs={4}>
+              <Button fullWidth onClick={onActivateProduct}
+              > Ativar Produto</Button>
+            </Grid>
+          )}
+
         </Grid>
 
 
