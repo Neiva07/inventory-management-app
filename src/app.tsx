@@ -14,6 +14,7 @@ import { Box } from "@mui/system";
 import { ProductList } from "./pages/product/ProductList";
 import { SupplierList } from "./pages/supplier/supplierList";
 import { CustomerForm } from "./pages/customer/customerForm";
+import { CustomersList } from "./pages/customer/customersList";
 
 const App = () => {
   return (
@@ -79,8 +80,11 @@ const router = createHashRouter([
       {
         path: "supplierList",
         element: <SupplierList />,
+      },
+      {
+        path: "customerList",
+        element: <CustomersList />,
       }
-
     ],
   },
 ]);

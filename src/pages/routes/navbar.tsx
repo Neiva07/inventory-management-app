@@ -53,7 +53,10 @@ export const Navbar = () => {
     setAnchorElNav(null);
     navigate("supplierList")
   }
-
+  const handleClickCustomerList = () => {
+    setAnchorElNav(null);
+    navigate("customerList")
+  }
 
 
   return (
@@ -129,7 +132,13 @@ export const Navbar = () => {
             Lista de Fornecedores
           </Button>
 
-
+          <Button
+            key={"customerList"}
+            onClick={handleClickCustomerList}
+            sx={{ my: 2, color: "white", display: "block" }}
+          >
+            Lista de Clientes
+          </Button>
 
         </Toolbar>
       </Container>
