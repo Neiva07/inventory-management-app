@@ -27,6 +27,11 @@ export const Navbar = () => {
     setAnchorElNav(null);
     navigate("suppliers");
   }
+  const handleClickCustomers = () => {
+    setAnchorElNav(null);
+    navigate("customers");
+  }
+
   const handleClickProductCategories = () => {
 
     setAnchorElNav(null);
@@ -86,6 +91,13 @@ export const Navbar = () => {
             sx={{ my: 2, color: "white", display: "block" }}
           >
             Fornecedores
+          </Button>
+          <Button
+            key={"customers"}
+            onClick={handleClickCustomers}
+            sx={{ my: 2, color: "white", display: "block" }}
+          >
+            Clientes
           </Button>
           <Button
             key={"productCategories"}

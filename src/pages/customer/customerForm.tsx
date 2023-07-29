@@ -1,11 +1,9 @@
 import { Autocomplete, Button, FormControl, Grid, TextField, Typography } from '@mui/material';
-import { useSupplierCreateForm } from './useSupplierCreateForm';
 import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import ReactInputMask from 'react-input-mask';
-import { ProductCategory, getProductCategories } from '../../model/productCategories';
-import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useCustomerCreateForm } from './useCustomerForm';
 
 const regions = [
   {
@@ -23,15 +21,10 @@ const regions = [
 ];
 
 
-export const SupplierForm = () => {
-  const { supplierID } = useParams();
+export const CustomerForm = () => {
+  const { customerID } = useParams();
 
-  const { register, supplier, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, ...formMethods } = useSupplierCreateForm(supplierID);
-  const [categories, setCategories] = useState<Array<ProductCategory>>([]);
-
-  useEffect(() => {
-    getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
-  }, []);
+  const { register, customer, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, ...formMethods } = useCustomerCreateForm(customerID);
 
   return (
     <FormProvider register={register} {...formMethods}>
@@ -39,21 +32,21 @@ export const SupplierForm = () => {
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Typography variant="h5" gutterBottom>
-              {supplierID ? "Editar Fornecedor" : "Cadastro de Fornecedor"}
+              {customerID ? "Editar  Cliente" : "Cadastro de  Cliente"}
             </Typography>
           </Grid>
-          {supplierID && <Grid item xs={4}>
-            <Button fullWidth hidden={!supplierID} onClick={onDelete}
-            > Deletar Fornecedor </Button>
+          {customerID && <Grid item xs={4}>
+            <Button fullWidth hidden={!customerID} onClick={onDelete}
+            > Deletar  Cliente </Button>
           </Grid>}
-          {supplier && supplier.status === 'active' && <Grid item xs={4}>
-            <Button fullWidth hidden={!supplierID} onClick={onDeactivate}
-            > Desativar Fornecedor </Button>
+          {customer && customer.status === 'active' && <Grid item xs={4}>
+            <Button fullWidth hidden={!customerID} onClick={onDeactivate}
+            > Desativar  Cliente </Button>
           </Grid>}
-          {supplier && supplier.status === 'inactive' && (
+          {customer && customer.status === 'inactive' && (
             <Grid item xs={4}>
-              <Button fullWidth hidden={!supplierID} onClick={onActivate}
-              > Ativar Fornecedor</Button>
+              <Button fullWidth hidden={!customerID} onClick={onActivate}
+              > Ativar  Cliente</Button>
             </Grid>
           )}
         </Grid>
@@ -69,30 +62,12 @@ export const SupplierForm = () => {
                     <TextField
                       {...field}
                       variant="outlined"
-                      label="Nome Fantasia"
-                      error={!!formMethods.formState.errors.tradeName}
+                      label="Nome"
+                      error={!!formMethods.formState.errors.name}
                     />
                   );
                 }}
-                name="tradeName"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={12}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field }) => {
-                  return (
-                    <TextField
-                      {...field}
-                      variant="outlined"
-                      label="Razão Social"
-                      error={!!formMethods.formState.errors.legalName}
-                    />
-                  );
-                }}
-                name="legalName"
+                name="name"
               />
             </FormControl>
           </Grid>
@@ -101,25 +76,50 @@ export const SupplierForm = () => {
               <Controller
                 control={formMethods.control}
                 render={({ field }) => {
-                  console.log(field.value)
                   return (
                     <ReactInputMask
                       {...field}
-                      mask={"99.999.999/9999-99"}
+                      mask={"999.999.999-99"}
                     >
                       {/* @ts-ignore */}
                       {() =>
                         <TextField
                           {...field}
                           variant="outlined"
-                          label="CNPJ"
-                          error={!!formMethods.formState.errors.entityID}
+                          label="CPF"
+                          error={!!formMethods.formState.errors.cpf}
                         />
                       }
                     </ReactInputMask>
                   );
                 }}
-                name="entityID"
+                name="cpf"
+              />
+            </FormControl>
+          </Grid>
+          <Grid item xs={6}>
+            <FormControl fullWidth>
+              <Controller
+                control={formMethods.control}
+                render={({ field }) => {
+                  return (
+                    <ReactInputMask
+                      {...field}
+                      mask={"999999-9"}
+                    >
+                      {/* @ts-ignore */}
+                      {() =>
+                        <TextField
+                          {...field}
+                          variant="outlined"
+                          label="RG(Identidade)"
+                          error={!!formMethods.formState.errors.rg}
+                        />
+                      }
+                    </ReactInputMask>
+                  );
+                }}
+                name="rg"
               />
             </FormControl>
           </Grid>
@@ -248,136 +248,26 @@ export const SupplierForm = () => {
                         <TextField
                           {...field}
                           variant="outlined"
-                          label="Telefone da Empresa"
-                          error={!!formMethods.formState.errors.companyPhone}
+                          label="Telefone"
+                          error={!!formMethods.formState.errors.phone}
                         />
                       }
                     </ReactInputMask>
                   );
                 }}
-                name="companyPhone"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field }) => {
-                  return (
-                    <ReactInputMask
-                      {...field}
-                      mask={"(99) 9999-99999"}
-                    >
-                      {/* @ts-ignore */}
-                      {() =>
-
-                        <TextField
-                          {...field}
-                          variant="outlined"
-                          label="Telefone do Contato"
-                          error={!!formMethods.formState.errors.contactPhone}
-                        />
-                      }
-                    </ReactInputMask>
-                  );
-                }}
-                name="contactPhone"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field }) => {
-                  return (
-                    <TextField
-                      {...field}
-                      variant="outlined"
-                      label="Nome do contato"
-                      error={!!formMethods.formState.errors.contactName}
-                    />
-                  );
-                }}
-                name="contactName"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={8}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field: { value, ...props } }) => {
-                  const handleChange = (
-                    e: React.SyntheticEvent<Element, Event>,
-                    value: SelectField[]
-                  ) => {
-                    props.onChange(value);
-                  };
-                  return (
-                    <Autocomplete
-                      multiple
-                      id="productCategories"
-                      {...props}
-                      options={categories.map(
-                        (s) => ({ label: s.name, value: s.id } as SelectField)
-                      )}
-                      getOptionLabel={(option) => option.label}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Categorias de Produto"
-                          error={!!formMethods.formState.errors.productCategories}
-                        />
-                      )}
-                      value={value}
-                      onChange={handleChange}
-                      isOptionEqualToValue={(option, value) =>
-                        option.value === value.value
-                      }
-                      renderTags={(list) => {
-                        const displayList = list
-                          .map((item) => item.label)
-                          .join(", ");
-
-                        return <span>{displayList}</span>;
-                      }}
-                    />
-                  );
-                }}
-                name="productCategories"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={4}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field }) => {
-                  return (
-                    <TextField
-                      {...field}
-                      variant="outlined"
-                      label="Prazo de crédito"
-                      error={!!formMethods.formState.errors.daysToPay}
-                    />
-                  );
-                }}
-                name="daysToPay"
+                name="phone"
               />
             </FormControl>
           </Grid>
         </Grid>
         {
-          supplierID ?
+          customerID ?
             <Button
               onClick={onFormUpdate}
               variant="contained"
               style={{ marginTop: "12px" }}
             >
-              Editar Fornecedor
+              Editar Cliente
             </Button>
 
             :
@@ -386,7 +276,7 @@ export const SupplierForm = () => {
               variant="contained"
               style={{ marginTop: "12px" }}
             >
-              Criar Fornecedor
+              Criar Cliente
             </Button>
 
         }

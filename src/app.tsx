@@ -13,6 +13,7 @@ import { Units } from "./pages/unit/Unit";
 import { Box } from "@mui/system";
 import { ProductList } from "./pages/product/ProductList";
 import { SupplierList } from "./pages/supplier/supplierList";
+import { CustomerForm } from "./pages/customer/customerForm";
 
 const App = () => {
   return (
@@ -52,6 +53,16 @@ const router = createHashRouter([
           }
         ]
 
+      },
+      {
+        path: "customers",
+        element: <CustomerForm />,
+        children: [
+          {
+            path: ":customerID",
+            element: <CustomerForm />,
+          }
+        ]
       },
       {
         path: "productCategories",
