@@ -6,6 +6,7 @@ import ReactInputMask from 'react-input-mask';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { states } from '../../model/region';
 
 const regions = [
   {
@@ -202,10 +203,10 @@ export const SupplierForm = () => {
                       <Autocomplete
                         {...props}
                         id="regions"
-                        options={regions.map((c) => {
+                        options={states.map((s) => {
                           return {
-                            label: c.name,
-                            value: c.id,
+                            label: s.name,
+                            value: s.code,
                           } as SelectField;
                         })}
                         getOptionLabel={(option) => option.label}

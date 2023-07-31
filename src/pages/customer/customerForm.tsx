@@ -4,22 +4,7 @@ import { SelectField } from '../product/useProductCreateForm';
 import ReactInputMask from 'react-input-mask';
 import { useParams } from 'react-router-dom';
 import { useCustomerCreateForm } from './useCustomerForm';
-
-const regions = [
-  {
-    id: "PA",
-    name: "Pará",
-  },
-  {
-    id: "RJ",
-    name: "Rio de Janeiro",
-  },
-  {
-    id: "SP",
-    name: "São Paulo",
-  },
-];
-
+import { states } from '../../model/region';
 
 export const CustomerForm = () => {
   const { customerID } = useParams();
@@ -202,10 +187,10 @@ export const CustomerForm = () => {
                       <Autocomplete
                         {...props}
                         id="regions"
-                        options={regions.map((c) => {
+                        options={states.map((c) => {
                           return {
                             label: c.name,
-                            value: c.id,
+                            value: c.code,
                           } as SelectField;
                         })}
                         getOptionLabel={(option) => option.label}

@@ -1,0 +1,65 @@
+export interface State {
+  name: string;
+  code: string;
+}
+
+export const states = [
+  { name: "Acre", code: "AC" },
+  { name: "Alagoas", code: "AL" },
+  { name: "Amapá", code: "AP" },
+  { name: "Amazonas", code: "AM" },
+  { name: "Bahia", code: "BA" },
+  { name: "Ceará", code: "CE" },
+  { name: "Distrito Federal", code: "DF" },
+  { name: "Espírito Santo", code: "ES" },
+  { name: "Goiás", code: "GO" },
+  { name: "Maranhão", code: "MA" },
+  { name: "Mato Grosso", code: "MT" },
+  { name: "Mato Grosso do Sul", code: "MS" },
+  { name: "Minas Gerais", code: "MG" },
+  { name: "Pará", code: "PA" },
+  { name: "Paraíba", code: "PB" },
+  { name: "Paraná", code: "PR" },
+  { name: "Pernambuco", code: "PE" },
+  { name: "Piauí", code: "PI" },
+  { name: "Rio de Janeiro", code: "RJ" },
+  { name: "Rio Grande do Norte", code: "RN" },
+  { name: "Rio Grande do Sul", code: "RS" },
+  { name: "Rondônia", code: "RO" },
+  { name: "Roraima", code: "RR" },
+  { name: "Santa Catarina", code: "SC" },
+  { name: "São Paulo", code: "SP" },
+  { name: "Sergipe", code: "SE" },
+  { name: "Tocantins", code: "TO" }
+
+] as Array<State>
+
+export const regionByCode = new Map([
+  ["AC", "Acre"],
+  ["AL", "Alagoas"],
+  ["AP", "Amapá"],
+  ["AM", "Amazonas"],
+  ["BA", "Bahia"],
+  ["CE", "Ceará"],
+  ["DF", "Distrito Federal"],
+  ["ES", "Espírito Santo"],
+  ["GO", "Goiás"],
+  ["MA", "Maranhão"],
+  ["MT", "Mato Grosso"],
+  ["MS", "Mato Grosso do Sul"],
+  ["MG", "Minas Gerais"],
+  ["PA", "Pará"],
+  ["PB", "Paraíba"],
+  ["PR", "Paraná"],
+  ["PE", "Pernambuco"],
+  ["PI", "Piauí"],
+  ["RJ", "Rio de Janeiro"],
+  ["RN", "Rio Grande do Norte"],
+  ["RS", "Rio Grande do Sul"],
+  ["RO", "Rondônia"],
+  ["RR", "Roraima"],
+  ["SC", "Santa Catarina"],
+  ["SP", "São Paulo"],
+  ["SE", "Sergipe"],
+  ["TO", "Tocantins"],
+]) 

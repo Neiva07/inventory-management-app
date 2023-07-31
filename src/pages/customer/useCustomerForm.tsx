@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback } from 'react';
 import { activeCustomer, createCustomer, Customer, deactiveCustomer, deleteCustomer, getCustomer, updateCustomer } from '../../model/customer';
 import { AddressFormDataInterface } from '../supplier/useSupplierCreateForm';
+import { regionByCode } from '../../model/region';
 
 
 export interface CustomerFormDataInterface {
@@ -54,7 +55,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
         ...queriedCustomer.address,
         region: {
           value: queriedCustomer.address.region,
-          label: '',
+          label: regionByCode.get(queriedCustomer.address.region),
         },
       },
     } as CustomerFormDataInterface

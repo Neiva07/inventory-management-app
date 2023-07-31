@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback } from 'react';
 import { Supplier, createSupplier, getSupplier, updateSupplier, deleteSupplier, deactiveSupplier, activeSupplier } from '../../model/suppliers';
 import { ProductCategory } from '../../model/productCategories';
+import { regionByCode } from '../../model/region';
 
 export interface AddressFormDataInterface {
   city: string;
@@ -73,7 +74,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
         ...queriedSupplier.address,
         region: {
           value: queriedSupplier.address.region,
-          label: '',
+          label: regionByCode.get(queriedSupplier.address.region),
         },
       },
       productCategories: queriedSupplier.productCategories.map(pc => ({
