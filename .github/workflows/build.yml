@@ -25,7 +25,7 @@ jobs:
           node-version: 20
       - name: Install Dependencies
         run: |
-          if [ -e yarn.lock ]; then
+          if [[ -e yarn.lock ]]; then
           yarn install --frozen-lockfile
           elif [ -e package-lock.json ]; then
           npm ci
