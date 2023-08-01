@@ -9,9 +9,9 @@
   },
   "scripts": {
     "start": "electron-forge start",
-    "package": "electron-forge package --asar=true",
-    "make": "electron-forge make --asar=true",
-    "publish": "electron-forge publish --asar=true",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx ."
   },
   "keywords": [],
