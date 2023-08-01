@@ -8,33 +8,33 @@ import { rendererConfig } from './webpack.renderer.config';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    executableName: "inventory-management-app",
+    executableName: "Inventory App",
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        bin: 'Electron Starter'
+        bin: 'Inventory App',
       }
     },
     {
       name: '@electron-forge/maker-zip',
       config: {
-        bin: 'Electron Starter'
+        bin: 'Inventory App',
       },
       platforms: ['darwin']
     },
     {
       name: '@electron-forge/maker-deb',
       config: {
-        bin: 'Electron Starter'
+        bin: 'Inventory App',
       }
     },
     {
       name: '@electron-forge/maker-rpm',
       config: {
-        bin: 'Electron Starter'
+        bin: 'Inventory App',
       }
     }
   ],
