@@ -17,7 +17,6 @@ export interface Customer {
   }
   status: string;
   address?: Address;
-  daysToPay: number;
   phone: string;
   // sailsman: Sailsman
 }
