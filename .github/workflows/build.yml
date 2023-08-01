@@ -23,8 +23,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
-
-      - run: npm ci
+      - name: Install dependencies
+        run: |
+          if [ -e yarn.lock ]; then
+          yarn install --frozen-lockfile
+          elif [ -e package-lock.json ]; then
+          npm ci
+          else
+          npm i
+          fi
 
       - name: Publish app
         env:
