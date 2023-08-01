@@ -5,7 +5,7 @@
   "description": "My Electron application description",
   "main": ".webpack/main",
   "build":  {
-    "asar": true,
+    "asar": true
   },
   "scripts": {
     "start": "electron-forge start",
