@@ -38,7 +38,9 @@ const config: ForgeConfig = {
   plugins: [
     {
       name: '@electron-forge/plugin-auto-unpack-natives',
-      config: {},
+      config: {
+        asar: true,
+      },
     },
     new WebpackPlugin({
       mainConfig,
