@@ -68,8 +68,8 @@ const config: ForgeConfig = {
       name: '@electron-forge/publisher-github',
       config: {
         repository: {
-          owner: 'delimitertech',
-          name: 'electron-starter'
+          owner: 'Neiva07',
+          name: 'inventory-management-app'
         },
         prerelease: true
       }
