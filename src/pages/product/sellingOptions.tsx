@@ -79,12 +79,22 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
           <Controller
             control={formMethods.control}
             render={({ field: { value: profit, ...props } }) => {
+              const currentCost = formMethods.watch(`sellingOptions.${parentIndex}.unitCost`) || 0
+              const onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
+                props.onChange(event)
+
+                const value = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0
+                const finalValue = currentCost * ((value / 100) + 1)
+                formMethods.setValue(`sellingOptions.${parentIndex}.prices.${index}.value`, finalValue)
+              }
               return (
                 <TextField
                   {...props}
                   variant="outlined"
-                  label="Lucro"
+                  label="Lucro %"
                   value={profit}
+                  onChange={onChange}
+                  onFocus={(e) => e.target.select()}
                 />
               );
             }}
@@ -98,11 +108,22 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
           <Controller
             control={formMethods.control}
             render={({ field: props }) => {
+              const currentCost = formMethods.watch(`sellingOptions.${parentIndex}.unitCost`) || 0
+              const onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
+                props.onChange(event)
+
+                const value = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0
+                const finalValue = (value - currentCost) * 100 / currentCost
+                formMethods.setValue(`sellingOptions.${parentIndex}.prices.${index}.profit`, finalValue)
+              }
+
               return (
                 <TextField
                   {...props}
+                  onChange={onChange}
                   variant="outlined"
                   label="Preço"
+                  onFocus={(e) => e.target.select()}
                 />
               );
             }}
@@ -173,7 +194,11 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
               control={formMethods.control}
               render={({ field: { ...props } }) => {
                 return (
-                  <TextField {...props} variant="outlined" label="Conversão" />
+                  <TextField {...props}
+                    variant="outlined"
+                    label="Conversão"
+                    onFocus={(e) => e.target.select()}
+                  />
                 );
               }}
               name={`sellingOptions.${index}.conversionRate`}
@@ -204,11 +229,15 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
             <Controller
               control={formMethods.control}
               render={({ field: { ...props } }) => {
+
+
                 return (
                   <TextField
                     {...props}
                     variant="outlined"
                     label="Custo da unidade"
+
+                    onFocus={(e) => e.target.select()}
                   />
                 );
               }}

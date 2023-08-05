@@ -163,6 +163,7 @@ export const ProductForm = () => {
                       {...props}
                       variant="outlined"
                       label="Comissão do vendedor"
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
@@ -276,7 +277,13 @@ export const ProductForm = () => {
                 control={formMethods.control}
                 render={({ field }) => {
                   return (
-                    <TextField {...field} variant="outlined" label="Estoque" />
+                    <TextField {...field}
+                      variant="outlined"
+                      label="Estoque"
+
+                      onFocus={(e) => e.target.select()}
+
+                    />
                   );
                 }}
                 name="inventory"
@@ -293,6 +300,8 @@ export const ProductForm = () => {
                       variant="outlined"
                       label="Estoque Mínimo"
                       {...props}
+
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
@@ -310,6 +319,7 @@ export const ProductForm = () => {
                       variant="outlined"
                       label="Custo de compra"
                       {...props}
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
@@ -327,6 +337,7 @@ export const ProductForm = () => {
                       variant="outlined"
                       label="Peso (kg)"
                       {...props}
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
