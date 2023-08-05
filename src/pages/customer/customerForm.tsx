@@ -203,8 +203,10 @@ export const CustomerForm = () => {
                           />
                         )}
                         value={region}
-                        isOptionEqualToValue={(option, value) =>
-                          option.value === value.value
+                        isOptionEqualToValue={(option, value) => {
+                          console.log(option, value)
+                          return option.value === value.value
+                        }
                         }
                         onChange={handleChange}
                       />

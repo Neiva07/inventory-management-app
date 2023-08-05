@@ -15,6 +15,7 @@ import { ProductList } from "./pages/product/ProductList";
 import { SupplierList } from "./pages/supplier/supplierList";
 import { CustomerForm } from "./pages/customer/customerForm";
 import { CustomersList } from "./pages/customer/customersList";
+import { ToastContainer } from "react-toastify";
 
 const App = () => {
   return (
@@ -24,7 +25,19 @@ const App = () => {
         marginTop: "60px"
       }}>
         <Outlet />
-      </Box>
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          icon
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+        />      </Box>
     </>
   );
 };

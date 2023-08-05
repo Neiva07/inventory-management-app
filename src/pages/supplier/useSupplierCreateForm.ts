@@ -6,6 +6,7 @@ import React, { useCallback } from 'react';
 import { Supplier, createSupplier, getSupplier, updateSupplier, deleteSupplier, deactiveSupplier, activeSupplier } from '../../model/suppliers';
 import { ProductCategory } from '../../model/productCategories';
 import { regionByCode } from '../../model/region';
+import { toast } from 'react-toastify';
 
 export interface AddressFormDataInterface {
   city: string;
@@ -108,26 +109,52 @@ export const useSupplierCreateForm = (supplierID?: string) => {
     const cleanedCompanyPhone = companyPhone.replace(/[^0-9]/gi, "");
     const cleanedContactPhone = contactPhone.replace(/[^0-9]/gi, "");
 
+    try {
+      createSupplier({
+        address: {
+          country: 'Brazil',
+          region: region.value,
+          postalCode: cleanedPostalCode,
+          ...restAddress,
+        },
+        status: 'active',
+        entityID: cleanedEntityID,
+        companyPhone: cleanedCompanyPhone,
+        contactPhone: cleanedContactPhone,
+        productCategories: productCategories.map(pc =>
+        ({
+          id: pc.value,
+          name: pc.label,
+        } as Partial<ProductCategory>),
+        ),
+        ...restData,
+      } as Supplier);
 
-    createSupplier({
-      address: {
-        country: 'Brazil',
-        region: region.value,
-        postalCode: cleanedPostalCode,
-        ...restAddress,
-      },
-      status: 'active',
-      entityID: cleanedEntityID,
-      companyPhone: cleanedCompanyPhone,
-      contactPhone: cleanedContactPhone,
-      productCategories: productCategories.map(pc =>
-      ({
-        id: pc.value,
-        name: pc.label,
-      } as Partial<ProductCategory>),
-      ),
-      ...restData,
-    } as Supplier);
+      toast.success('Cliente registrado com sucesso', {
+        position: "bottom-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        draggable: true,
+        progress: undefined,
+        icon: false,
+        theme: "colored",
+      })
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
+        position: "bottom-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        draggable: true,
+        progress: undefined,
+        icon: false,
+        theme: "colored",
+      })
+    }
+
   }, []);
 
   const onUpdate = useCallback((data: SupplierFormDataInterface) => {
@@ -140,39 +167,73 @@ export const useSupplierCreateForm = (supplierID?: string) => {
     const cleanedCompanyPhone = companyPhone.replace(/[^0-9]/gi, "");
     const cleanedContactPhone = contactPhone.replace(/[^0-9]/gi, "");
 
+    try {
 
-    updateSupplier(supplierID, {
-      address: {
-        country: 'Brazil',
-        region: region.value,
-        postalCode: cleanedPostalCode,
-        ...restAddress,
-      },
-      status: 'active',
-      entityID: cleanedEntityID,
-      companyPhone: cleanedCompanyPhone,
-      contactPhone: cleanedContactPhone,
-      productCategories: productCategories.map(pc =>
-      ({
-        id: pc.value,
-        name: pc.label,
-      } as Partial<ProductCategory>),
-      ),
-      ...restData,
-    } as Supplier);
+      updateSupplier(supplierID, {
+        address: {
+          country: 'Brazil',
+          region: region.value,
+          postalCode: cleanedPostalCode,
+          ...restAddress,
+        },
+        status: 'active',
+        entityID: cleanedEntityID,
+        companyPhone: cleanedCompanyPhone,
+        contactPhone: cleanedContactPhone,
+        productCategories: productCategories.map(pc =>
+        ({
+          id: pc.value,
+          name: pc.label,
+        } as Partial<ProductCategory>),
+        ),
+        ...restData,
+      } as Supplier);
+
+      toast.success('Fornecedor atualizado com sucesso'
+      )
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
   }, [supplierID]);
 
 
   const onDelete = useCallback(() => {
-    deleteSupplier(supplierID)
+    try {
+      deleteSupplier(supplierID)
+      toast.success('Fornecedor deletado com sucesso')
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
+
   }, [supplierID])
 
   const onDeactivate = useCallback(() => {
-    deactiveSupplier(supplierID)
+    try {
+      deactiveSupplier(supplierID)
+      toast.success('Fornecedor desativado com sucesso'
+      )
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
+
   }, [supplierID])
 
   const onActivate = useCallback(() => {
-    activeSupplier(supplierID)
+    try {
+      activeSupplier(supplierID)
+      toast.success('Fornecedor ativado com sucesso')
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
+
   }, [supplierID])
 
 

@@ -1,5 +1,6 @@
 import { Box, Button, Grid, TextField, Typography } from "@mui/material"
 import { ChangeEvent, useEffect, useState } from "react"
+import { toast } from "react-toastify";
 import { createUnit, getUnits, Unit } from "../../model/units";
 
 export const Units = () => {
@@ -21,8 +22,16 @@ export const Units = () => {
 
 
   const submitNewUnit = () => {
-    createUnit({ name, description })
-    getUnits().then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)));
+    try {
+      createUnit({ name, description })
+      toast.success('Unidade criada com sucesso')
+
+      getUnits().then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)));
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
+
   }
 
   console.log(units)

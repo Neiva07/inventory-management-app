@@ -1,5 +1,6 @@
 import { Box, Button, Grid, TextField, Typography } from "@mui/material"
 import { ChangeEvent, useEffect, useState } from "react"
+import { toast } from "react-toastify";
 import { createProductCategories, getProductCategories, ProductCategory } from "../../model/productCategories";
 
 export const ProductCategories = () => {
@@ -21,8 +22,16 @@ export const ProductCategories = () => {
 
 
   const submitNewProductCategory = () => {
-    createProductCategories({ name, description })
-    getProductCategories().then(queryResult => setProductCategories(queryResult.docs.map(r => r.data() as ProductCategory)));
+    try {
+      createProductCategories({ name, description })
+      toast.success('Unidade criada com sucesso')
+
+      getProductCategories().then(queryResult => setProductCategories(queryResult.docs.map(r => r.data() as ProductCategory)));
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
+
   }
   return (
     <>

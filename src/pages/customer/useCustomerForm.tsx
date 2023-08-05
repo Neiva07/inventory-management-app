@@ -6,6 +6,8 @@ import React, { useCallback } from 'react';
 import { activeCustomer, createCustomer, Customer, deactiveCustomer, deleteCustomer, getCustomer, updateCustomer } from '../../model/customer';
 import { AddressFormDataInterface } from '../supplier/useSupplierCreateForm';
 import { regionByCode } from '../../model/region';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 export interface CustomerFormDataInterface {
@@ -83,20 +85,38 @@ export const useCustomerCreateForm = (customerID?: string) => {
     const cleanedCPF = cpf.replace(/[^0-9]/gi, "");
     const cleanedRG = rg.replace(/[^0-9]/gi, "");
     const cleanedPhone = phone.replace(/[^0-9]/gi, "");
+    try {
+      createCustomer({
+        address: {
+          country: 'Brazil',
+          region: region.value,
+          postalCode: cleanedPostalCode,
+          ...restAddress,
+        },
+        name,
+        status: 'active',
+        phone: cleanedPhone,
+        cpf: cleanedCPF,
+        rg: cleanedRG,
+      } as Customer);
 
-    createCustomer({
-      address: {
-        country: 'Brazil',
-        region: region.value,
-        postalCode: cleanedPostalCode,
-        ...restAddress,
-      },
-      name,
-      status: 'active',
-      phone: cleanedPhone,
-      cpf: cleanedCPF,
-      rg: cleanedRG,
-    } as Customer);
+      toast.success('Cliente registrado com sucesso', {
+        position: "bottom-right",
+        theme: "colored",
+      })
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
+        position: "bottom-right",
+        theme: "colored",
+      })
+
+
+    }
+
+
+
   }, []);
 
   const onUpdate = useCallback((data: CustomerFormDataInterface) => {
@@ -110,33 +130,89 @@ export const useCustomerCreateForm = (customerID?: string) => {
     const cleanedPhone = phone.replace(/[^0-9]/gi, "");
 
 
-    updateCustomer(customerID, {
-      address: {
-        country: 'Brazil',
-        region: region.value,
-        postalCode: cleanedPostalCode,
-        ...restAddress,
-      },
-      name,
-      status: 'active',
-      phone: cleanedPhone,
-      cpf: cleanedCPF,
-      rg: cleanedRG,
-    } as Customer);
+    try {
+      updateCustomer(customerID, {
+        address: {
+          country: 'Brazil',
+          region: region.value,
+          postalCode: cleanedPostalCode,
+          ...restAddress,
+        },
+        name,
+        status: 'active',
+        phone: cleanedPhone,
+        cpf: cleanedCPF,
+        rg: cleanedRG,
+      } as Customer);
+      toast.success('Cliente atualizado com sucesso', {
+        position: "bottom-right",
+        theme: "colored",
+      })
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
+        position: "bottom-right",
+        theme: "colored",
+      })
+
+    }
+
 
   }, [customerID]);
 
 
   const onDelete = useCallback(() => {
-    deleteCustomer(customerID)
+    try {
+      deleteCustomer(customerID)
+      toast.success('Cliente deletado com sucesso', {
+        position: "bottom-right",
+        theme: "colored",
+      })
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
+        position: "bottom-right",
+        theme: "colored",
+      })
+    }
   }, [customerID])
 
   const onDeactivate = useCallback(() => {
-    deactiveCustomer(customerID)
+    try {
+      deactiveCustomer(customerID)
+      toast.success('Cliente desativado com sucesso', {
+        position: "bottom-right",
+        theme: "colored",
+      })
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
+        position: "bottom-right",
+        theme: "colored",
+      })
+    }
+
   }, [customerID])
 
   const onActivate = useCallback(() => {
-    activeCustomer(customerID)
+    try {
+      activeCustomer(customerID)
+      toast.success('Cliente ativado com sucesso', {
+        position: "bottom-right",
+        theme: "colored",
+      })
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
+        position: "bottom-right",
+        theme: "colored",
+      })
+    }
+
   }, [customerID])
 
 

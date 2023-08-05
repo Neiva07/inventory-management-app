@@ -56,14 +56,15 @@
     "react-input-mask": "^2.0.4",
     "react-router-dom": "^6.11.2",
     "react-text-mask": "^5.5.0",
+    "react-toastify": "^9.1.3",
     "uuid": "^9.0.0",
     "yup": "^1.2.0"
   },
   "devContentSecurityPolicy": "default-src * self blob: data: gap:; style-src * self 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * self 'unsafe-inline' blob: data: gap:; connect-src self * 'unsafe-inline' blob: data: gap:; frame-src * self blob: data: gap:;",
   "plugins": [
-    [
-      "@electron-forge/plugin-webpack",
-      {
+    {
+      "name": "@electron-forge/plugin-webpack",
+      "config": {
         "mainConfig": "./webpack.main.config.ts",
         "devContentSecurityPolicy": "connect-src 'self' https://firestore.googleapis.com/ 'unsafe-eval'",
         "renderer": {
@@ -77,6 +78,6 @@
           ]
         }
       }
-    ]
+    }
   ]
 }

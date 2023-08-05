@@ -4,6 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback } from "react";
 import { Product, Price, ProductSupplier, ProductUnit, SellingOption, createProduct, getProduct, updateProduct, deleteProduct, deactiveProduct, activeProduct } from "../../model/products";
 import { ProductCategory } from "../../model/productCategories";
+import { toast } from "react-toastify";
 
 export interface SelectField<T = string> {
   label: string;
@@ -134,93 +135,134 @@ export const useProductCreateForm = (productID?: string) => {
 
   const onSubmit = useCallback((data: ProductFormDataInterface) => {
 
-    createProduct({
-      productCategory: {
-        name: data.productCategory.label,
-        id: data.productCategory.value,
-      } as ProductCategory,
-      cost: data.cost,
-      description: data.description,
-      inventory: data.inventory,
-      title: data.title,
-      sailsmanComission: data.sailsmanComission,
-      buyUnit: {
-        id: data.buyUnit.value,
-        name: data.buyUnit.label,
-      } as ProductUnit,
-      status: "active",
-      sellingOptions: data.sellingOptions.map(so => {
-        const { unit, ...rest } = so;
-        return {
-          unit: {
-            id: unit.value,
-            name: unit.label,
-          } as ProductUnit,
-          ...rest,
+    try {
+      createProduct({
+        productCategory: {
+          name: data.productCategory.label,
+          id: data.productCategory.value,
+        } as ProductCategory,
+        cost: data.cost,
+        description: data.description,
+        inventory: data.inventory,
+        title: data.title,
+        sailsmanComission: data.sailsmanComission,
+        buyUnit: {
+          id: data.buyUnit.value,
+          name: data.buyUnit.label,
+        } as ProductUnit,
+        status: "active",
+        sellingOptions: data.sellingOptions.map(so => {
+          const { unit, ...rest } = so;
+          return {
+            unit: {
+              id: unit.value,
+              name: unit.label,
+            } as ProductUnit,
+            ...rest,
 
-        } as SellingOption
-      }),
-      weight: data.weight,
-      minInventory: data.minInventory,
-      suppliers: data.suppliers.map(s => {
-        return {
-          name: s.label,
-          supplierID: s.value,
-        } as ProductSupplier
+          } as SellingOption
+        }),
+        weight: data.weight,
+        minInventory: data.minInventory,
+        suppliers: data.suppliers.map(s => {
+          return {
+            name: s.label,
+            supplierID: s.value,
+          } as ProductSupplier
+        })
       })
-    })
+
+      toast.success('Produto ativado com sucesso')
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
+
   }, [])
 
 
   const onUpdate = useCallback((data: ProductFormDataInterface) => {
-    updateProduct(productID, {
-      productCategory: {
-        name: data.productCategory.label,
-        id: data.productCategory.value,
-      } as ProductCategory,
-      cost: data.cost,
-      description: data.description,
-      inventory: data.inventory,
-      title: data.title,
-      sailsmanComission: data.sailsmanComission,
-      buyUnit: {
-        id: data.buyUnit.value,
-        name: data.buyUnit.label,
-      } as ProductUnit,
-      status: "active",
-      sellingOptions: data.sellingOptions.map(so => {
-        const { unit, ...rest } = so;
-        return {
-          unit: {
-            id: unit.value,
-            name: unit.label,
-          } as ProductUnit,
-          ...rest,
+    try {
+      updateProduct(productID, {
+        productCategory: {
+          name: data.productCategory.label,
+          id: data.productCategory.value,
+        } as ProductCategory,
+        cost: data.cost,
+        description: data.description,
+        inventory: data.inventory,
+        title: data.title,
+        sailsmanComission: data.sailsmanComission,
+        buyUnit: {
+          id: data.buyUnit.value,
+          name: data.buyUnit.label,
+        } as ProductUnit,
+        status: "active",
+        sellingOptions: data.sellingOptions.map(so => {
+          const { unit, ...rest } = so;
+          return {
+            unit: {
+              id: unit.value,
+              name: unit.label,
+            } as ProductUnit,
+            ...rest,
 
-        } as SellingOption
-      }),
-      weight: data.weight,
-      minInventory: data.minInventory,
-      suppliers: data.suppliers.map(s => {
-        return {
-          name: s.label,
-          supplierID: s.value,
-        } as ProductSupplier
+          } as SellingOption
+        }),
+        weight: data.weight,
+        minInventory: data.minInventory,
+        suppliers: data.suppliers.map(s => {
+          return {
+            name: s.label,
+            supplierID: s.value,
+          } as ProductSupplier
+        })
       })
-    })
+      toast.success('Produto ativado com sucesso')
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
+
   }, [productID])
 
 
   const onDelete = useCallback(async () => {
-    await deleteProduct(productID);
+    try {
+      await deleteProduct(productID);
+      toast.success('Produto ativado com sucesso')
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
+
   }, [productID])
 
   const onDeactiveProduct = useCallback(async () => {
-    await deactiveProduct(productID);
+    try {
+      await deactiveProduct(productID);
+      toast.success('Produto ativado com sucesso')
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
+
   }, [productID])
 
   const onActivateProduct = useCallback(async () => {
-    await activeProduct(productID);
+    try {
+      await activeProduct(productID);
+      toast.success('Produto ativado com sucesso')
+
+    } catch (err) {
+      console.error(err)
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+    }
+
   }, [productID])
 
 
