@@ -13,49 +13,25 @@ import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
   const navigate = useNavigate();
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
-    null
-  );
-
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-    navigate("products");
-  };
-
-  const handleClickSuppliers = () => {
-
-    setAnchorElNav(null);
-    navigate("suppliers");
-  }
-  const handleClickCustomers = () => {
-    setAnchorElNav(null);
-    navigate("customers");
-  }
-
   const handleClickProductCategories = () => {
 
-    setAnchorElNav(null);
     navigate("productCategories");
   }
 
   const handleClickUnits = () => {
 
-    setAnchorElNav(null);
     navigate("units");
   }
 
 
   const handleClickProductList = () => {
-    setAnchorElNav(null);
-    navigate("productList")
+    navigate("products")
   }
   const handleClickSupplierList = () => {
-    setAnchorElNav(null);
-    navigate("supplierList")
+    navigate("suppliers")
   }
   const handleClickCustomerList = () => {
-    setAnchorElNav(null);
-    navigate("customerList")
+    navigate("customers")
   }
 
 
@@ -81,23 +57,24 @@ export const Navbar = () => {
             LOGO
           </Typography>
           <Button
-            key={"product"}
-            onClick={handleCloseNavMenu}
+            key={"products"}
+            onClick={handleClickProductList}
             sx={{ my: 2, color: "white", display: "block" }}
           >
             Produtos
           </Button>
 
           <Button
-            key={"fornecedores"}
-            onClick={handleClickSuppliers}
+            key={"suppliers"}
+            onClick={handleClickSupplierList}
             sx={{ my: 2, color: "white", display: "block" }}
           >
             Fornecedores
           </Button>
+
           <Button
             key={"customers"}
-            onClick={handleClickCustomers}
+            onClick={handleClickCustomerList}
             sx={{ my: 2, color: "white", display: "block" }}
           >
             Clientes
@@ -116,29 +93,7 @@ export const Navbar = () => {
           >
             Unidades
           </Button>
-          <Button
-            key={"productList"}
-            onClick={handleClickProductList}
-            sx={{ my: 2, color: "white", display: "block" }}
-          >
-            Lista de Produtos
-          </Button>
 
-          <Button
-            key={"supplierList"}
-            onClick={handleClickSupplierList}
-            sx={{ my: 2, color: "white", display: "block" }}
-          >
-            Lista de Fornecedores
-          </Button>
-
-          <Button
-            key={"customerList"}
-            onClick={handleClickCustomerList}
-            sx={{ my: 2, color: "white", display: "block" }}
-          >
-            Lista de Clientes
-          </Button>
 
         </Toolbar>
       </Container>

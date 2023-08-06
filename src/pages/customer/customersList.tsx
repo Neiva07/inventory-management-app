@@ -134,22 +134,25 @@ export const CustomersList = () => {
             onChange={handleStatusSelection}
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <Button fullWidth disabled={!selectedRowID} onClick={() => navigate(`/customers/${selectedRowID}`)}
           > Editar Cliente </Button>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <Button fullWidth disabled={!selectedRowID} onClick={handleDeleteCustomer}
           > Deletar Cliente </Button>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <Button fullWidth disabled={!selectedRowID} onClick={handleDeactiveCustomer}
           > Desativar Cliente </Button>
         </Grid>
-
+        <Grid item xs={3}>
+          <Button fullWidth onClick={() => navigate(`/customers/create`)}
+          > Cadastrar Cliente </Button>
+        </Grid>
 
         <Grid xs={12} item marginTop="20px">
-          <div style={{ height: 600, width: 1200 }}>
+          <div style={{ minHeight: 400, height: '100%' }}>
             <DataGrid
               rows={customers}
               columns={columns}

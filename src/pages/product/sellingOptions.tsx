@@ -216,6 +216,7 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
                     variant="outlined"
                     label="Estoque"
                     value={inventory}
+                    onFocus={(e) => e.target.select()}
                   />
                 );
               }}

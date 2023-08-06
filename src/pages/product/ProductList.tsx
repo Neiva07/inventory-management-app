@@ -9,7 +9,6 @@ import { SelectField } from './useProductCreateForm';
 const columns: GridColDef[] = [
   // { field: 'id', headerName: 'ID', width: 200 },
   { field: 'title', headerName: 'Nome', width: 200 },
-  { field: 'description', headerName: 'Desrição', width: 200 },
   {
     field: 'inventory',
     headerName: 'Estoque',
@@ -27,23 +26,23 @@ const columns: GridColDef[] = [
   },
   {
     field: 'cost',
-    headerName: 'Custo de compra',
+    headerName: 'Custo Compra',
     type: 'number',
     sortable: false,
     width: 140,
     renderCell: (params) => {
 
-      return <h5>{params.row.cost}</h5>
+      return params.row.cost
     }
   },
   {
     field: 'buyUnit',
-    headerName: 'Unidade de compra',
+    headerName: 'Unidade Compra',
     sortable: false,
     width: 140,
     renderCell: (params: GridCellParams<Product>) => {
 
-      return <h5>{params.row.buyUnit.name}</h5>
+      return params.row.buyUnit.name
     }
   },
   {
@@ -207,43 +206,46 @@ export const ProductList = () => {
             onChange={handleStatusSelection}
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <Button fullWidth disabled={!selectedRowID} onClick={() => navigate(`/products/${selectedRowID}`)}
           > Editar Produto </Button>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <Button fullWidth disabled={!selectedRowID} onClick={handleDeleteProduct}
           > Deletar Produto </Button>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <Button fullWidth disabled={!selectedRowID} onClick={handleDeactivateProduct}
           > Desativar Produto </Button>
         </Grid>
+        <Grid item xs={3}>
+          <Button fullWidth onClick={() => navigate(`/products/create`)}
+          > Cadastrar Produto </Button>
+        </Grid>
 
 
-        <Grid xs={12} item marginTop="20px">
-          <div style={{ height: 600, width: 1200 }}>
-            <DataGrid
-              rows={products}
-              columns={columns}
-              initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize },
-                },
-              }}
-              pageSizeOptions={[10, 20]}
-              pagination
-              onRowSelectionModelChange={handleRowSelection}
-              onPaginationModelChange={handlePaginationModelChange}
-              hideFooterSelectedRowCount
-              rowCount={count}
-              rowSelectionModel={[selectedRowID]}
-              paginationMode="server"
-            // local text is the prop in which defines the text to translate
-            // localeText={}
-            // checkboxSelection
-            />
-          </div>
+
+        <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
+          <DataGrid
+            rows={products}
+            columns={columns}
+            initialState={{
+              pagination: {
+                paginationModel: { page: 0, pageSize },
+              },
+            }}
+            pageSizeOptions={[10, 20]}
+            pagination
+            onRowSelectionModelChange={handleRowSelection}
+            onPaginationModelChange={handlePaginationModelChange}
+            hideFooterSelectedRowCount
+            rowCount={count}
+            rowSelectionModel={[selectedRowID]}
+            paginationMode="server"
+          // local text is the prop in which defines the text to translate
+          // localeText={}
+          // checkboxSelection
+          />
         </Grid>
       </Grid>
     </>

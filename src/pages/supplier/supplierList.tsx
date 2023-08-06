@@ -16,7 +16,7 @@ const columns: GridColDef[] = [
     field: 'status',
     headerName: 'Status',
     type: 'string',
-    width: 140,
+    width: 200,
   }
 ];
 
@@ -167,22 +167,27 @@ export const SupplierList = () => {
             onChange={handleStatusSelection}
           />
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <Button fullWidth disabled={!selectedRowID} onClick={() => navigate(`/suppliers/${selectedRowID}`)}
           > Editar Fornecedor </Button>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <Button fullWidth disabled={!selectedRowID} onClick={handleDeleteSupplier}
           > Deletar Fornecedor </Button>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <Button fullWidth disabled={!selectedRowID} onClick={handleDeactivateSupplier}
           > Desativar Fornecedor </Button>
         </Grid>
 
+        <Grid item xs={3}>
+          <Button fullWidth onClick={() => navigate(`/suppliers/create`)}
+          > Cadastrar Fornecedor </Button>
+        </Grid>
+
 
         <Grid xs={12} item marginTop="20px">
-          <div style={{ height: 600, width: 1200 }}>
+          <div style={{ height: '100%', minHeight: 400 }}>
             <DataGrid
               rows={suppliers}
               columns={columns}

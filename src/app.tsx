@@ -48,35 +48,28 @@ const router = createHashRouter([
     element: <App />,
     children: [
       {
-        path: "products",
+        path: "products/create",
         element: <ProductForm />,
-        children: [
-          {
-            path: ":productID",
-            element: <ProductForm />,
-          }
-        ]
       },
       {
-        path: "suppliers",
+        path: "products/:productID",
+        element: <ProductForm />,
+      },
+      {
+        path: "suppliers/create",
         element: <SupplierForm />,
-        children: [
-          {
-            path: ":supplierID",
-            element: <SupplierForm />,
-          }
-        ]
-
       },
       {
-        path: "customers",
+        path: "suppliers/:supplierID",
+        element: <SupplierForm />,
+      },
+      {
+        path: "customers/create",
         element: <CustomerForm />,
-        children: [
-          {
-            path: ":customerID",
-            element: <CustomerForm />,
-          }
-        ]
+      },
+      {
+        path: "customers/:customerID",
+        element: <CustomerForm />,
       },
       {
         path: "productCategories",
@@ -87,15 +80,15 @@ const router = createHashRouter([
         element: <Units />,
       },
       {
-        path: "productList",
+        path: "products",
         element: <ProductList />,
       },
       {
-        path: "supplierList",
+        path: "suppliers",
         element: <SupplierList />,
       },
       {
-        path: "customerList",
+        path: "customers",
         element: <CustomersList />,
       }
     ],
