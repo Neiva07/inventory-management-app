@@ -11,7 +11,6 @@ export interface SelectField<T = string> {
   value: T;
 }
 
-
 export interface FormSellingOption {
   unit: SelectField;
   conversionRate: number;

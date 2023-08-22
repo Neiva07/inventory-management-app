@@ -1,4 +1,3 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp, setLogLevel } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { CACHE_SIZE_UNLIMITED, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
@@ -23,10 +22,11 @@ const analytics = getAnalytics(app);
 
 
 initializeFirestore(app,
-    {localCache:
-      persistentLocalCache(/*settings*/{tabManager: persistentMultipleTabManager(), cacheSizeBytes: CACHE_SIZE_UNLIMITED}),
+  {
+    localCache:
+      persistentLocalCache(/*settings*/{ tabManager: persistentMultipleTabManager(), cacheSizeBytes: CACHE_SIZE_UNLIMITED }),
   });
-  
 
 
-  export const db = getFirestore(app);
+
+export const db = getFirestore(app);
