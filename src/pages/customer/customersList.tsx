@@ -33,7 +33,7 @@ const statuses = [
   }
 ] as SelectField<string>[]
 
-export const CustomersList = () => {
+export const CustomerList = () => {
 
   const [customers, setCustomers] = React.useState<Array<Customer>>([]);
   const [count, setCount] = React.useState<number>();

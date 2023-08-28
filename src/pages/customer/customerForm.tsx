@@ -221,8 +221,9 @@ export const CustomerForm = () => {
             <FormControl fullWidth>
               <Controller
                 control={formMethods.control}
-                render={({ field }) => {
 
+                //FIX: https://github.com/react-hook-form/react-hook-form/issues/9126#issuecomment-1370843816 related to ref
+                render={({ field: { ref, ...field } }) => {
                   // const mask = field.value?.length < 10 ? "(99) 9999-9999" : "(99) 99999-9999"
                   return (
                     <ReactInputMask

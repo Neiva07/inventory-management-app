@@ -101,7 +101,7 @@ export const getProducts = (searchParams: ProductSearchParams) => {
 }
 
 export const getProduct = (productID: string) => {
-  return getDoc(doc(db, PRODUCTS_COLLECTION, productID))
+  return getDoc(doc(db, PRODUCTS_COLLECTION, productID));
 }
 
 

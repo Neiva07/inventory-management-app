@@ -243,7 +243,7 @@ export const ProductList = () => {
             rowSelectionModel={[selectedRowID]}
             paginationMode="server"
           // local text is the prop in which defines the text to translate
-          // localeText={}
+          // localetext={}
           // checkboxSelection
           />
         </Grid>

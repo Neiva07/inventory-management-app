@@ -13,8 +13,8 @@ import { Controller, FormProvider } from "react-hook-form";
 import { SelectField, useProductCreateForm } from "./useProductCreateForm";
 import { SellingOptions } from "./sellingOptions";
 import { getProductCategories, ProductCategory } from "../../model/productCategories";
-import { Supplier, getSuppliers } from "../../model/suppliers";
-import { getUnits, Unit } from "../../model/units";
+import { Supplier, getSuppliers } from "model/suppliers";
+import { getUnits, Unit } from "model/units";
 import { useParams } from "react-router-dom";
 
 export const ProductForm = () => {
@@ -60,10 +60,7 @@ export const ProductForm = () => {
               > Ativar Produto</Button>
             </Grid>
           )}
-
         </Grid>
-
-
         <Grid container spacing={2}>
           <Grid item xs={6}>
             <FormControl fullWidth>
@@ -89,7 +86,7 @@ export const ProductForm = () => {
                 control={formMethods.control}
                 render={({ field: { value: productCategory, ...props } }) => {
                   const handleChange = (
-                    e: React.SyntheticEvent<Element, Event>,
+                    _: React.SyntheticEvent<Element, Event>,
                     value: SelectField
                   ) => {
                     props.onChange(value);
@@ -177,7 +174,7 @@ export const ProductForm = () => {
                 control={formMethods.control}
                 render={({ field: { value, ...props } }) => {
                   const handleChange = (
-                    e: React.SyntheticEvent<Element, Event>,
+                    _: React.SyntheticEvent<Element, Event>,
                     value: SelectField[]
                   ) => {
                     props.onChange(value);
@@ -234,7 +231,7 @@ export const ProductForm = () => {
                 control={formMethods.control}
                 render={({ field: { value: buyUnit, ...props } }) => {
                   const handleChange = (
-                    e: React.SyntheticEvent<Element, Event>,
+                    _: React.SyntheticEvent<Element, Event>,
                     value: SelectField
                   ) => {
                     props.onChange(value);

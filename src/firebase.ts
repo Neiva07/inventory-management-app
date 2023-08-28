@@ -1,6 +1,7 @@
 import { initializeApp, setLogLevel } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { CACHE_SIZE_UNLIMITED, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -17,6 +18,7 @@ export const firebaseConfig = {
 };
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
 const analytics = getAnalytics(app);
 
 

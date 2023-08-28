@@ -1,8 +1,11 @@
 import * as ReactDOM from "react-dom";
 import {
   Outlet,
-  RouterProvider,
-  createHashRouter,
+  Route,
+  Navigate,
+  Routes,
+  HashRouter as Router,
+  useLocation,
 } from "react-router-dom";
 import React from "react";
 import { Navbar } from "./pages/routes/navbar";
@@ -14,17 +17,20 @@ import { Box } from "@mui/system";
 import { ProductList } from "./pages/product/ProductList";
 import { SupplierList } from "./pages/supplier/supplierList";
 import { CustomerForm } from "./pages/customer/customerForm";
-import { CustomersList } from "./pages/customer/customersList";
+import { CustomerList } from "./pages/customer/customersList";
 import { ToastContainer } from "react-toastify";
+import { AuthContextProvider, useAuth } from "./context/auth";
+import { Login } from "pages/auth/Login";
 
 const App = () => {
+  console.log("fhaiudefhuawdith")
+  const location = useLocation();
+  console.log(location)
   return (
     <>
-      <Navbar />
       <Box style={{
         marginTop: "60px"
       }}>
-        <Outlet />
         <ToastContainer
           position="bottom-right"
           autoClose={5000}
@@ -37,69 +43,77 @@ const App = () => {
           draggable
           pauseOnHover
           theme="colored"
-        />      </Box>
+        />
+        <Navbar />
+        <Outlet />
+
+      </Box>
     </>
   );
 };
 
-const router = createHashRouter([
-  {
-    path: "/",
-    element: <App />,
-    children: [
-      {
-        path: "products/create",
-        element: <ProductForm />,
-      },
-      {
-        path: "products/:productID",
-        element: <ProductForm />,
-      },
-      {
-        path: "suppliers/create",
-        element: <SupplierForm />,
-      },
-      {
-        path: "suppliers/:supplierID",
-        element: <SupplierForm />,
-      },
-      {
-        path: "customers/create",
-        element: <CustomerForm />,
-      },
-      {
-        path: "customers/:customerID",
-        element: <CustomerForm />,
-      },
-      {
-        path: "productCategories",
-        element: <ProductCategories />,
-      },
-      {
-        path: "units",
-        element: <Units />,
-      },
-      {
-        path: "products",
-        element: <ProductList />,
-      },
-      {
-        path: "suppliers",
-        element: <SupplierList />,
-      },
-      {
-        path: "customers",
-        element: <CustomersList />,
-      }
-    ],
-  },
-]);
 
+
+function PrivateRoute() {
+  const auth = useAuth();
+  console.log(auth)
+  if (!auth.user) {
+    return <Navigate to="/" />
+  }
+  console.log('hereuhreru', auth)
+
+  return <Outlet />
+
+}
+
+const AppRouter = () => {
+
+
+  return <>
+    <Router>
+      <Routes>
+        <Route
+          path="/" element={<App />}
+        >
+          <Route path="login" element={<Login />} />
+          <Route path="products/:productID" element={<PrivateRoute />}>
+            <Route element={<ProductForm />} />
+          </Route>
+          <Route element={<PrivateRoute />}>
+
+            <Route path="products/create" element={<ProductForm />} />
+
+            <Route path="suppliers/:supplierID" element={<SupplierForm />} />
+            <Route path="suppliers/create" element={<SupplierForm />} />
+
+            <Route path="customers/:customerID" element={<CustomerForm />} />
+            <Route path="customers/create" element={<CustomerForm />} />
+
+
+            <Route path="productCategories" element={<ProductCategories />} />
+            <Route path="units" element={<Units />} />
+
+            <Route path="products" element={<ProductList />} />
+            <Route path="suppliers" element={<SupplierList />} />
+            <Route path="customers" element={<CustomerList />} />
+
+            <Route path="*" element={<p>There's nothing here: 404!</p>} />
+          </Route>
+
+        </Route>
+      </Routes>
+    </Router>
+
+  </>
+
+}
 function render() {
   ReactDOM.render(
     <>
       <React.StrictMode>
-        <RouterProvider router={router} />
+        <AuthContextProvider>
+          <AppRouter />
+        </AuthContextProvider>
       </React.StrictMode>
     </>,
 

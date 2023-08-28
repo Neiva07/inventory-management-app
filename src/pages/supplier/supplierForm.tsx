@@ -8,22 +8,6 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { states } from '../../model/region';
 
-const regions = [
-  {
-    id: "PA",
-    name: "Pará",
-  },
-  {
-    id: "RJ",
-    name: "Rio de Janeiro",
-  },
-  {
-    id: "SP",
-    name: "São Paulo",
-  },
-];
-
-
 export const SupplierForm = () => {
   const { supplierID } = useParams();
 
@@ -65,7 +49,8 @@ export const SupplierForm = () => {
             <FormControl fullWidth>
               <Controller
                 control={formMethods.control}
-                render={({ field }) => {
+                //FIX: https://github.com/react-hook-form/react-hook-form/issues/9126#issuecomment-1370843816 related to ref
+                render={({ field: { ref, ...field } }) => {
                   return (
                     <TextField
                       {...field}
@@ -102,7 +87,6 @@ export const SupplierForm = () => {
               <Controller
                 control={formMethods.control}
                 render={({ field }) => {
-                  console.log(field.value)
                   return (
                     <ReactInputMask
                       {...field}
@@ -192,7 +176,7 @@ export const SupplierForm = () => {
                 control={formMethods.control}
                 render={({ field: { value: region, ...props } }) => {
                   const handleChange = (
-                    e: React.SyntheticEvent<Element, Event>,
+                    _: React.SyntheticEvent<Element, Event>,
                     value: SelectField
                   ) => {
                     props.onChange(value);
@@ -235,7 +219,8 @@ export const SupplierForm = () => {
             <FormControl fullWidth>
               <Controller
                 control={formMethods.control}
-                render={({ field }) => {
+                //FIX: https://github.com/react-hook-form/react-hook-form/issues/9126#issuecomment-1370843816 related to ref
+                render={({ field: { ref, ...field } }) => {
 
                   // const mask = field.value?.length < 10 ? "(99) 9999-9999" : "(99) 99999-9999"
                   return (
@@ -264,7 +249,9 @@ export const SupplierForm = () => {
             <FormControl fullWidth>
               <Controller
                 control={formMethods.control}
-                render={({ field }) => {
+                //FIX: https://github.com/react-hook-form/react-hook-form/issues/9126#issuecomment-1370843816 related to ref
+                render={({ field: { ref, ...field } }) => {
+
                   return (
                     <ReactInputMask
                       {...field}
@@ -311,7 +298,7 @@ export const SupplierForm = () => {
                 control={formMethods.control}
                 render={({ field: { value, ...props } }) => {
                   const handleChange = (
-                    e: React.SyntheticEvent<Element, Event>,
+                    _: React.SyntheticEvent<Element, Event>,
                     value: SelectField[]
                   ) => {
                     props.onChange(value);

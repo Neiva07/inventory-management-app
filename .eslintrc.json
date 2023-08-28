@@ -4,12 +4,22 @@
     "es6": true,
     "node": true
   },
+   "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"],
+        "moduleDirectory": ["src", "node_modules"]
+      }
+    }
+  },
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:import/recommended",
     "plugin:import/electron",
+    "plugin:import/errors",
+    "plugin:import/warnings",
     "plugin:import/typescript"
   ],
   "parser": "@typescript-eslint/parser"
