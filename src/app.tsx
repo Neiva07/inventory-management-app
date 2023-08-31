@@ -21,6 +21,9 @@ import { CustomerList } from "./pages/customer/customersList";
 import { ToastContainer } from "react-toastify";
 import { AuthContextProvider, useAuth } from "./context/auth";
 import { Login } from "pages/auth/Login";
+import { OrderForm } from "pages/order/OrderForm";
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 const App = () => {
   console.log("fhaiudefhuawdith")
@@ -56,7 +59,6 @@ const App = () => {
 
 function PrivateRoute() {
   const auth = useAuth();
-  console.log(auth)
   if (!auth.user) {
     return <Navigate to="/" />
   }
@@ -81,6 +83,7 @@ const AppRouter = () => {
           </Route>
           <Route element={<PrivateRoute />}>
 
+            <Route path="orders/create" element={<OrderForm />} />
             <Route path="products/create" element={<ProductForm />} />
 
             <Route path="suppliers/:supplierID" element={<SupplierForm />} />
@@ -112,7 +115,9 @@ function render() {
     <>
       <React.StrictMode>
         <AuthContextProvider>
-          <AppRouter />
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <AppRouter />
+          </LocalizationProvider>
         </AuthContextProvider>
       </React.StrictMode>
     </>,

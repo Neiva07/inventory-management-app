@@ -76,6 +76,13 @@ export const Navbar = () => {
             >
               Fornecedores
             </Button>
+            <Button
+              key={"units"}
+              onClick={() => navigate("orders/create")}
+              sx={{ my: 2, color: "white", display: "block" }}
+            >
+              Vendas
+            </Button>
 
             <Button
               key={"customers"}

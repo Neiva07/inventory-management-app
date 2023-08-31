@@ -118,10 +118,10 @@ export const ProductList = () => {
     setSearchTitle(e.target.value)
   }
 
-  const handleCategorySelect = (event: React.SyntheticEvent<Element, Event>, value: ProductCategory) => {
+  const handleCategorySelect = (_: React.SyntheticEvent<Element, Event>, value: ProductCategory) => {
     setCategorySelected(value)
   }
-  const handleStatusSelection = (event: React.SyntheticEvent<Element, Event>, value: SelectField) => {
+  const handleStatusSelection = (_: React.SyntheticEvent<Element, Event>, value: SelectField) => {
     setStatusSelected(value)
   }
 
@@ -242,6 +242,7 @@ export const ProductList = () => {
             rowCount={count}
             rowSelectionModel={[selectedRowID]}
             paginationMode="server"
+            disableColumnMenu
           // local text is the prop in which defines the text to translate
           // localetext={}
           // checkboxSelection

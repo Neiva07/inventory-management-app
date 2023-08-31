@@ -17,6 +17,7 @@ import {
   FormSellingOption,
 } from "./useProductCreateForm";
 import { Price } from "../../model/products";
+import { getUnits, Unit } from "model/units";
 
 const units = [
   {
@@ -143,6 +144,14 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
     ]);
   };
 
+
+  const [units, setUnits] = React.useState<Array<Unit>>([]);
+
+
+  React.useEffect(() => {
+    getUnits().then(qr => setUnits(qr.docs.map(d => d.data() as Unit)));
+  }, [])
+
   return (
     <Box>
       <Grid container spacing={2}>
@@ -152,7 +161,7 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
               control={formMethods.control}
               render={({ field: { value: unit, ...props } }) => {
                 const handleChange = (
-                  e: React.SyntheticEvent<Element, Event>,
+                  _: React.SyntheticEvent<Element, Event>,
                   value: SelectField
                 ) => {
                   props.onChange(value);
