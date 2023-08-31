@@ -6,7 +6,7 @@ import { Controller, useFormContext } from "react-hook-form"
 import { OrderFormDataInterface } from "./useOrderForm";
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
-const statuses = [
+export const statuses = [
   {
     label: "requisição",
     value: "request",
@@ -17,7 +17,7 @@ const statuses = [
   }
 ]
 
-const paymentOptions = [
+export const paymentOptions = [
   {
     label: "Cartão de Crédito",
     value: "credit",

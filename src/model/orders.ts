@@ -1,7 +1,7 @@
 import { uuidv4 } from "@firebase/util";
 import { db } from "firebase";
 import { collection, doc, getCountFromServer, getDoc, getDocs, limit, orderBy, query, QueryConstraint, setDoc, startAfter, updateDoc, where } from "firebase/firestore";
-import { ProductSearchParams, ProductUnit, updateProduct } from "./products";
+import { ProductUnit, updateProduct } from "./products";
 
 export interface OrderCustomer {
   id: string;
@@ -56,10 +56,9 @@ export function calcOrderTotalCost(order: Order) {
 interface OrderSearchParams {
   userID: string;
   customerID?: string;
-  customerName?: string;
   dateRange?: {
-    startDate: number;
-    endDate: number;
+    startDate?: number;
+    endDate?: number;
   }
   status: OrderStatus;
   cursor?: Order;
@@ -68,43 +67,49 @@ interface OrderSearchParams {
 
 const ORDER_COLLECTION = "orders"
 const orderCollection = collection(db, ORDER_COLLECTION)
-//
-// export const getOrders = (searchParams: OrderSearchParams) => {
-//   const constrains: QueryConstraint[] = [where("userID", "==", userID)]
-//
-//
-//   const category = searchParams.productCategory;
-//   const title = searchParams?.customerName || ''
-//
-//
-//   if (category && category.id) {
-//     constrains.push(where("productCategory.id", "==", category.id))
-//   }
-//
-//   if (searchParams.status) {
-//     constrains.push(where("status", "==", searchParams.status))
-//   } else {
-//     constrains.push(where("status", "==", "complete"))
-//   }
-//
-//
-//
-//   constrains.push(orderBy("customer.name"))
-//
-//   if (searchParams.cursor) {
-//     constrains.push(startAfter(searchParams.cursor.customer.name))
-//   }
-//
-//   constrains.push(where("title", ">=", title), where('title', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
-//
-//   const countQuery = query(orderCollection, ...constrains)
-//
-//   constrains.push(limit(searchParams.pageSize))
-//
-//   const q = query(orderCollection, ...constrains);
-//   return Promise.all([getDocs(q), getCountFromServer(countQuery)])
-// }
-//
+
+
+export const getOrders = (searchParams: OrderSearchParams) => {
+  const userID = searchParams.userID;
+  const constrains: QueryConstraint[] = [where("userID", "==", userID)]
+
+
+  if (searchParams.customerID) {
+    constrains.push(where("customer.id", "==", searchParams.customerID))
+  }
+
+  if (searchParams.status) {
+    constrains.push(where("status", "==", searchParams.status))
+  } else {
+    constrains.push(where("status", "==", "complete"))
+  }
+
+  constrains.push(orderBy("createdAt"))
+
+  if (searchParams.cursor) {
+    constrains.push(startAfter(searchParams.cursor.createdAt))
+  }
+
+  if (searchParams.dateRange) {
+    if (searchParams.dateRange.startDate) {
+      constrains.push(where("createdAt", ">=", searchParams.dateRange.startDate))
+    }
+    if (searchParams.dateRange.endDate) {
+      constrains.push(where("createdAt", "<=", searchParams.dateRange.endDate))
+    }
+
+  }
+
+  constrains.push(where("deleted.isDeleted", "==", false))
+
+  const countQuery = query(orderCollection, ...constrains)
+
+  constrains.push(limit(searchParams.pageSize))
+
+  const q = query(orderCollection, ...constrains);
+  return Promise.all([getDocs(q), getCountFromServer(countQuery)])
+}
+
 export const getOrder = (orderID: string) => {
   return getDoc(doc(db, ORDER_COLLECTION, orderID));
 }

@@ -5,7 +5,6 @@ import {
   Navigate,
   Routes,
   HashRouter as Router,
-  useLocation,
 } from "react-router-dom";
 import React from "react";
 import { Navbar } from "./pages/routes/navbar";
@@ -24,11 +23,9 @@ import { Login } from "pages/auth/Login";
 import { OrderForm } from "pages/order/OrderForm";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { OrderList } from "pages/order/OrderList";
 
 const App = () => {
-  console.log("fhaiudefhuawdith")
-  const location = useLocation();
-  console.log(location)
   return (
     <>
       <Box style={{
@@ -99,6 +96,7 @@ const AppRouter = () => {
             <Route path="products" element={<ProductList />} />
             <Route path="suppliers" element={<SupplierList />} />
             <Route path="customers" element={<CustomerList />} />
+            <Route path="orders" element={<OrderList />} />
 
             <Route path="*" element={<p>There's nothing here: 404!</p>} />
           </Route>

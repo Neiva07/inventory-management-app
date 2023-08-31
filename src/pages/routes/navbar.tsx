@@ -18,7 +18,6 @@ export const Navbar = () => {
   }
 
   const handleClickUnits = () => {
-
     navigate("units");
   }
 
@@ -78,7 +77,7 @@ export const Navbar = () => {
             </Button>
             <Button
               key={"units"}
-              onClick={() => navigate("orders/create")}
+              onClick={() => navigate("orders")}
               sx={{ my: 2, color: "white", display: "block" }}
             >
               Vendas
