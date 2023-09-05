@@ -73,9 +73,7 @@ const columns: GridColDef[] = [
     valueGetter: (cell: GridCellParams<Order>) => {
       return cell.row.items.length
     }
-
   }
-
   //sailsman
 ];
 export const OrderList = () => {
@@ -94,8 +92,8 @@ export const OrderList = () => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    getCustomers({ pageSize: 10000 }).then(queryResult => setCustomers(queryResult[0].docs.map(qr => qr.data() as Customer)))
-  }, []);
+    getCustomers({ pageSize: 10000, userID: user.id }).then(queryResult => setCustomers(queryResult[0].docs.map(qr => qr.data() as Customer)))
+  }, [user]);
 
 
   const queryOrders = React.useCallback(() => {

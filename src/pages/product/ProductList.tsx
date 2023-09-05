@@ -5,6 +5,7 @@ import { Autocomplete, Button, Grid, InputAdornment, TextField } from '@mui/mate
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from './useProductCreateForm';
+import { useAuth } from 'context/auth';
 
 const columns: GridColDef[] = [
   // { field: 'id', headerName: 'ID', width: 200 },
@@ -76,6 +77,8 @@ const statuses = [
 
 export const ProductList = () => {
 
+  const { user } = useAuth();
+
   const [products, setProducts] = React.useState<Array<Product>>([]);
   const [count, setCount] = React.useState<number>();
   const [searchTitle, setSearchTitle] = React.useState<string>('');
@@ -89,8 +92,8 @@ export const ProductList = () => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
-  }, []);
+    getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
+  }, [user.id]);
 
 
   const queryProducts = React.useCallback(() => {
@@ -98,6 +101,7 @@ export const ProductList = () => {
       pageSize,
       title: searchTitle,
       productCategory: categorySelected,
+      userID: user.id,
       cursor: products[-1],
       status: statusSelected?.value
     }).then(result => {
@@ -107,12 +111,12 @@ export const ProductList = () => {
     }
     )
 
-  }, [searchTitle, categorySelected, pageSize, statusSelected])
+  }, [user, searchTitle, categorySelected, pageSize, statusSelected])
 
 
   React.useEffect(() => {
     queryProducts();
-  }, [searchTitle, categorySelected, pageSize, statusSelected]);
+  }, [user, searchTitle, categorySelected, pageSize, statusSelected]);
 
   const handleSearchTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTitle(e.target.value)

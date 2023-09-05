@@ -5,6 +5,7 @@ import { ProductCategory, getProductCategories } from '../../model/productCatego
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { Supplier, getSuppliers, deactiveSupplier, deleteSupplier } from '../../model/suppliers';
+import { useAuth } from 'context/auth';
 
 const columns: GridColDef[] = [
   // { field: 'id', headerName: 'ID', width: 200 },
@@ -36,6 +37,7 @@ const statuses = [
 ] as SelectField<string>[]
 
 export const SupplierList = () => {
+  const { user } = useAuth();
 
   const [suppliers, setSuppliers] = React.useState<Array<Supplier>>([]);
   const [count, setCount] = React.useState<number>();
@@ -50,30 +52,30 @@ export const SupplierList = () => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
-  }, []);
+    getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
+  }, [user]);
 
 
   const querySuppliers = React.useCallback(() => {
     getSuppliers({
+      userID: user.id,
       pageSize,
       tradeName: searchTitle,
       productCategory: categorySelected,
       cursor: suppliers[-1],
       status: statusSelected?.value
     }).then(result => {
-
       setSuppliers(result[0].docs.map(qr => qr.data() as Supplier))
       setCount(result[1].data().count)
     }
     )
 
-  }, [searchTitle, categorySelected, pageSize, statusSelected])
+  }, [user, searchTitle, categorySelected, pageSize, statusSelected])
 
 
   React.useEffect(() => {
     querySuppliers();
-  }, [searchTitle, categorySelected, pageSize, statusSelected]);
+  }, [user, searchTitle, categorySelected, pageSize, statusSelected]);
 
   const handleSearchTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTitle(e.target.value)
@@ -201,7 +203,7 @@ export const SupplierList = () => {
               onRowSelectionModelChange={handleRowSelection}
               onPaginationModelChange={handlePaginationModelChange}
               hideFooterSelectedRowCount
-              rowCount={count}
+              rowCount={count || 0}
               rowSelectionModel={[selectedRowID]}
               paginationMode="server"
             // local text is the prop in which defines the text to translate

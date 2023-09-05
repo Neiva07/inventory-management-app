@@ -1,9 +1,11 @@
 import { Box, Button, Grid, TextField, Typography } from "@mui/material"
+import { useAuth } from "context/auth";
 import { ChangeEvent, useEffect, useState } from "react"
 import { toast } from "react-toastify";
 import { createUnit, getUnits, Unit } from "../../model/units";
 
 export const Units = () => {
+  const { user } = useAuth();
 
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -17,16 +19,16 @@ export const Units = () => {
   }
 
   useEffect(() => {
-    getUnits().then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)));
-  }, [])
+    getUnits(user.id).then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)));
+  }, [user])
 
 
   const submitNewUnit = () => {
     try {
-      createUnit({ name, description })
+      createUnit({ name, description, userID: user.id })
       toast.success('Unidade criada com sucesso')
 
-      getUnits().then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)));
+      getUnits(user.id).then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)));
     } catch (err) {
       console.error(err)
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
@@ -34,7 +36,6 @@ export const Units = () => {
 
   }
 
-  console.log(units)
   return (
     <>
       <Box>

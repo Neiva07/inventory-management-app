@@ -22,19 +22,19 @@ export interface Customer {
 }
 
 interface CustomerSearchParams {
+  userID: string;
   name?: string;
   status?: string;
   cursor?: Customer;
   pageSize: number;
 }
 
-const userID = 'my-id'
 const CUSTOMER_COLLECTION = "customers"
 
 const customerCollection = collection(db, CUSTOMER_COLLECTION)
 
 export const getCustomers = (searchParams: CustomerSearchParams) => {
-  const constrains: QueryConstraint[] = [where("userID", "==", userID)]
+  const constrains: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
 
   const title = searchParams?.name || ''
 
@@ -71,7 +71,6 @@ export const createCustomer = (customerInfo: Customer) => {
     deleted: {
       isDeleted: false,
     },
-    userID,
   });
 }
 

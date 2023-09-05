@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form"
 import { OrderFormDataInterface } from "./useOrderForm";
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { useAuth } from "context/auth";
 
 export const statuses = [
   {
@@ -37,11 +38,12 @@ export const paymentOptions = [
 ]
 
 export const OrderFormHeader = () => {
+  const { user } = useAuth();
   const [customers, setCustomers] = useState<Array<Customer>>([]);
 
   const formMethods = useFormContext<OrderFormDataInterface>()
   useEffect(() => {
-    getCustomers({ pageSize: 1000 }).then(results => setCustomers(results[0].docs.map(qr => qr.data() as Customer)))
+    getCustomers({ pageSize: 1000, userID: user.id }).then(results => setCustomers(results[0].docs.map(qr => qr.data() as Customer)))
   }, []);
 
   return (

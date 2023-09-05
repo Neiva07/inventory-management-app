@@ -1,4 +1,5 @@
 import { Autocomplete, Box, Button, Grid, TextField } from "@mui/material";
+import { useAuth } from "context/auth";
 import { calcItemTotalCost } from "model/orders";
 import { getProducts, Product, SellingOption } from "model/products";
 import React, { useMemo, useState } from "react";
@@ -6,6 +7,7 @@ import { useFormContext } from "react-hook-form";
 import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm";
 
 export const OrderFormLineItemForm = () => {
+  const { user } = useAuth();
 
   const [products, setProducts] = useState<Array<Product>>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product>(null);
@@ -22,16 +24,17 @@ export const OrderFormLineItemForm = () => {
   const queryProducts = React.useCallback(() => {
     getProducts({
       pageSize: 10000,
-      status: 'active'
+      status: 'active',
+      userID: user.id,
     }).then(result => {
       setProducts(result[0].docs.map(qr => qr.data() as Product))
     })
 
-  }, [])
+  }, [user])
 
   React.useEffect(() => {
     queryProducts();
-  }, []);
+  }, [user]);
 
   const handleSelectProduct = (_: React.SyntheticEvent<Element, Event>, value: Product) => {
     setSelectedProduct(value)

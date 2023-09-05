@@ -35,6 +35,7 @@ export interface Supplier {
 }
 
 interface SuppliersSearchParams {
+  userID: string;
   tradeName?: string;
   status?: string;
   cursor?: Supplier;
@@ -42,13 +43,12 @@ interface SuppliersSearchParams {
   productCategory?: ProductCategory;
 }
 
-const userID = 'my-id'
 const SUPPLIERS_COLLECTION = "suppliers"
 
 const supplierColletion = collection(db, SUPPLIERS_COLLECTION)
 
 export const getSuppliers = (searchParams: SuppliersSearchParams) => {
-  const constrains: QueryConstraint[] = [where("userID", "==", userID)]
+  const constrains: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
 
 
   const category = searchParams.productCategory;
@@ -92,7 +92,6 @@ export const createSupplier = (supplierInfo: Supplier) => {
     deleted: {
       isDeleted: false,
     },
-    userID,
     ...supplierInfo
   });
 }

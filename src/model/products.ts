@@ -54,6 +54,7 @@ export interface Product extends DocumentData {
 }
 
 export interface ProductSearchParams {
+  userID: string;
   cursor?: Product;
   pageSize: number;
   title?: string;
@@ -62,13 +63,12 @@ export interface ProductSearchParams {
 }
 
 
-const userID = "my-id";
 const PRODUCTS_COLLECTION = "products"
 
 const productColletion = collection(db, PRODUCTS_COLLECTION)
 
 export const getProducts = (searchParams: ProductSearchParams) => {
-  const constrains: QueryConstraint[] = [where("userID", "==", userID)]
+  const constrains: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
 
 
   const category = searchParams.productCategory;
@@ -113,9 +113,7 @@ export const createProduct = (productInfo: Partial<Product>) => {
 
   return setDoc(newProduct, {
     id: productID,
-    userID,
     createdAt: Date.now(),
-    updatedAt: Date.now(),
     deleted: {
       isDeleted: false,
     },

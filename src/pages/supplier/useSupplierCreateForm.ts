@@ -7,6 +7,7 @@ import { Supplier, createSupplier, getSupplier, updateSupplier, deleteSupplier, 
 import { ProductCategory } from '../../model/productCategories';
 import { regionByCode } from '../../model/region';
 import { toast } from 'react-toastify';
+import { useAuth } from 'context/auth';
 
 export interface AddressFormDataInterface {
   city: string;
@@ -52,6 +53,7 @@ const INITIAL_SUPPLIER_FORM_STATE: SupplierFormDataInterface = {
 };
 
 export const useSupplierCreateForm = (supplierID?: string) => {
+  const { user } = useAuth();
   const [fetchedSupplierForm, setFetchedSupplierForm] = React.useState<SupplierFormDataInterface>();
   const [supplier, setSupplier] = React.useState<Supplier>();
 
@@ -119,6 +121,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
         },
         status: 'active',
         entityID: cleanedEntityID,
+        userID: user.id,
         companyPhone: cleanedCompanyPhone,
         contactPhone: cleanedContactPhone,
         productCategories: productCategories.map(pc =>

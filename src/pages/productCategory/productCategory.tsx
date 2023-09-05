@@ -1,9 +1,11 @@
 import { Box, Button, Grid, TextField, Typography } from "@mui/material"
+import { useAuth } from "context/auth";
 import { ChangeEvent, useEffect, useState } from "react"
 import { toast } from "react-toastify";
 import { createProductCategories, getProductCategories, ProductCategory } from "../../model/productCategories";
 
 export const ProductCategories = () => {
+  const { user } = useAuth();
 
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -17,16 +19,16 @@ export const ProductCategories = () => {
   }
 
   useEffect(() => {
-    getProductCategories().then(queryResult => setProductCategories(queryResult.docs.map(r => r.data() as ProductCategory)));
-  }, [])
+    getProductCategories(user.id).then(queryResult => setProductCategories(queryResult.docs.map(r => r.data() as ProductCategory)));
+  }, [user])
 
 
   const submitNewProductCategory = () => {
     try {
-      createProductCategories({ name, description })
+      createProductCategories({ name, description, userID: user.id })
       toast.success('Unidade criada com sucesso')
 
-      getProductCategories().then(queryResult => setProductCategories(queryResult.docs.map(r => r.data() as ProductCategory)));
+      getProductCategories(user.id).then(queryResult => setProductCategories(queryResult.docs.map(r => r.data() as ProductCategory)));
     } catch (err) {
       console.error(err)
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde')

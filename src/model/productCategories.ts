@@ -12,13 +12,12 @@ export interface ProductCategory {
   userID: string;
 }
 
-const userID = 'my-id'
 
 const PRODUCT_CATEGORIES_COLLECTION = "product_categories"
 
 const productCategoryColletion = collection(db, PRODUCT_CATEGORIES_COLLECTION);
 
-export const getProductCategories = (name: string = '') => {
+export const getProductCategories = (userID: string, name = '') => {
   const q = query(productCategoryColletion, where("userID", "==", userID), where("name", ">=", name), where('name', '<=', name + '\uf8ff'));
 
   return getDocs(q);
@@ -32,9 +31,7 @@ export const createProductCategories = (productCategoryInfo: Partial<ProductCate
 
   return setDoc(newProductCategory, {
     id,
-    userID,
     createdAt: Date.now(),
-    updatedAt: Date.now(),
     ...productCategoryInfo
   });
 }

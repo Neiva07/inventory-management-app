@@ -4,6 +4,7 @@ import { Autocomplete, Button, Grid, InputAdornment, TextField } from '@mui/mate
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { Customer, deactiveCustomer, deleteCustomer, getCustomers } from '../../model/customer';
+import { useAuth } from 'context/auth';
 
 const columns: GridColDef[] = [
   { field: 'name', headerName: 'Nome', width: 200 },
@@ -34,6 +35,7 @@ const statuses = [
 ] as SelectField<string>[]
 
 export const CustomerList = () => {
+  const { user } = useAuth();
 
   const [customers, setCustomers] = React.useState<Array<Customer>>([]);
   const [count, setCount] = React.useState<number>();
@@ -47,6 +49,7 @@ export const CustomerList = () => {
 
   const queryCustomers = React.useCallback(() => {
     getCustomers({
+      userID: user.id,
       pageSize,
       name: searchName,
       cursor: customers[-1],
@@ -58,12 +61,12 @@ export const CustomerList = () => {
     }
     )
 
-  }, [searchName, pageSize, statusSelected])
+  }, [user, searchName, pageSize, statusSelected])
 
 
   React.useEffect(() => {
     queryCustomers();
-  }, [searchName, pageSize, statusSelected]);
+  }, [user, searchName, pageSize, statusSelected]);
 
   const handleSearchName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchName(e.target.value)

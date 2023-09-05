@@ -8,6 +8,7 @@ import { AddressFormDataInterface } from '../supplier/useSupplierCreateForm';
 import { regionByCode } from '../../model/region';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useAuth } from 'context/auth';
 
 
 export interface CustomerFormDataInterface {
@@ -35,6 +36,7 @@ const INITIAL_CUSTOMER_VALUES: CustomerFormDataInterface = {
 };
 
 export const useCustomerCreateForm = (customerID?: string) => {
+  const { user } = useAuth();
   const [fetchedCustomerForm, setFetchedCustomerForm] = React.useState<CustomerFormDataInterface>();
   const [customer, setCustomer] = React.useState<Customer>();
 
@@ -96,6 +98,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
         name,
         status: 'active',
         phone: cleanedPhone,
+        userID: user.id,
         cpf: cleanedCPF,
         rg: cleanedRG,
       } as Customer);

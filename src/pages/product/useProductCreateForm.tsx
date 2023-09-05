@@ -5,6 +5,7 @@ import React, { useCallback } from "react";
 import { Product, Price, ProductSupplier, ProductUnit, SellingOption, createProduct, getProduct, updateProduct, deleteProduct, deactiveProduct, activeProduct } from "../../model/products";
 import { ProductCategory } from "../../model/productCategories";
 import { toast } from "react-toastify";
+import { useAuth } from "context/auth";
 
 export interface SelectField<T = string> {
   label: string;
@@ -72,6 +73,7 @@ const INITIAL_PRODUCT_FORM_STATE = {
 } as ProductFormDataInterface;
 
 export const useProductCreateForm = (productID?: string) => {
+  const { user } = useAuth();
   const [fetchedProductForm, setFetchedProductForm] = React.useState<ProductFormDataInterface>();
   const [product, setProduct] = React.useState<Product>();
 
@@ -150,6 +152,7 @@ export const useProductCreateForm = (productID?: string) => {
           name: data.buyUnit.label,
         } as ProductUnit,
         status: "active",
+        userID: user.id,
         sellingOptions: data.sellingOptions.map(so => {
           const { unit, ...rest } = so;
           return {
