@@ -21,7 +21,7 @@ export const OrderForm = () => {
       <Box style={{ marginTop: 40 }}>
         <OrderFormLineItemList />
       </Box>
-      <Button variant="outlined" onClick={onFormSubmit} style={{ marginTop: 20 }}>Fechar Nota</Button>
+      <Button variant="outlined" onClick={onFormSubmit} style={{ marginTop: 20 }}>{orderID ? 'Editar Nota' : 'Fechar Nota'} </Button>
     </FormProvider>
   )
 

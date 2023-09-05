@@ -81,6 +81,7 @@ const AppRouter = () => {
           <Route element={<PrivateRoute />}>
 
             <Route path="orders/create" element={<OrderForm />} />
+            <Route path="orders/:orderID" element={<OrderForm />} />
             <Route path="products/create" element={<ProductForm />} />
 
             <Route path="suppliers/:supplierID" element={<SupplierForm />} />

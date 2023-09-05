@@ -1,6 +1,6 @@
 import { Autocomplete, Box, Button, Grid, TextField } from "@mui/material";
 import { calcItemTotalCost } from "model/orders";
-import { getProducts, Product, ProductUnit, SellingOption } from "model/products";
+import { getProducts, Product, SellingOption } from "model/products";
 import React, { useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm";
@@ -8,7 +8,7 @@ import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm";
 export const OrderFormLineItemForm = () => {
 
   const [products, setProducts] = useState<Array<Product>>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product>();
+  const [selectedProduct, setSelectedProduct] = useState<Product>(null);
 
 
   const [quantity, setQuantity] = useState<number>();
@@ -16,7 +16,7 @@ export const OrderFormLineItemForm = () => {
   const [descount, setDescount] = useState<number>(0);
   const [unitCost, setUnitCost] = useState<number>(0);
   const [productComission, setProductComission] = useState<number>(0);
-  const [productUnit, setProductUnit] = useState<ProductUnit>();
+  const [sellingOption, setSellingOption] = useState<SellingOption>(null);
   const [unitPrice, setUnitPrice] = useState<number>(0);
 
   const queryProducts = React.useCallback(() => {
@@ -38,6 +38,7 @@ export const OrderFormLineItemForm = () => {
 
     if (!value) {
       setInventory(0);
+      setProductComission(0);
       return;
     }
     setProductComission(value.sailsmanComission);
@@ -45,10 +46,9 @@ export const OrderFormLineItemForm = () => {
   }
 
   const handleSelectSellingOption = (_: React.SyntheticEvent<Element, Event>, value: SellingOption) => {
+    setSellingOption(value)
     if (value) {
       setUnitCost(value.unitCost)
-      setProductUnit(value.unit)
-
     }
   }
 
@@ -72,7 +72,7 @@ export const OrderFormLineItemForm = () => {
       quantity,
       cost: unitCost,
       descount,
-      unit: productUnit,
+      unit: sellingOption.unit,
       unitPrice,
       itemTotalCost,
       title: selectedProduct.title,
@@ -87,6 +87,16 @@ export const OrderFormLineItemForm = () => {
     formMethods.setValue("totalComission", prevCommission + (productComission * itemTotalCost) / 100)
     formMethods.setValue("totalCost", prevTotalCost + itemTotalCost)
 
+
+
+    setSelectedProduct(null);
+    setUnitCost(null);
+    setSellingOption(null);
+    setQuantity(0);
+    setUnitPrice(0);
+    setProductComission(0);
+    setUnitCost(0);
+    setInventory(0);
   }
 
   const isFormCompleted = useMemo(() => itemTotalCost > 0, [itemTotalCost])
@@ -96,6 +106,7 @@ export const OrderFormLineItemForm = () => {
       <Grid item xs={3}>
         <Autocomplete
           id="product-select"
+          value={selectedProduct}
           options={products}
           getOptionLabel={(option) => option.title}
           fullWidth
@@ -138,11 +149,13 @@ export const OrderFormLineItemForm = () => {
           id="unit-select"
           options={selectedProduct?.sellingOptions || []}
           getOptionLabel={(option) => option.unit.name}
+          value={sellingOption}
           fullWidth
           renderInput={(params) => (
             <TextField
               {...params}
               fullWidth
+              value={sellingOption}
               variant="outlined"
               label="Unidade"
             />
@@ -205,8 +218,6 @@ export const OrderFormLineItemForm = () => {
       </Grid>
       <Grid item xs={2}>
         <Button onClick={submitItem} fullWidth style={{ height: "100%" }} variant="outlined" disabled={!isFormCompleted} > Adicionar Item </Button>
-
-
       </Grid>
     </Grid>
   </Box>

@@ -1,7 +1,7 @@
 import { uuidv4 } from "@firebase/util";
 import { db } from "firebase";
 import { collection, doc, getCountFromServer, getDoc, getDocs, limit, orderBy, query, QueryConstraint, setDoc, startAfter, updateDoc, where } from "firebase/firestore";
-import { ProductUnit, updateProduct } from "./products";
+import { getProduct, Product, ProductUnit, updateProduct } from "./products";
 
 export interface OrderCustomer {
   id: string;
@@ -97,7 +97,6 @@ export const getOrders = (searchParams: OrderSearchParams) => {
     if (searchParams.dateRange.endDate) {
       constrains.push(where("createdAt", "<=", searchParams.dateRange.endDate))
     }
-
   }
 
   constrains.push(where("deleted.isDeleted", "==", false))
@@ -134,16 +133,27 @@ export const createOrder = (orderInfo: Partial<Order>) => {
 
   return newOrderDoc
 }
-
 export const deleteOrder = async (orderID: string) => {
-  const productDoc = doc(db, ORDER_COLLECTION, orderID);
-
-  return updateDoc(productDoc, {
+  const orderDoc = doc(db, ORDER_COLLECTION, orderID);
+  updateDoc(orderDoc, {
     deleted: {
       isDeleted: true,
       date: Date.now(),
     }
   })
+
+  getDoc(orderDoc).then(r => r.data() as Order).then(o => o.items.map(async i => {
+    const p = await getProduct(i.productID).then(r => r.data() as Product)
+    updateProduct(i.productID, { inventory: p.inventory + i.quantity })
+  }))
 }
 
 
+export const updateOrder = (orderID: string, orderInfo: Partial<Order>) => {
+  const orderDoc = doc(db, ORDER_COLLECTION, orderID);
+
+  return updateDoc(orderDoc, {
+    ...orderInfo,
+    updatedAt: Date.now(),
+  })
+}

@@ -233,9 +233,6 @@ export const OrderList = () => {
             rowSelectionModel={[selectedRowID]}
             paginationMode="server"
             disableColumnMenu
-          // local text is the prop in which defines the text to translate
-          // localetext={}
-          // checkboxSelection
           />
         </Grid>
       </Grid>
