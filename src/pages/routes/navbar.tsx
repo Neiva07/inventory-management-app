@@ -37,6 +37,8 @@ export const Navbar = () => {
     navigate("login")
   }
 
+  console.log(location)
+
   return (
     <AppBar position="fixed">
       <Container maxWidth="xl">
@@ -58,7 +60,7 @@ export const Navbar = () => {
                 textDecoration: "none",
               }}
             >
-              LOGO
+              Stockify
             </Typography>
             <Button
               key={"products"}

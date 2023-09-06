@@ -114,12 +114,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
         position: "bottom-right",
         theme: "colored",
       })
-
-
     }
-
-
-
   }, []);
 
   const onUpdate = useCallback((data: CustomerFormDataInterface) => {

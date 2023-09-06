@@ -12,13 +12,12 @@ export interface Unit {
   userID: string;
 }
 
-const userID = 'my-id'
 
 const UNIT_COLLECTION = "units"
 
 const unitColletion = collection(db, UNIT_COLLECTION);
 
-export const getUnits = (name: string = '') => {
+export const getUnits = (userID: string, name = '') => {
   const q = query(unitColletion, where("userID", "==", userID), where("name", ">=", name), where('name', '<=', name + '\uf8ff'));
   return getDocs(q);
 }
@@ -31,9 +30,7 @@ export const createUnit = (unitInfo: Partial<Unit>) => {
 
   return setDoc(newUnit, {
     id,
-    userID,
     createdAt: Date.now(),
-    updatedAt: Date.now(),
     ...unitInfo
   });
 }

@@ -1,70 +1,97 @@
-import { ChangeEvent, useState } from "react";
-import Button from "@mui/material/Button";
-import { Product, createProduct } from "./model/products";
-import { Input } from "@mui/material";
+import * as React from 'react';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+import { Button, CardActionArea, CardActions, Grid } from '@mui/material';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import { useNavigate } from 'react-router-dom';
 
-export const Home = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+type GuideProps = {
+  title: string;
+  description: string;
+  link1: string;
+  link2?: string;
+}
 
-  const [name, setName] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [searchText, setSearchText] = useState<string>("");
-
-  const handleCreateProduct = () => {
-    createProduct({
-      name,
-      description,
-      status: "active",
-      userID: "my-id",
-      // providersIDs,
-    });
-  };
-
-  const handleChangeName = (e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  };
-
-  const handleChangeDescription = (e: ChangeEvent<HTMLInputElement>) => {
-    setDescription(e.target.value);
-  };
-
-  const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearchText(e.target.value);
-  };
+const GuideCard = (props: GuideProps) => {
+  const navigate = useNavigate();
 
   return (
-    <>
-      <div>
-        <Input
-          value={name}
-          placeholder="Nome do produto"
-          onChange={handleChangeName}
-        />
-      </div>
-      <div>
-        <Input
-          value={description}
-          placeholder="Descrição"
-          onChange={handleChangeDescription}
-        />
-      </div>
-      <Button onClick={handleCreateProduct} variant="contained">
-        Create Product
-      </Button>
+    <Card sx={{ maxWidth: 345 }}>
+      <CardActionArea>
+        <CardContent onClick={() => navigate(props.link1)}>
+          <Typography gutterBottom variant="h5" component="div">
+            {props.title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {props.description}
+          </Typography>
+        </CardContent>
+      </CardActionArea>
+      <CardActions>
+        <Button size="small" color="primary" onClick={() => navigate(props.link1)}>
+          Consultar
+        </Button>
+        {props.link2 && (<Button size="small" color="primary" onClick={() => navigate(props.link2)}>
+          Cadastrar
+        </Button>)}
+      </CardActions>
+    </Card >
 
-      <div>
-        <Input
-          value={searchText}
-          placeholder="digite o nome do produto"
-          onChange={handleSearch}
-        />
-      </div>
+  )
+}
 
-      <ol>
-        {products.map((d) => (
-          <li>{d.name}</li>
-        ))}
-      </ol>
-    </>
+export const Home = () => {
+
+  return (
+    <Grid spacing={2} container>
+      <Grid item xs={6}>
+        <GuideCard
+          title='Produtos'
+          description='Cadastre, consulte, edite e delete seus produtos'
+          link1='products'
+          link2='products/create'
+        />
+      </Grid>
+      <Grid item xs={6}>
+        <GuideCard
+          title='Fornecedores'
+          description='Cadastre, consulte, edite e delete seus fornecedores'
+          link1='suppliers'
+          link2='suppliers/create'
+        />
+      </Grid>
+      <Grid item xs={6}>
+        <GuideCard
+          title='Clientes'
+          description='Cadastre, consulte, edite e delete seus clientes'
+          link1='customers'
+          link2='customers/create'
+        />
+      </Grid>
+      <Grid item xs={6}>
+        <GuideCard
+          title='Vendas'
+          description='crie, consulte, edite e delete suas vendas'
+          link1='orders'
+          link2='orders/create'
+        />
+      </Grid>
+      <Grid item xs={6}>
+        <GuideCard
+          title='Categoria de Produtos'
+          description='Cadastre e consulte as categorias de produtos'
+          link1='units'
+        />
+      </Grid>
+      <Grid item xs={6}>
+        <GuideCard
+          title='Unidade de Produtos'
+          description='Cadastre e consulte suas unidades de produtos'
+          link1='productCategories'
+        />
+      </Grid>
+
+    </Grid>
   );
 };

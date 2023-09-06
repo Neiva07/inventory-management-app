@@ -25,6 +25,20 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { OrderList } from "pages/order/OrderList";
 
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { Home } from "home";
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#6F1386',
+    },
+    secondary: {
+      main: '#9935FD',
+    },
+  },
+});
+
 const App = () => {
   return (
     <>
@@ -57,10 +71,8 @@ const App = () => {
 function PrivateRoute() {
   const auth = useAuth();
   if (!auth.user) {
-    return <Navigate to="/" />
+    return <Navigate to="/login" />
   }
-  console.log('hereuhreru', auth)
-
   return <Outlet />
 
 }
@@ -75,11 +87,10 @@ const AppRouter = () => {
           path="/" element={<App />}
         >
           <Route path="login" element={<Login />} />
-          <Route path="products/:productID" element={<PrivateRoute />}>
-            <Route element={<ProductForm />} />
-          </Route>
           <Route element={<PrivateRoute />}>
+            <Route path="/" element={<Home />} />
 
+            <Route path="products/:productID" element={<ProductForm />} />
             <Route path="orders/create" element={<OrderForm />} />
             <Route path="orders/:orderID" element={<OrderForm />} />
             <Route path="products/create" element={<ProductForm />} />
@@ -114,9 +125,11 @@ function render() {
     <>
       <React.StrictMode>
         <AuthContextProvider>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <AppRouter />
-          </LocalizationProvider>
+          <ThemeProvider theme={theme}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <AppRouter />
+            </LocalizationProvider>
+          </ThemeProvider>
         </AuthContextProvider>
       </React.StrictMode>
     </>,
