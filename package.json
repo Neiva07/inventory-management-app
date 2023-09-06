@@ -45,7 +45,6 @@
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@hookform/resolvers": "^3.1.1",
-    "@mui/icons-material": "^5.14.8",
     "@mui/material": "^5.13.3",
     "@mui/x-data-grid": "^6.10.0",
     "@mui/x-date-pickers": "^6.12.0",
