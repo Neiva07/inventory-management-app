@@ -16,8 +16,10 @@ import { getProductCategories, ProductCategory } from "../../model/productCatego
 import { Supplier, getSuppliers } from "model/suppliers";
 import { getUnits, Unit } from "model/units";
 import { useParams } from "react-router-dom";
+import { useAuth } from "context/auth";
 
 export const ProductForm = () => {
+  const { user } = useAuth();
 
   const { productID } = useParams();
   const { register, product, onFormSubmit, onFormUpdate, onDeactiveProduct, onActivateProduct, onDelete, ...formMethods } = useProductCreateForm(productID);
@@ -26,16 +28,16 @@ export const ProductForm = () => {
   const [units, setUnits] = useState<Array<Unit>>([]);
 
   useEffect(() => {
-    getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
-  }, []);
+    getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
+  }, [user]);
 
   useEffect(() => {
-    getSuppliers({ pageSize: 1000 }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
-  }, []);
+    getSuppliers({ pageSize: 1000, userID: user.id }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
+  }, [user]);
 
   useEffect(() => {
-    getUnits().then(queryResult => setUnits(queryResult.docs.map(qr => qr.data() as Unit)))
-  }, []);
+    getUnits(user.id).then(queryResult => setUnits(queryResult.docs.map(qr => qr.data() as Unit)))
+  }, [user]);
 
   return (
     <FormProvider register={register} {...formMethods}>

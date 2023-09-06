@@ -7,15 +7,17 @@ import { ProductCategory, getProductCategories } from '../../model/productCatego
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { states } from '../../model/region';
+import { useAuth } from 'context/auth';
 
 export const SupplierForm = () => {
+  const { user } = useAuth();
   const { supplierID } = useParams();
 
   const { register, supplier, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, ...formMethods } = useSupplierCreateForm(supplierID);
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
 
   useEffect(() => {
-    getProductCategories().then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
+    getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
   }, []);
 
   return (

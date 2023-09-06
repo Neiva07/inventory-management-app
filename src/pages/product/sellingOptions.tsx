@@ -18,21 +18,8 @@ import {
 } from "./useProductCreateForm";
 import { Price } from "../../model/products";
 import { getUnits, Unit } from "model/units";
+import { useAuth } from "context/auth";
 
-const units = [
-  {
-    id: "1",
-    name: "pacotes",
-  },
-  {
-    id: "2",
-    name: "lata",
-  },
-  {
-    id: "3",
-    name: "kilo",
-  },
-];
 
 type SellingOptionProps = {
   sellingOption: FormSellingOption;
@@ -146,10 +133,11 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
 
 
   const [units, setUnits] = React.useState<Array<Unit>>([]);
+  const { user } = useAuth();
 
 
   React.useEffect(() => {
-    getUnits().then(qr => setUnits(qr.docs.map(d => d.data() as Unit)));
+    getUnits(user.id).then(qr => setUnits(qr.docs.map(d => d.data() as Unit)));
   }, [])
 
   return (
