@@ -33,7 +33,7 @@ const USERS_COLLECTION = "users"
 const googleProvider = new GoogleAuthProvider();
 
 export const signInWithGoogle = async () => {
-  console.log(window.location.hostname);
+  console.log(window.location);
 
   try {
     const res = await signInWithPopup(auth, googleProvider);
