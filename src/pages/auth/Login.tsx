@@ -13,6 +13,7 @@ export const Login = () => {
       toast.success("Você entrou com sucesso!")
     } catch (e) {
       console.error(e);
+      console.error(e.message);
       toast.error('Erro ao logar com o Google')
     }
   }
