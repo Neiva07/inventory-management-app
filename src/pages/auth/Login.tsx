@@ -12,6 +12,7 @@ export const Login = () => {
       await loginWithGoogle()
       toast.success("Você entrou com sucesso!")
     } catch (e) {
+      console.error(e);
       toast.error('Erro ao logar com o Google')
     }
   }
