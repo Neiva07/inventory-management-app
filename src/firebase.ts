@@ -18,6 +18,7 @@ export const firebaseConfig = {
 // Initialize Firebase
 if (window.location.hostname) {
   console.log('test environment')
+  // @ts-ignore
   firebaseConfig.authDomain = "inventory-management-app-8aee0.firebaseapp.com"
 }
 const app = initializeApp(firebaseConfig);
