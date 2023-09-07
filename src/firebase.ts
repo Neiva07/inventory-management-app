@@ -9,7 +9,6 @@ import { getAuth } from "firebase/auth";
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 export const firebaseConfig = {
   apiKey: "AIzaSyB2Ak1S0jr6IIvLDxf-P-cKkeNbZG9sp1E",
-  authDomain: "inventory-management-app-8aee0.firebaseapp.com",
   projectId: "inventory-management-app-8aee0",
   storageBucket: "inventory-management-app-8aee0.appspot.com",
   messagingSenderId: "908617527974",
@@ -17,10 +16,15 @@ export const firebaseConfig = {
   measurementId: "G-PVRX9LR0MG",
 };
 // Initialize Firebase
+if (window.location.hostname) {
+  console.log('test environment')
+  firebaseConfig.authDomain = "inventory-management-app-8aee0.firebaseapp.com"
+}
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 const analytics = getAnalytics(app);
+
 
 
 
