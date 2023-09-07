@@ -57,10 +57,9 @@ export const signInWithGoogle = async () => {
 
     return { user: dbUser, isNewUser: false }
   } catch (err) {
+    console.log("auth config", auth.config)
+    console.log("emulator config", auth.emulatorConfig)
     console.error("Sign in with Google failed", err);
-    console.error(err)
-    console.error(err.code)
-    console.error(err.message)
     throw err;
   }
 };
