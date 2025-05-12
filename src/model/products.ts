@@ -67,13 +67,11 @@ const PRODUCTS_COLLECTION = "products"
 
 const productColletion = collection(db, PRODUCTS_COLLECTION)
 
-export const getProducts = (searchParams: ProductSearchParams) => {
+export const getProducts = async (searchParams: ProductSearchParams) => {
   const constrains: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
-
 
   const category = searchParams.productCategory;
   const title = searchParams?.title || ''
-
 
   if (category && category.id) {
     constrains.push(where("productCategory.id", "==", category.id))
@@ -82,7 +80,6 @@ export const getProducts = (searchParams: ProductSearchParams) => {
   if (searchParams.status && searchParams.status !== "") {
     constrains.push(where("status", "==", searchParams.status))
   }
-
 
   constrains.push(orderBy("title"))
 

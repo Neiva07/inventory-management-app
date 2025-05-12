@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { DataGrid, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
-import { Autocomplete, Button, Grid, InputAdornment, TextField } from '@mui/material';
+import { Autocomplete, Button, Grid, InputAdornment, TextField, Skeleton } from '@mui/material';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { Supplier, getSuppliers, deactiveSupplier, deleteSupplier } from '../../model/suppliers';
 import { useAuth } from 'context/auth';
+import { ptBR } from '@mui/x-data-grid/locales';
 
 const columns: GridColDef[] = [
   // { field: 'id', headerName: 'ID', width: 200 },
@@ -43,6 +44,7 @@ export const SupplierList = () => {
   const [count, setCount] = React.useState<number>();
   const [searchTitle, setSearchTitle] = React.useState<string>('');
   const [selectedRowID, setSelectedRowID] = React.useState<string>();
+  const [loading, setLoading] = React.useState(true);
 
   const [categories, setCategories] = React.useState<Array<ProductCategory>>([]);
   const [categorySelected, setCategorySelected] = React.useState<ProductCategory>();
@@ -55,8 +57,8 @@ export const SupplierList = () => {
     getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
   }, [user]);
 
-
   const querySuppliers = React.useCallback(() => {
+    setLoading(true);
     getSuppliers({
       userID: user.id,
       pageSize,
@@ -67,11 +69,10 @@ export const SupplierList = () => {
     }).then(result => {
       setSuppliers(result[0].docs.map(qr => qr.data() as Supplier))
       setCount(result[1].data().count)
-    }
-    )
-
+    }).finally(() => {
+      setLoading(false);
+    });
   }, [user, searchTitle, categorySelected, pageSize, statusSelected])
-
 
   React.useEffect(() => {
     querySuppliers();
@@ -206,9 +207,8 @@ export const SupplierList = () => {
               rowCount={count || 0}
               rowSelectionModel={[selectedRowID]}
               paginationMode="server"
-            // local text is the prop in which defines the text to translate
-            // localeText={}
-            // checkboxSelection
+              loading={loading}
+              localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
             />
           </div>
         </Grid>

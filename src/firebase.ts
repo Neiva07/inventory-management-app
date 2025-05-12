@@ -8,33 +8,29 @@ import { getAuth } from "firebase/auth";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 export const firebaseConfig = {
-  apiKey: "AIzaSyB2Ak1S0jr6IIvLDxf-P-cKkeNbZG9sp1E",
+  apiKey: window.env.FIREBASE_API_KEY,
   projectId: "inventory-management-app-8aee0",
   storageBucket: "inventory-management-app-8aee0.appspot.com",
-  messagingSenderId: "908617527974",
-  appId: "1:908617527974:web:58cf25bea368d5d21bfa67",
+  messagingSenderId: window.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: window.env.FIREBASE_APP_ID,
   measurementId: "G-PVRX9LR0MG",
+  authDomain: window.env.FIREBASE_AUTH_DOMAIN,
 };
-// Initialize Firebase
-if (window.location.hostname) {
-  console.log('test environment')
-  // @ts-ignore
-  firebaseConfig.authDomain = "inventory-management-app-8aee0.firebaseapp.com"
+
+if (!firebaseConfig.apiKey || !firebaseConfig.messagingSenderId || !firebaseConfig.appId || !firebaseConfig.authDomain) {
+  throw new Error('Missing required Firebase configuration environment variables');
 }
+
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 const analytics = getAnalytics(app);
-
-
-
 
 initializeFirestore(app,
   {
     localCache:
       persistentLocalCache(/*settings*/{ tabManager: persistentMultipleTabManager(), cacheSizeBytes: CACHE_SIZE_UNLIMITED }),
   });
-
-
 
 export const db = getFirestore(app);

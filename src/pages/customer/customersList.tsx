@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { Customer, deactiveCustomer, deleteCustomer, getCustomers } from '../../model/customer';
 import { useAuth } from 'context/auth';
+import { ptBR } from '@mui/x-data-grid/locales';
 
 const columns: GridColDef[] = [
   { field: 'name', headerName: 'Nome', width: 200 },
@@ -41,6 +42,7 @@ export const CustomerList = () => {
   const [count, setCount] = React.useState<number>();
   const [searchName, setSearchName] = React.useState<string>('');
   const [selectedRowID, setSelectedRowID] = React.useState<string>();
+  const [loading, setLoading] = React.useState(true);
 
   const [statusSelected, setStatusSelected] = React.useState<SelectField<string>>();
   const [pageSize, setPageSize] = React.useState<number>(10);
@@ -48,6 +50,7 @@ export const CustomerList = () => {
   const navigate = useNavigate();
 
   const queryCustomers = React.useCallback(() => {
+    setLoading(true);
     getCustomers({
       userID: user.id,
       pageSize,
@@ -55,14 +58,12 @@ export const CustomerList = () => {
       cursor: customers[-1],
       status: statusSelected?.value
     }).then(result => {
-
       setCustomers(result[0].docs.map(qr => qr.data() as Customer))
       setCount(result[1].data().count)
-    }
-    )
-
+    }).finally(() => {
+      setLoading(false);
+    });
   }, [user, searchName, pageSize, statusSelected])
-
 
   React.useEffect(() => {
     queryCustomers();
@@ -155,7 +156,7 @@ export const CustomerList = () => {
         </Grid>
 
         <Grid xs={12} item marginTop="20px">
-          <div style={{ minHeight: 400, height: '100%' }}>
+          <div style={{ height: '100%', minHeight: 400 }}>
             <DataGrid
               rows={customers}
               columns={columns}
@@ -169,12 +170,11 @@ export const CustomerList = () => {
               onRowSelectionModelChange={handleRowSelection}
               onPaginationModelChange={handlePaginationModelChange}
               hideFooterSelectedRowCount
-              rowCount={count}
+              rowCount={count || 0}
               rowSelectionModel={[selectedRowID]}
               paginationMode="server"
-            // local text is the prop in which defines the text to translate
-            // localeText={}
-            // checkboxSelection
+              loading={loading}
+              localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
             />
           </div>
         </Grid>

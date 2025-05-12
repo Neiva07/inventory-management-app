@@ -4,131 +4,195 @@ import {
   Container,
   Toolbar,
   Typography,
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  Divider,
 } from "@mui/material";
 import { useAuth } from "context/auth";
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import MenuIcon from '@mui/icons-material/Menu';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import PeopleIcon from '@mui/icons-material/People';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import CategoryIcon from '@mui/icons-material/Category';
+import ScaleIcon from '@mui/icons-material/Scale';
+import LogoutIcon from '@mui/icons-material/Logout';
+import LoginIcon from '@mui/icons-material/Login';
 
 export const Navbar = () => {
   const auth = useAuth();
   const navigate = useNavigate();
-  const handleClickProductCategories = () => {
+  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
 
-    navigate("productCategories");
-  }
+  const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMobileMenuAnchor(event.currentTarget);
+  };
 
-  const handleClickUnits = () => {
-    navigate("units");
-  }
+  const handleMobileMenuClose = () => {
+    setMobileMenuAnchor(null);
+  };
 
-
-  const handleClickProductList = () => {
-    navigate("products")
-  }
-  const handleClickSupplierList = () => {
-    navigate("suppliers")
-  }
-  const handleClickCustomerList = () => {
-    navigate("customers")
-  }
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    handleMobileMenuClose();
+  };
 
   const handleSignout = () => {
-    auth.signOut();
-    navigate("login")
-  }
+    auth.logout();
+    navigate("login");
+  };
 
-  console.log(location)
+  const menuItems = [
+    { text: 'Produtos', path: 'products', icon: <InventoryIcon /> },
+    { text: 'Fornecedores', path: 'suppliers', icon: <PeopleIcon /> },
+    { text: 'Vendas', path: 'orders', icon: <ShoppingCartIcon /> },
+    { text: 'Clientes', path: 'customers', icon: <PeopleIcon /> },
+    { text: 'Categoria de Produtos', path: 'productCategories', icon: <CategoryIcon /> },
+    { text: 'Unidades', path: 'units', icon: <ScaleIcon /> },
+  ];
 
   return (
-    <AppBar position="fixed">
+    <AppBar 
+      position="fixed" 
+      sx={{ 
+        backgroundColor: 'primary.main',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      }}
+    >
       <Container maxWidth="xl">
-        {auth.user ?
+        {auth.user ? (
+          <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography
+                variant="h5"
+                component="div"
+                onClick={() => navigate("/")}
+                sx={{
+                  mr: 4,
+                  display: { xs: 'none', md: 'flex' },
+                  color: 'inherit',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    opacity: 0.8,
+                  },
+                }}
+              >
+                Stockify
+              </Typography>
 
-          <Toolbar disableGutters>
-            <Typography
-              variant="h6"
-              noWrap
-              component="a"
-              href=""
+              {/* Desktop Menu */}
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
+                {menuItems.map((item) => (
+                  <Button
+                    key={item.text}
+                    onClick={() => handleNavigation(item.path)}
+                    startIcon={item.icon}
+                    sx={{
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      },
+                    }}
+                  >
+                    {item.text}
+                  </Button>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Mobile Menu Button */}
+            <IconButton
+              size="large"
+              edge="end"
+              color="inherit"
+              aria-label="menu"
+              onClick={handleMobileMenuOpen}
+              sx={{ display: { xs: 'flex', md: 'none' } }}
+            >
+              <MenuIcon />
+            </IconButton>
+
+            {/* Logout Button */}
+            <Button
+              onClick={handleSignout}
+              startIcon={<LogoutIcon />}
               sx={{
-                mr: 2,
-                display: { xs: "none", md: "flex" },
-                fontFamily: "monospace",
-                fontWeight: 700,
-                letterSpacing: ".3rem",
-                color: "inherit",
-                textDecoration: "none",
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                },
+              }}
+            >
+              Deslogar
+            </Button>
+
+            {/* Mobile Menu */}
+            <Menu
+              anchorEl={mobileMenuAnchor}
+              open={Boolean(mobileMenuAnchor)}
+              onClose={handleMobileMenuClose}
+              PaperProps={{
+                sx: {
+                  mt: 1.5,
+                  minWidth: 200,
+                },
+              }}
+            >
+              {menuItems.map((item) => (
+                <MenuItem
+                  key={item.text}
+                  onClick={() => handleNavigation(item.path)}
+                  sx={{
+                    py: 1,
+                    '&:hover': {
+                      backgroundColor: 'rgba(26, 35, 126, 0.08)',
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {item.icon}
+                    {item.text}
+                  </Box>
+                </MenuItem>
+              ))}
+            </Menu>
+          </Toolbar>
+        ) : (
+          <Toolbar>
+            <Typography
+              variant="h5"
+              component="div"
+              onClick={() => navigate("/")}
+              sx={{
+                flexGrow: 1,
+                color: 'inherit',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                '&:hover': {
+                  opacity: 0.8,
+                },
               }}
             >
               Stockify
             </Typography>
             <Button
-              key={"products"}
-              onClick={handleClickProductList}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              Produtos
-            </Button>
-
-            <Button
-              key={"suppliers"}
-              onClick={handleClickSupplierList}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              Fornecedores
-            </Button>
-            <Button
-              key={"units"}
-              onClick={() => navigate("orders")}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              Vendas
-            </Button>
-
-            <Button
-              key={"customers"}
-              onClick={handleClickCustomerList}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              Clientes
-            </Button>
-            <Button
-              key={"productCategories"}
-              onClick={handleClickProductCategories}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              Categoria de Produtos
-            </Button>
-            <Button
-              key={"units"}
-              onClick={handleClickUnits}
-              sx={{ my: 2, color: "white", display: "block" }}
-            >
-              Unidades
-            </Button>
-            <Button
-              key={"signout"}
-              onClick={handleSignout}
-              style={{ right: 0, position: 'absolute' }}
-              sx={{ my: 2, color: "white" }}
-            >
-              Deslogar
-            </Button>
-
-          </Toolbar>
-          : (
-            <Button
-              key={"login"}
               onClick={() => navigate("login")}
-              sx={{ my: 2, color: "white", display: "block" }}
+              startIcon={<LoginIcon />}
+              sx={{
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                },
+              }}
             >
               Logar
             </Button>
-
-          )
-
-        }
-
+          </Toolbar>
+        )}
       </Container>
     </AppBar>
   );

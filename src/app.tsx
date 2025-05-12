@@ -24,17 +24,128 @@ import { OrderForm } from "pages/order/OrderForm";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { OrderList } from "pages/order/OrderList";
-
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Home } from "home";
+import { ptBR } from '@mui/x-data-grid/locales';
+import ptBRDateFns from 'date-fns/locale/pt-BR';
+
+declare module '@mui/material/styles' {
+  interface Components {
+    MuiDataGrid?: {
+      styleOverrides?: {
+        root?: {
+          fontFamily?: string;
+          '& .MuiDataGrid-cell'?: {
+            fontWeight?: number;
+          };
+          '& .MuiDataGrid-columnHeader'?: {
+            fontWeight?: number;
+          };
+        };
+      };
+    };
+  }
+}
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#6F1386',
+      main: '#1A237E', // Deep Indigo
+      light: '#534BAE',
+      dark: '#000051',
+      contrastText: '#ffffff',
     },
     secondary: {
-      main: '#9935FD',
+      main: '#00897B', // Teal
+      light: '#4DB6AC',
+      dark: '#005B4F',
+      contrastText: '#ffffff',
+    },
+    background: {
+      default: '#F5F5F5',
+      paper: '#FFFFFF',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    h1: {
+      fontWeight: 700,
+      letterSpacing: '-0.01562em',
+    },
+    h2: {
+      fontWeight: 700,
+      letterSpacing: '-0.00833em',
+    },
+    h3: {
+      fontWeight: 600,
+      letterSpacing: '0em',
+    },
+    h4: {
+      fontWeight: 600,
+      letterSpacing: '0.00735em',
+    },
+    h5: {
+      fontWeight: 600,
+      letterSpacing: '0em',
+    },
+    h6: {
+      fontWeight: 600,
+      letterSpacing: '0.0075em',
+    },
+    subtitle1: {
+      fontWeight: 500,
+      letterSpacing: '0.00938em',
+    },
+    subtitle2: {
+      fontWeight: 500,
+      letterSpacing: '0.00714em',
+    },
+    body1: {
+      fontWeight: 400,
+      letterSpacing: '0.00938em',
+    },
+    body2: {
+      fontWeight: 400,
+      letterSpacing: '0.01071em',
+    },
+    button: {
+      fontWeight: 500,
+      letterSpacing: '0.02857em',
+      textTransform: 'none',
+    },
+  },
+  shape: {
+    borderRadius: 8,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 500,
+          borderRadius: 8,
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        },
+      },
+    },
+    MuiDataGrid: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          '& .MuiDataGrid-cell': {
+            fontWeight: 400,
+          },
+          '& .MuiDataGrid-columnHeader': {
+            fontWeight: 600,
+          },
+        },
+      },
     },
   },
 });
@@ -60,13 +171,10 @@ const App = () => {
         />
         <Navbar />
         <Outlet />
-
       </Box>
     </>
   );
 };
-
-
 
 function PrivateRoute() {
   const auth = useAuth();
@@ -74,12 +182,9 @@ function PrivateRoute() {
     return <Navigate to="/login" />
   }
   return <Outlet />
-
 }
 
 const AppRouter = () => {
-
-
   return <>
     <Router>
       <Routes>
@@ -112,28 +217,25 @@ const AppRouter = () => {
 
             <Route path="*" element={<p>There's nothing here: 404!</p>} />
           </Route>
-
         </Route>
       </Routes>
     </Router>
-
   </>
-
 }
+
 function render() {
   ReactDOM.render(
     <>
       <React.StrictMode>
         <AuthContextProvider>
           <ThemeProvider theme={theme}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBRDateFns}>
               <AppRouter />
             </LocalizationProvider>
           </ThemeProvider>
         </AuthContextProvider>
       </React.StrictMode>
     </>,
-
     document.body
   );
 }

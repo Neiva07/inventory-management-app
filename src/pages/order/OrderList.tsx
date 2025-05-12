@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { DataGrid, GridCellParams, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
 import { deleteOrder, getOrders, Order, OrderStatus } from '../../model/orders';
-import { Autocomplete, Button, Grid, TextField } from '@mui/material';
+import { Autocomplete, Button, Grid, TextField, Skeleton } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { Customer, getCustomers } from 'model/customer';
 import { useAuth } from 'context/auth';
@@ -9,6 +9,7 @@ import { statuses } from './OrderFormHeader';
 import { DatePicker } from '@mui/x-date-pickers';
 import { SelectField } from 'pages/product/useProductCreateForm';
 import { format } from "date-fns"
+import { ptBR } from '@mui/x-data-grid/locales';
 
 const columns: GridColDef[] = [
   {
@@ -88,6 +89,7 @@ export const OrderList = () => {
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [startDate, setStartDate] = React.useState<Date>();
   const [endDate, setEndDate] = React.useState<Date>();
+  const [loading, setLoading] = React.useState(true);
 
   const navigate = useNavigate();
 
@@ -95,8 +97,8 @@ export const OrderList = () => {
     getCustomers({ pageSize: 10000, userID: user.id }).then(queryResult => setCustomers(queryResult[0].docs.map(qr => qr.data() as Customer)))
   }, [user]);
 
-
   const queryOrders = React.useCallback(() => {
+    setLoading(true);
     getOrders({
       pageSize,
       dateRange: {
@@ -108,19 +110,16 @@ export const OrderList = () => {
       cursor: orders[-1],
       status: statusSelected,
     }).then(result => {
-
       setOrders(result[0].docs.map(qr => qr.data() as Order))
       setCount(result[1].data().count)
-    }
-    )
-
+    }).finally(() => {
+      setLoading(false);
+    });
   }, [startDate, endDate, selectedCustomer, pageSize, statusSelected])
-
 
   React.useEffect(() => {
     queryOrders();
   }, [startDate, endDate, selectedCustomer, statusSelected]);
-
 
   const handleCustomerSelection = (_: React.SyntheticEvent<Element, Event>, value: Customer) => {
     setSelectedCustomer(value)
@@ -211,27 +210,28 @@ export const OrderList = () => {
           > Cadastrar Venda </Button>
         </Grid>
 
-
-
-        <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
-          <DataGrid
-            rows={orders}
-            columns={columns}
-            initialState={{
-              pagination: {
-                paginationModel: { page: 0, pageSize },
-              },
-            }}
-            pageSizeOptions={[10, 20]}
-            pagination
-            onRowSelectionModelChange={handleRowSelection}
-            onPaginationModelChange={handlePaginationModelChange}
-            hideFooterSelectedRowCount
-            rowCount={count}
-            rowSelectionModel={[selectedRowID]}
-            paginationMode="server"
-            disableColumnMenu
-          />
+        <Grid xs={12} item marginTop="20px">
+          <div style={{ height: '100%', minHeight: 400 }}>
+            <DataGrid
+              rows={orders}
+              columns={columns}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize },
+                },
+              }}
+              pageSizeOptions={[10, 20]}
+              pagination
+              onRowSelectionModelChange={handleRowSelection}
+              onPaginationModelChange={handlePaginationModelChange}
+              hideFooterSelectedRowCount
+              rowCount={count || 0}
+              rowSelectionModel={[selectedRowID]}
+              paginationMode="server"
+              loading={loading}
+              localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
+            />
+          </div>
         </Grid>
       </Grid>
     </>

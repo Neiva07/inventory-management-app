@@ -1,40 +1,88 @@
 import React from "react"
-import { Button } from "@mui/material"
+import { Button, Box, Typography, Paper, Container } from "@mui/material"
 import { useAuth } from "context/auth"
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify"
 
 export const Login = () => {
-  const { user, loginWithGoogle } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
-  const handleGoogleSignIn = async () => {
-    try {
-      await loginWithGoogle()
-      toast.success("Você entrou com sucesso!")
-    } catch (e) {
-      console.error(e);
-      console.error(e.message);
-      toast.error('Erro ao logar com o Google')
-    }
-  }
-
 
   React.useEffect(() => {
     if (user) {
-      navigate("/")
+      navigate("/");
     }
-  }, [user])
+  }, [user]);
 
-  return <>
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
+  if (!session) {
+    return (
+      <Container maxWidth="sm">
+        <Box
+          sx={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Paper
+            elevation={3}
+            sx={{
+              p: 4,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              width: '100%',
+              maxWidth: 400,
+              borderRadius: 2,
+            }}
+          >
+            <Typography 
+              variant="h4" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 600,
+                color: 'primary.main',
+                mb: 2
+              }}
+            >
+              Stockify
+            </Typography>
 
-      <Button onClick={handleGoogleSignIn}> Entrar com o Google </Button>
+            <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 2 }}>
+              Gerencie seu inventário de forma eficiente
+            </Typography>
 
-    </div>
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              onClick={() => {
+                console.log(window.env.LOGIN_URL)
+                window.electron.openExternal(window.env.LOGIN_URL)
+              }}
+              sx={{
+                py: 1.5,
+                fontSize: '1.1rem',
+                textTransform: 'none',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                '&:hover': {
+                  boxShadow: '0 6px 8px rgba(0, 0, 0, 0.15)',
+                },
+              }}
+            >
+              Entrar
+            </Button>
 
-  </>
+            <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+              Faça login para acessar o sistema
+            </Typography>
+          </Paper>
+        </Box>
+      </Container>
+    );
+  }
+
+  return null;
 }
