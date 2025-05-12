@@ -23,8 +23,20 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+          cache: 'npm'
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          npm ci --prefer-offline --no-audit
+        timeout-minutes: 10
 
       - name: Publish app
         env:
@@ -36,3 +48,4 @@ jobs:
           FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
           LOGIN_URL: ${{ secrets.LOGIN_URL }}
         run: yarn run publish
+        timeout-minutes: 15
