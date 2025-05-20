@@ -37,7 +37,6 @@ jobs:
 
       - name: Clean up lock files
         run: |
-          rm -f package-lock.json
           yarn install --network-timeout 100000
 
       - name: Publish app
