@@ -72,7 +72,10 @@ const config: ForgeConfig = {
           owner: 'Neiva07',
           name: 'inventory-management-app'
         },
-        prerelease: true
+        prerelease: true,
+        draft: false,
+        generateReleaseNotes: true,
+        force: true
       }
     }
   ]
