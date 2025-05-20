@@ -2,8 +2,7 @@ import { useMemo } from "react"
 import * as yup from "yup";
 import { ProductFormDataInterface } from "./useProductCreateForm";
 
-
-const useProductFormValidationSchema = () : yup.ObjectSchema<ProductFormDataInterface>=> {
+const useProductFormValidationSchema = () : yup.ObjectSchema<ProductFormDataInterface> => {
     return useMemo(() => {
       return yup.object().shape({
         productCategory: yup.object().shape({

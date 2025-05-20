@@ -90,11 +90,11 @@ export const SupplierForm = () => {
                 control={formMethods.control}
                 render={({ field }) => {
                   return (
+                    // @ts-ignore
                     <ReactInputMask
                       {...field}
                       mask={"99.999.999/9999-99"}
                     >
-                      {/* @ts-ignore */}
                       {() =>
                         <TextField
                           {...field}
@@ -134,6 +134,7 @@ export const SupplierForm = () => {
                 control={formMethods.control}
                 render={({ field }) => {
                   return (
+                    // @ts-ignore
                     <ReactInputMask
                       {...field}
                       mask={"99.999-999"}
@@ -226,11 +227,11 @@ export const SupplierForm = () => {
 
                   // const mask = field.value?.length < 10 ? "(99) 9999-9999" : "(99) 99999-9999"
                   return (
+                    // @ts-ignore
                     <ReactInputMask
                       {...field}
                       mask={"(99) 9999-99999"}
                     >
-                      {/* @ts-ignore */}
                       {() =>
 
                         <TextField
@@ -255,6 +256,7 @@ export const SupplierForm = () => {
                 render={({ field: { ref, ...field } }) => {
 
                   return (
+                    // @ts-ignore
                     <ReactInputMask
                       {...field}
                       mask={"(99) 9999-99999"}

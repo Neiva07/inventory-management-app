@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import useOrderFormValidationSchema from './useOrderFormValidation';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -62,7 +62,7 @@ export const useOrderForm = (orderID?: string) => {
   const formMethods = useForm<OrderFormDataInterface>({
     defaultValues: INITIAL_ORDER_VALUES,
     mode: 'onBlur',
-    resolver: yupResolver(formValidationSchema),
+    resolver: yupResolver(formValidationSchema) as Resolver<OrderFormDataInterface>,
   });
 
   const getOrderFormData = React.useCallback(async (orderID?: string) => {

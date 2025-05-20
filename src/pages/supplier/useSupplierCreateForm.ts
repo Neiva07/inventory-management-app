@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import useSupplierFormValidationSchema from './useSupplierFormValidationSchema';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -61,7 +61,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
   const formMethods = useForm<SupplierFormDataInterface>({
     defaultValues: INITIAL_SUPPLIER_FORM_STATE,
     mode: 'onBlur',
-    resolver: yupResolver(formValidationSchema),
+    resolver: yupResolver(formValidationSchema) as Resolver<SupplierFormDataInterface>,
   });
 
 

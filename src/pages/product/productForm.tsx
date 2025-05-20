@@ -22,7 +22,8 @@ export const ProductForm = () => {
   const { user } = useAuth();
 
   const { productID } = useParams();
-  const { register, product, onFormSubmit, onFormUpdate, onDeactiveProduct, onActivateProduct, onDelete, ...formMethods } = useProductCreateForm(productID);
+  const formMethods = useProductCreateForm(productID);
+  const { register, product, onFormSubmit, onFormUpdate, onDeactiveProduct, onActivateProduct, onDelete } = formMethods; 
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
   const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
   const [units, setUnits] = useState<Array<Unit>>([]);

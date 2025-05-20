@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn, SubmitHandler, Resolver } from "react-hook-form";
 import useProductFormValidationSchema from "./useProductFormValidationSchema";
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback } from "react";
@@ -81,7 +81,7 @@ export const useProductCreateForm = (productID?: string) => {
   const formMethods = useForm<ProductFormDataInterface>({
     defaultValues: INITIAL_PRODUCT_FORM_STATE,
     mode: 'onChange',
-    resolver: yupResolver(formValidationSchema),
+    resolver: yupResolver(formValidationSchema) as Resolver<ProductFormDataInterface>,
   });
 
 
@@ -134,7 +134,7 @@ export const useProductCreateForm = (productID?: string) => {
   }, [fetchedProductForm])
 
 
-  const onSubmit = useCallback((data: ProductFormDataInterface) => {
+  const onSubmit: SubmitHandler<ProductFormDataInterface> = useCallback((data) => {
 
     try {
       createProduct({

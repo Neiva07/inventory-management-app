@@ -62,6 +62,7 @@ export const CustomerForm = () => {
                 control={formMethods.control}
                 render={({ field }) => {
                   return (
+                    // @ts-ignore
                     <ReactInputMask
                       {...field}
                       mask={"999.999.999-99"}
@@ -88,6 +89,7 @@ export const CustomerForm = () => {
                 control={formMethods.control}
                 render={({ field }) => {
                   return (
+                    // @ts-ignore
                     <ReactInputMask
                       {...field}
                       mask={"999999-9"}
@@ -132,6 +134,7 @@ export const CustomerForm = () => {
                 control={formMethods.control}
                 render={({ field }) => {
                   return (
+                    // @ts-ignore
                     <ReactInputMask
                       {...field}
                       mask={"99.999-999"}
@@ -226,6 +229,7 @@ export const CustomerForm = () => {
                 render={({ field: { ref, ...field } }) => {
                   // const mask = field.value?.length < 10 ? "(99) 9999-9999" : "(99) 99999-9999"
                   return (
+                    // @ts-ignore
                     <ReactInputMask
                       {...field}
                       mask={"(99) 9999-99999"}

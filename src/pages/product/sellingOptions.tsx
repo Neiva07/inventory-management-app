@@ -23,13 +23,13 @@ import { useAuth } from "context/auth";
 
 type SellingOptionProps = {
   sellingOption: FormSellingOption;
-  formMethods: Partial<UseFormReturn<ProductFormDataInterface, any, undefined>>;
+  formMethods: UseFormReturn<ProductFormDataInterface>;
   index: number;
 };
 
 type PriceProps = {
   price: Price;
-  formMethods: Partial<UseFormReturn<ProductFormDataInterface, any, undefined>>;
+  formMethods: UseFormReturn<ProductFormDataInterface>;
   index: number;
   parentIndex: number;
 };
@@ -283,7 +283,7 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
 };
 
 export const SellingOptions = (
-  formMethods: Partial<UseFormReturn<ProductFormDataInterface, any, undefined>>
+  formMethods: UseFormReturn<ProductFormDataInterface>
 ) => {
   const handleAddNewSellingOption = () => {
     formMethods.setValue("sellingOptions", [

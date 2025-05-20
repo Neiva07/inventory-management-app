@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import useCustomerFormValidationSchema from './useCustomerFormValidationSchema';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -44,7 +44,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
   const formMethods = useForm<CustomerFormDataInterface>({
     defaultValues: INITIAL_CUSTOMER_VALUES,
     mode: 'onBlur',
-    resolver: yupResolver(formValidationSchema),
+    resolver: yupResolver(formValidationSchema) as Resolver<CustomerFormDataInterface>,
   });
 
   const getCustomerFormData = React.useCallback(async (customerID?: string) => {
