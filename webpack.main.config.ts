@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { rules } from './webpack.rules';
+import { plugins } from './webpack.plugins';
 
 export const mainConfig: Configuration = {
   /**
@@ -19,6 +20,7 @@ export const mainConfig: Configuration = {
     rules,
   },
   plugins: [
+    ...plugins,
     new webpack.DefinePlugin({
       'process.env.CLERK_API_SECRET_KEY': JSON.stringify(process.env.CLERK_API_SECRET_KEY),
       'process.env.FIREBASE_API_KEY': JSON.stringify(process.env.FIREBASE_API_KEY),
