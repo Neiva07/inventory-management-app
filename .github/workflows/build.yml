@@ -39,14 +39,6 @@ jobs:
         run: |
           yarn install --network-timeout 100000
 
-      - name: Clean up existing release assets
-        if: matrix.os.name == 'linux'  # Only run on one OS to avoid race conditions
-        run: |
-          LATEST_RELEASE=$(gh api repos/${{ github.repository }}/releases/latest --jq .id 2>/dev/null || echo "")
-          if [ ! -z "$LATEST_RELEASE" ]; then
-            gh api repos/${{ github.repository }}/releases/$LATEST_RELEASE/assets --jq '.[].id' | xargs -I {} gh api repos/${{ github.repository }}/releases/assets/{} -X DELETE
-          fi
-
       - name: Publish app
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

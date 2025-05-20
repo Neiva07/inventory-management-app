@@ -74,6 +74,7 @@ const config: ForgeConfig = {
         },
         prerelease: true,
         draft: false,
+        overwrite: true,
         generateReleaseNotes: true,
         force: true
       }
