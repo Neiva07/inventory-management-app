@@ -23,7 +23,50 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-let mainWindow: BrowserWindow
+let mainWindow: BrowserWindow | null = null;
+
+// Prevent multiple instances of the app
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine) => {
+    // Someone tried to run a second instance, we should focus our window
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.focus();
+    }
+
+    // Handle the protocol URL if it exists
+    const url = commandLine.find(arg => arg.startsWith('inventarum://'));
+    if (url) {
+      handleProtocolUrl(url);
+    }
+  });
+}
+
+// Function to handle protocol URL
+async function handleProtocolUrl(url: string) {
+  const sessionId = new URL(url).searchParams.get("sessionId");
+  
+  if (sessionId && mainWindow) {
+    try {
+      const {data: session} = await clerkClient.get(`/sessions/${sessionId}`);
+
+      if (session) {
+        console.log("Clerk session:", session);
+        mainWindow.webContents.send("auth-session-received", session);
+      } else {
+        console.error("Failed to get session token:", session);
+      }
+    } catch (error) {
+      console.error("Error retrieving Clerk session:", error);
+    }
+  }
+}
 
 // Register IPC handlers
 console.log('Registering IPC handlers...');
@@ -88,7 +131,6 @@ ipcMain.handle('get-env-variable', (event, key: string) => {
 console.log('IPC handlers registered');
 
 const createWindow = (): void => {
-  console.log(MAIN_WINDOW_WEBPACK_ENTRY, MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY)
   // Create the browser window.
   mainWindow = new BrowserWindow({
     height: 800,
@@ -117,37 +159,9 @@ app.on('ready', createWindow);
 app.setAsDefaultProtocolClient("inventarum");
 
 app.on('open-url', async (e, url) => {
-  e.preventDefault()
-  const sessionId = new URL(url).searchParams.get("sessionId");
-  
-  if (sessionId) {
-    try {
-      const {data: session} = await clerkClient.get(`/sessions/${sessionId}`)
-
-      if (session) {
-        console.log("Clerk session:", session);
-        
-        // If window exists, focus it
-        if (mainWindow) {
-          if (mainWindow.isMinimized()) {
-            mainWindow.restore();
-          }
-          mainWindow.focus();
-        } else {
-          // Only create a new window if one doesn't exist
-          createWindow();
-        }
-        
-        // Send the session token to React
-        mainWindow.webContents.send("auth-session-received", session);
-      } else {
-        console.error("Failed to get session token:", session);
-      }
-    } catch (error) {
-      console.error("Error retrieving Clerk session:", error);
-    }
-  }
-})
+  e.preventDefault();
+  handleProtocolUrl(url);
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
