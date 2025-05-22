@@ -103,8 +103,10 @@ const createWindow = (): void => {
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // Only open DevTools in development mode
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.webContents.openDevTools();
+  }
 };
 
 // This method will be called when Electron has finished
@@ -118,14 +120,25 @@ app.on('open-url', async (e, url) => {
   e.preventDefault()
   const sessionId = new URL(url).searchParams.get("sessionId");
   
-  if (sessionId && mainWindow) {
+  if (sessionId) {
     try {
       const {data: session} = await clerkClient.get(`/sessions/${sessionId}`)
 
       if (session) {
         console.log("Clerk session:", session);
         
-        // Send the session token to React instead of the sign-in token
+        // If window exists, focus it
+        if (mainWindow) {
+          if (mainWindow.isMinimized()) {
+            mainWindow.restore();
+          }
+          mainWindow.focus();
+        } else {
+          // Only create a new window if one doesn't exist
+          createWindow();
+        }
+        
+        // Send the session token to React
         mainWindow.webContents.send("auth-session-received", session);
       } else {
         console.error("Failed to get session token:", session);
@@ -133,7 +146,6 @@ app.on('open-url', async (e, url) => {
     } catch (error) {
       console.error("Error retrieving Clerk session:", error);
     }
-    // mainWindow.webContents.send('auth-session-received', token);
   }
 })
 
