@@ -28,6 +28,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Home } from "home";
 import { ptBR } from '@mui/x-data-grid/locales';
 import ptBRDateFns from 'date-fns/locale/pt-BR';
+import { UpdateNotification } from './components/UpdateNotification';
 
 declare module '@mui/material/styles' {
   interface Components {
@@ -169,6 +170,7 @@ const App = () => {
           pauseOnHover
           theme="colored"
         />
+        <UpdateNotification />
         <Navbar />
         <Outlet />
       </Box>

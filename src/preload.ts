@@ -3,6 +3,7 @@
 
 import { contextBridge, ipcRenderer } from 'electron';
 import { Session } from 'model/session';
+import type { UpdateInfo } from 'electron-updater';
 
 contextBridge.exposeInMainWorld('electron', {
   onAuthSessionReceived: (callback: (session: Session) => void) => {
@@ -11,6 +12,17 @@ contextBridge.exposeInMainWorld('electron', {
   fetchClerkUser: (user_id: string) => ipcRenderer.invoke('fetch-clerk-user', user_id),
   clerkLogout: (sessionId: string) => ipcRenderer.invoke('clerk-logout', sessionId),
   openExternal: (url: string) => ipcRenderer.invoke('open-external-url', url),
+  onUpdateAvailable: (callback: (info: UpdateInfo) => void) => {
+    ipcRenderer.on('update-available', (_, info) => callback(info));
+  },
+  onUpdateDownloaded: (callback: (info: UpdateInfo) => void) => {
+    ipcRenderer.on('update-downloaded', (_, info) => callback(info));
+  },
+  onUpdateError: (callback: (error: Error) => void) => {
+    ipcRenderer.on('update-error', (_, error) => callback(error));
+  },
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
 });
 
 contextBridge.exposeInMainWorld('env', {

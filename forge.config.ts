@@ -8,7 +8,7 @@ import { rendererConfig } from './webpack.renderer.config';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    executableName: "Inventory App",
+    executableName: "Stockify App",
   },
   rebuildConfig: {},
   makers: [

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
-
+import { autoUpdater, UpdateInfo } from 'electron-updater';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -130,6 +130,10 @@ ipcMain.handle('get-env-variable', (event, key: string) => {
 
 console.log('IPC handlers registered');
 
+// Configure auto-updater
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
+
 const createWindow = (): void => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -149,6 +153,9 @@ const createWindow = (): void => {
   if (process.env.NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools();
   }
+
+  // Check for updates
+  autoUpdater.checkForUpdates();
 };
 
 // This method will be called when Electron has finished
@@ -178,6 +185,34 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+// Auto-updater events
+autoUpdater.on('update-available', (info: UpdateInfo) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-available', info);
+  }
+});
+
+autoUpdater.on('update-downloaded', (info: UpdateInfo) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-downloaded', info);
+  }
+});
+
+autoUpdater.on('error', (err: Error) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-error', err);
+  }
+});
+
+// IPC handlers for update actions
+ipcMain.handle('download-update', () => {
+  autoUpdater.downloadUpdate();
+});
+
+ipcMain.handle('install-update', () => {
+  autoUpdater.quitAndInstall();
 });
 
 // In this file you can include the rest of your app's specific main process
