@@ -3,38 +3,43 @@ import { WebpackPlugin } from '@electron-forge/plugin-webpack';
 import { mainConfig } from './webpack.main.config';
 import { rendererConfig } from './webpack.renderer.config';
 
-
-
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     executableName: "Stockify App",
+    win32metadata: {
+      CompanyName: "Lucas Neiva",
+      FileDescription: "Inventory Management Application",
+      OriginalFilename: "Stockify.exe",
+      ProductName: "Stockify App",
+      InternalName: "Stockify App"
+    }
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        bin: 'Inventory App',
+        bin: 'Stockify App',
       }
     },
     {
       name: '@electron-forge/maker-zip',
       config: {
-        bin: 'Inventory App',
+        bin: 'Stockify App',
       },
       platforms: ['darwin']
     },
     {
       name: '@electron-forge/maker-deb',
       config: {
-        bin: 'Inventory App',
+        bin: 'Stockify App',
       }
     },
     {
       name: '@electron-forge/maker-rpm',
       config: {
-        bin: 'Inventory App',
+        bin: 'Stockify App',
       }
     }
   ],
@@ -55,7 +60,6 @@ const config: ForgeConfig = {
             html: './src/index.html',
             js: './src/renderer.ts',
             name: 'main_window',
-
             preload: {
               js: './src/preload.ts',
             },
