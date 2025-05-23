@@ -80,7 +80,7 @@ Este software é proprietário e está protegido por direitos autorais. Todos os
 
 ## 📞 Suporte
 
-Para suporte, entre em contato através do email: [seu-email@dominio.com]
+Para suporte, entre em contato através do email: [lucasneiva07@gmail.com]
 
 ## ⚠️ Aviso Legal
 
