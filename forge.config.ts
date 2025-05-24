@@ -13,7 +13,8 @@ const config: ForgeConfig = {
       OriginalFilename: "Stockify.exe",
       ProductName: "Stockify App",
       InternalName: "Stockify App"
-    }
+    },
+    icon: './assets/icons/logo',
   },
   rebuildConfig: {},
   makers: [
@@ -21,6 +22,8 @@ const config: ForgeConfig = {
       name: '@electron-forge/maker-squirrel',
       config: {
         bin: 'Stockify App',
+        iconUrl: './assets/icons/logo.ico',
+        setupIcon: './assets/icons/logo.ico'
       }
     },
     {
@@ -34,12 +37,18 @@ const config: ForgeConfig = {
       name: '@electron-forge/maker-deb',
       config: {
         bin: 'Stockify App',
+        options: {
+          icon: './assets/icons/logo.png'
+        }
       }
     },
     {
       name: '@electron-forge/maker-rpm',
       config: {
         bin: 'Stockify App',
+        options: {
+          icon: './assets/icons/logo.png'
+        }
       }
     }
   ],

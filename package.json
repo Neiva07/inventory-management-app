@@ -1,7 +1,7 @@
 {
   "name": "stockify-app",
   "productName": "Stockify App",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Stockify Application for Inventory Management",
   "main": ".webpack/main",
   "scripts": {
