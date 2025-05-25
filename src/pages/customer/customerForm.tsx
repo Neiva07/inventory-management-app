@@ -49,6 +49,7 @@ export const CustomerForm = () => {
                       variant="outlined"
                       label="Nome"
                       error={!!formMethods.formState.errors.name}
+                      helperText={formMethods.formState.errors.name?.message}
                     />
                   );
                 }}
@@ -74,6 +75,7 @@ export const CustomerForm = () => {
                           variant="outlined"
                           label="CPF"
                           error={!!formMethods.formState.errors.cpf}
+                          helperText={formMethods.formState.errors.cpf?.message}
                         />
                       }
                     </ReactInputMask>
@@ -101,6 +103,7 @@ export const CustomerForm = () => {
                           variant="outlined"
                           label="RG(Identidade)"
                           error={!!formMethods.formState.errors.rg}
+                          helperText={formMethods.formState.errors.rg?.message}
                         />
                       }
                     </ReactInputMask>
@@ -121,6 +124,7 @@ export const CustomerForm = () => {
                       variant="outlined"
                       label="Endereço"
                       error={!!(formMethods.formState.errors.address?.street)}
+                      helperText={formMethods.formState.errors.address?.street?.message}
                     />
                   );
                 }}
@@ -146,6 +150,7 @@ export const CustomerForm = () => {
                           variant="outlined"
                           label="CEP"
                           error={!!formMethods.formState.errors.address?.postalCode}
+                          helperText={formMethods.formState.errors.address?.postalCode?.message}
                         />
                       }
                     </ReactInputMask>
@@ -166,6 +171,7 @@ export const CustomerForm = () => {
                       variant="outlined"
                       label="Cidade"
                       error={!!(formMethods.formState.errors.address?.city)}
+                      helperText={formMethods.formState.errors.address?.city?.message}
                     />
                   );
                 }}
@@ -203,6 +209,7 @@ export const CustomerForm = () => {
                             variant="outlined"
                             label="Estado"
                             error={!!(formMethods.formState.errors.address?.region)}
+                            helperText={formMethods.formState.errors.address?.region?.message}
                           />
                         )}
                         value={region}
@@ -242,6 +249,7 @@ export const CustomerForm = () => {
                           variant="outlined"
                           label="Telefone"
                           error={!!formMethods.formState.errors.phone}
+                          helperText={formMethods.formState.errors.phone?.message}
                         />
                       }
                     </ReactInputMask>

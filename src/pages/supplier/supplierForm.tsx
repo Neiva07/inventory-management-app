@@ -59,6 +59,7 @@ export const SupplierForm = () => {
                       variant="outlined"
                       label="Nome Fantasia"
                       error={!!formMethods.formState.errors.tradeName}
+                      helperText={formMethods.formState.errors.tradeName?.message}
                     />
                   );
                 }}
@@ -77,6 +78,7 @@ export const SupplierForm = () => {
                       variant="outlined"
                       label="Razão Social"
                       error={!!formMethods.formState.errors.legalName}
+                      helperText={formMethods.formState.errors.legalName?.message}
                     />
                   );
                 }}
@@ -101,6 +103,7 @@ export const SupplierForm = () => {
                           variant="outlined"
                           label="CNPJ"
                           error={!!formMethods.formState.errors.entityID}
+                          helperText={formMethods.formState.errors.entityID?.message}
                         />
                       }
                     </ReactInputMask>
@@ -121,6 +124,7 @@ export const SupplierForm = () => {
                       variant="outlined"
                       label="Endereço"
                       error={!!(formMethods.formState.errors.address?.street)}
+                      helperText={formMethods.formState.errors.address?.street?.message}
                     />
                   );
                 }}
@@ -146,6 +150,7 @@ export const SupplierForm = () => {
                           variant="outlined"
                           label="CEP"
                           error={!!formMethods.formState.errors.address?.postalCode}
+                          helperText={formMethods.formState.errors.address?.postalCode?.message}
                         />
                       }
                     </ReactInputMask>
@@ -166,6 +171,7 @@ export const SupplierForm = () => {
                       variant="outlined"
                       label="Cidade"
                       error={!!(formMethods.formState.errors.address?.city)}
+                      helperText={formMethods.formState.errors.address?.city?.message}
                     />
                   );
                 }}
@@ -203,6 +209,7 @@ export const SupplierForm = () => {
                             variant="outlined"
                             label="Estado"
                             error={!!(formMethods.formState.errors.address?.region)}
+                            helperText={formMethods.formState.errors.address?.region?.message}
                           />
                         )}
                         value={region}
@@ -239,6 +246,7 @@ export const SupplierForm = () => {
                           variant="outlined"
                           label="Telefone da Empresa"
                           error={!!formMethods.formState.errors.companyPhone}
+                          helperText={formMethods.formState.errors.companyPhone?.message}
                         />
                       }
                     </ReactInputMask>
@@ -269,6 +277,7 @@ export const SupplierForm = () => {
                           variant="outlined"
                           label="Telefone do Contato"
                           error={!!formMethods.formState.errors.contactPhone}
+                          helperText={formMethods.formState.errors.contactPhone?.message}
                         />
                       }
                     </ReactInputMask>
@@ -289,6 +298,7 @@ export const SupplierForm = () => {
                       variant="outlined"
                       label="Nome do contato"
                       error={!!formMethods.formState.errors.contactName}
+                      helperText={formMethods.formState.errors.contactName?.message}
                     />
                   );
                 }}
@@ -322,6 +332,7 @@ export const SupplierForm = () => {
                           variant="outlined"
                           label="Categorias de Produto"
                           error={!!formMethods.formState.errors.productCategories}
+                          helperText={formMethods.formState.errors.productCategories?.message}
                         />
                       )}
                       value={value}
@@ -354,6 +365,7 @@ export const SupplierForm = () => {
                       variant="outlined"
                       label="Prazo de crédito"
                       error={!!formMethods.formState.errors.daysToPay}
+                      helperText={formMethods.formState.errors.daysToPay?.message}
                     />
                   );
                 }}

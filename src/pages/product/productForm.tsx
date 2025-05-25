@@ -76,6 +76,7 @@ export const ProductForm = () => {
                       variant="outlined"
                       label="Nome do produto"
                       error={!!formMethods.formState.errors.title}
+                      helperText={formMethods.formState.errors.title?.message}
                     />
                   );
                 }}
@@ -116,6 +117,7 @@ export const ProductForm = () => {
                             error={
                               !!formMethods.formState.errors.productCategory
                             }
+                            helperText={formMethods.formState.errors.productCategory?.label?.message}
                           />
                         )}
                         isOptionEqualToValue={(option, value) =>
@@ -145,6 +147,8 @@ export const ProductForm = () => {
                       }}
                       value={description}
                       onChange={onChange}
+                      error={!!formMethods.formState.errors.description}
+                      helperText={formMethods.formState.errors.description?.message}
                     />
                   );
                 }}
@@ -257,6 +261,7 @@ export const ProductForm = () => {
                             variant="outlined"
                             label="Unidade"
                             error={!!formMethods.formState.errors.buyUnit}
+                            helperText={formMethods.formState.errors.buyUnit?.label?.message}
                           />
                         )}
                         isOptionEqualToValue={(option, value) =>

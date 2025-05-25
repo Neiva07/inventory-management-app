@@ -79,9 +79,8 @@ export const OrderFormHeader = () => {
                           {...params}
                           variant="outlined"
                           label="Cliente"
-                          error={
-                            !!formMethods.formState.errors.customer
-                          }
+                          error={!!formMethods.formState.errors.customer}
+                          helperText={formMethods.formState.errors.customer?.label?.message}
                         />
                       )}
                       isOptionEqualToValue={(option, value) =>
@@ -121,9 +120,8 @@ export const OrderFormHeader = () => {
                           {...params}
                           variant="outlined"
                           label="Tipo de venda"
-                          error={
-                            !!formMethods.formState.errors.status
-                          }
+                          error={!!formMethods.formState.errors.status}
+                          helperText={formMethods.formState.errors.status?.message}
                         />
                       )}
                       isOptionEqualToValue={(option, value) =>
@@ -163,9 +161,8 @@ export const OrderFormHeader = () => {
                           {...params}
                           variant="outlined"
                           label="Tipo de pagamento"
-                          error={
-                            !!formMethods.formState.errors.paymentType
-                          }
+                          error={!!formMethods.formState.errors.paymentType}
+                          helperText={formMethods.formState.errors.paymentType?.message}
                         />
                       )}
                       isOptionEqualToValue={(option, value) =>
@@ -187,7 +184,16 @@ export const OrderFormHeader = () => {
               control={formMethods.control}
               render={({ field }) => {
                 return (
-                  <DatePicker {...field} label="Data de Vencimento" />
+                  <DatePicker 
+                    {...field} 
+                    label="Data de Vencimento" 
+                    slotProps={{
+                      textField: {
+                        error: !!formMethods.formState.errors.dueDate,
+                        helperText: formMethods.formState.errors.dueDate?.message
+                      }
+                    }}
+                  />
                 );
               }}
             />
@@ -200,7 +206,13 @@ export const OrderFormHeader = () => {
               control={formMethods.control}
               render={({ field }) => {
                 return (
-                  <TextField {...field} disabled label="Comissão Total (R$)" />
+                  <TextField 
+                    {...field} 
+                    disabled 
+                    label="Comissão Total (R$)" 
+                    error={!!formMethods.formState.errors.totalComission}
+                    helperText={formMethods.formState.errors.totalComission?.message}
+                  />
                 );
               }}
             />
@@ -214,7 +226,13 @@ export const OrderFormHeader = () => {
               control={formMethods.control}
               render={({ field }) => {
                 return (
-                  <TextField {...field} disabled label="Valor Total da nota" />
+                  <TextField 
+                    {...field} 
+                    disabled 
+                    label="Valor Total da nota" 
+                    error={!!formMethods.formState.errors.totalCost}
+                    helperText={formMethods.formState.errors.totalCost?.message}
+                  />
                 );
               }}
             />
@@ -222,7 +240,5 @@ export const OrderFormHeader = () => {
         </Grid>
       </Grid>
     </>
-
   )
-
 }

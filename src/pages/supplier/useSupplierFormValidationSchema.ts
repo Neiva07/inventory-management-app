@@ -12,15 +12,17 @@ const useSupplierFormValidationSchema = (): yup.ObjectSchema<SupplierFormDataInt
           value: yup.string().required('A categoria é obrigatória'),
         })),
       tradeName: yup.string().required('O nome do fornecedor é obrigatório'),
-      contactPhone: yup.string().transform(val => {
+      contactPhone: yup.string().optional().transform(val => {
+        if (!val) return val;
         return val.replace(/[^0-9]/gi, "");
       })
-        .test('len', 'Telefone precisa ter 10 ou 11 digitos', val => val.length === 10 || val.length === 11),
+        .test('len', 'Telefone precisa ter 10 ou 11 digitos', val => !val || val.length === 10 || val.length === 11),
 
-      companyPhone: yup.string().transform(val => {
+      companyPhone: yup.string().optional().transform(val => {
+        if (!val) return val;
         return val.replace(/[^0-9]/gi, "");
       })
-        .test('len', 'Telefone precisa ter 10 ou 11 digitos', val => val.length === 10 || val.length === 11),
+        .test('len', 'Telefone precisa ter 10 ou 11 digitos', val => !val || val.length === 10 || val.length === 11),
       //Maybe implement it conditionally when user fill something
       // entityID: yup.string().transform(val => {
       //   return val.replace(/[^0-9]/gi, "");
