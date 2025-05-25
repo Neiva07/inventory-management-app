@@ -12,8 +12,8 @@ const config: ForgeConfig = {
       CompanyName: "Lucas Neiva",
       FileDescription: "Inventory Management Application",
       OriginalFilename: "Stockify.exe",
-      ProductName: "Stockify App",
-      InternalName: "Stockify App"
+      ProductName: "Stockify",
+      InternalName: "Stockify"
     },
   },
   rebuildConfig: {},
@@ -34,11 +34,21 @@ const config: ForgeConfig = {
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {},
+      config: {
+        options: {
+          bin: 'Stockify',
+          icon: './assets/icons/logo.png'
+        }
+      },
     },
     {
       name: '@electron-forge/maker-rpm',
-      config: {},
+      config: {
+        options: {
+          bin: 'Stockify',
+          icon: './assets/icons/logo.png'
+        }
+      },
     },
   ],
   plugins: [
