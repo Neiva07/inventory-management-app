@@ -5,8 +5,9 @@ import { rendererConfig } from './webpack.renderer.config';
 
 const config: ForgeConfig = {
   packagerConfig: {
+    icon: './assets/icons/logo',
     asar: true,
-    executableName: "Stockify App",
+    executableName: "Stockify",
     win32metadata: {
       CompanyName: "Lucas Neiva",
       FileDescription: "Inventory Management Application",
@@ -14,43 +15,31 @@ const config: ForgeConfig = {
       ProductName: "Stockify App",
       InternalName: "Stockify App"
     },
-    icon: './assets/icons/logo',
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        bin: 'Stockify App',
-        iconUrl: './assets/icons/logo.ico',
+        iconUrl: 'https://raw.githubusercontent.com/lucasneiva/inventory-management-app/main/assets/icons/logo.ico',
         setupIcon: './assets/icons/logo.ico'
-      }
+      },
     },
     {
       name: '@electron-forge/maker-zip',
       config: {
-        bin: 'Stockify App',
+        bin: 'Stockify',
       },
-      platforms: ['darwin']
+      platforms: ['darwin'],
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {
-        bin: 'Stockify App',
-        options: {
-          icon: './assets/icons/logo.png'
-        }
-      }
+      config: {},
     },
     {
       name: '@electron-forge/maker-rpm',
-      config: {
-        bin: 'Stockify App',
-        options: {
-          icon: './assets/icons/logo.png'
-        }
-      }
-    }
+      config: {},
+    },
   ],
   plugins: [
     {
@@ -85,11 +74,8 @@ const config: ForgeConfig = {
           owner: 'Neiva07',
           name: 'inventory-management-app'
         },
-        prerelease: true,
-        draft: false,
-        overwrite: true,
-        generateReleaseNotes: true,
-        force: true
+        prerelease: false,
+        draft: true
       }
     }
   ]
