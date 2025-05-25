@@ -21,6 +21,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import ScaleIcon from '@mui/icons-material/Scale';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
+import logo from '../../../assets/icons/logo.png';
 
 export const Navbar = () => {
   const auth = useAuth();
@@ -66,6 +67,7 @@ export const Navbar = () => {
         {auth.user ? (
           <Toolbar disableGutters sx={{ justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <img src={logo} alt="Logo" style={{ height: 36, marginRight: 10 }} />
               <Typography
                 variant="h5"
                 component="div"
@@ -163,6 +165,7 @@ export const Navbar = () => {
           </Toolbar>
         ) : (
           <Toolbar>
+            <img src={logo} alt="Logo" style={{ height: 36, marginRight: 10 }} />
             <Typography
               variant="h5"
               component="div"
