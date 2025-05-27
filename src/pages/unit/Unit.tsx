@@ -1,9 +1,12 @@
 import React, { ChangeEvent, useEffect, useState } from "react"
-import { Box, Button, Grid, TextField, Typography, Paper, Container, List, ListItem, ListItemText, Divider, Skeleton } from "@mui/material"
+import { Box, Button, Grid, TextField, Typography, Paper, Container, List, ListItem, ListItemText, Divider, Skeleton, IconButton, Menu, MenuItem } from "@mui/material"
 import { useAuth } from "context/auth";
 import { toast } from "react-toastify";
-import { createUnit, getUnits, Unit } from "../../model/units";
+import { createUnit, getUnits, Unit, updateUnit, deleteUnit } from "../../model/units";
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 export const Units = () => {
   const { user } = useAuth();
@@ -12,6 +15,9 @@ export const Units = () => {
   const [description, setDescription] = useState<string>("");
   const [units, setUnits] = useState<Array<Unit>>([]);
   const [loading, setLoading] = useState(true);
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
 
   const handleChangeName = (e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value)
@@ -27,6 +33,48 @@ export const Units = () => {
       .finally(() => setLoading(false));
   }, [user])
 
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, unit: Unit) => {
+    setMenuAnchorEl(event.currentTarget);
+    setSelectedUnit(unit);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedUnit(null);
+  };
+
+  const handleEditClick = (unit: Unit) => {
+    setEditingUnit(unit);
+    setName(unit.name);
+    setDescription(unit.description || "");
+    handleMenuClose();
+  };
+
+  const handleDeleteClick = async (unit: Unit) => {
+    try {
+      await deleteUnit(unit.id);
+      toast.success('Unidade excluída com sucesso');
+      refreshUnits();
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error('Erro ao excluir unidade');
+    }
+    handleMenuClose();
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUnit(null);
+    setName("");
+    setDescription("");
+  };
+
+  const refreshUnits = () => {
+    setLoading(true);
+    getUnits(user.id)
+      .then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)))
+      .finally(() => setLoading(false));
+  };
+
   const submitNewUnit = () => {
     if (!name.trim()) {
       toast.error('Por favor, insira um nome para a unidade');
@@ -34,17 +82,33 @@ export const Units = () => {
     }
 
     try {
-      createUnit({ name, description, userID: user.id })
-      toast.success('Unidade criada com sucesso')
-      setName("");
-      setDescription("");
-      setLoading(true);
-      getUnits(user.id)
-        .then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)))
-        .finally(() => setLoading(false));
-    } catch (err) {
-      console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
+      if (editingUnit) {
+        updateUnit(editingUnit.id, { name, description, userID: user.id })
+          .then(() => {
+            toast.success('Unidade atualizada com sucesso');
+            handleCancelEdit();
+            refreshUnits();
+          })
+          .catch((err: Error) => {
+            console.error(err);
+            toast.error('Erro ao atualizar unidade');
+          });
+      } else {
+        createUnit({ name, description, userID: user.id })
+          .then(() => {
+            toast.success('Unidade criada com sucesso');
+            setName("");
+            setDescription("");
+            refreshUnits();
+          })
+          .catch((err: Error) => {
+            console.error(err);
+            toast.error('Erro ao criar unidade');
+          });
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde');
     }
   }
 
@@ -91,7 +155,18 @@ export const Units = () => {
               ) : (
                 units.map((unit, index) => (
                   <React.Fragment key={unit.id}>
-                    <ListItem>
+                    <ListItem
+                      secondaryAction={
+                        <IconButton 
+                          edge="end" 
+                          aria-label="more"
+                          onClick={(e) => handleMenuClick(e, unit)}
+                          color="primary"
+                        >
+                          <MoreVertIcon />
+                        </IconButton>
+                      }
+                    >
                       <ListItemText
                         primary={unit.name}
                         secondary={unit.description}
@@ -105,10 +180,24 @@ export const Units = () => {
                 ))
               )}
             </List>
+            <Menu
+              anchorEl={menuAnchorEl}
+              open={Boolean(menuAnchorEl)}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={() => selectedUnit && handleEditClick(selectedUnit)}>
+                <EditIcon fontSize="small" sx={{ mr: 1 }} />
+                Editar
+              </MenuItem>
+              <MenuItem onClick={() => selectedUnit && handleDeleteClick(selectedUnit)}>
+                <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+                Excluir
+              </MenuItem>
+            </Menu>
           </Paper>
         </Grid>
 
-        {/* Create Unit Form */}
+        {/* Create/Edit Unit Form */}
         <Grid item xs={12} md={6}>
           <Paper 
             elevation={2} 
@@ -120,7 +209,7 @@ export const Units = () => {
             }}
           >
             <Typography variant="h5" gutterBottom sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
-              Nova Unidade
+              {editingUnit ? 'Editar Unidade' : 'Nova Unidade'}
             </Typography>
             <Grid container spacing={3} sx={{ flex: 1 }}>
               <Grid item xs={12}>
@@ -145,17 +234,29 @@ export const Units = () => {
                   rows={3}
                 />
               </Grid>
-              <Grid item xs={12} sx={{ mt: 'auto' }}>
+              <Grid item xs={12} sx={{ mt: 'auto', display: 'flex', gap: 2 }}>
+                {editingUnit && (
+                  <Button
+                    variant="outlined"
+                    onClick={handleCancelEdit}
+                    sx={{
+                      py: 1.5,
+                      px: 4,
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                )}
                 <Button
                   variant="contained"
                   onClick={submitNewUnit}
-                  startIcon={<AddIcon />}
+                  startIcon={editingUnit ? <EditIcon /> : <AddIcon />}
                   sx={{
                     py: 1.5,
                     px: 4,
                   }}
                 >
-                  Criar Unidade
+                  {editingUnit ? 'Atualizar Unidade' : 'Criar Unidade'}
                 </Button>
               </Grid>
             </Grid>

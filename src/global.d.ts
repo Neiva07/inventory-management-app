@@ -2,7 +2,6 @@ import { Session } from "model/session";
 import { ClerkUser } from "model/clerkUser.types";
 import type { UpdateInfo } from 'electron-updater';
 
-
 declare global {
   interface Window {
     electron: {
