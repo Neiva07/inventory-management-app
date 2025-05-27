@@ -191,9 +191,7 @@ app.on('activate', () => {
 
 // Auto-updater events
 autoUpdater.on('update-available', (info: UpdateInfo) => {
-  if (mainWindow) {
-    mainWindow.webContents.send('update-available', info);
-  }
+    mainWindow?.webContents.send('update-available', info);
 });
 
 autoUpdater.on('update-downloaded', (info: UpdateInfo) => {

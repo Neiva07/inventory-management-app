@@ -26,9 +26,11 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { OrderList } from "pages/order/OrderList";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Home } from "home";
-import { ptBR } from '@mui/x-data-grid/locales';
 import ptBRDateFns from 'date-fns/locale/pt-BR';
 import { UpdateNotification } from './components/UpdateNotification';
+import { Settings } from "pages/routes/settings";
+import { UIContextProvider, useUI } from './context/ui';
+import { Sidebar } from './pages/routes/Sidebar';
 
 declare module '@mui/material/styles' {
   interface Components {
@@ -152,6 +154,7 @@ const theme = createTheme({
 });
 
 const App = () => {
+  const { layout } = useUI();
   return (
     <>
       <Box style={{
@@ -171,7 +174,7 @@ const App = () => {
           theme="colored"
         />
         <UpdateNotification />
-        <Navbar />
+        {layout === 'navbar' ? <Navbar /> : <Sidebar />}
         <Outlet />
       </Box>
     </>
@@ -217,7 +220,9 @@ const AppRouter = () => {
             <Route path="customers" element={<CustomerList />} />
             <Route path="orders" element={<OrderList />} />
 
-            <Route path="*" element={<p>There's nothing here: 404!</p>} />
+            <Route path="settings" element={<Settings />} />
+
+            <Route path="*" element={<p>Página não encontrada! 404!</p>} />
           </Route>
         </Route>
       </Routes>
@@ -232,7 +237,9 @@ function render() {
         <AuthContextProvider>
           <ThemeProvider theme={theme}>
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBRDateFns}>
-              <AppRouter />
+              <UIContextProvider>
+                <AppRouter />
+              </UIContextProvider>
             </LocalizationProvider>
           </ThemeProvider>
         </AuthContextProvider>

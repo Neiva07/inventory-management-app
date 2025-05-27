@@ -21,6 +21,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import ScaleIcon from '@mui/icons-material/Scale';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
+import SettingsIcon from '@mui/icons-material/Settings';
 import logo from '../../../assets/icons/logo.png';
 
 export const Navbar = () => {
@@ -53,6 +54,7 @@ export const Navbar = () => {
     { text: 'Clientes', path: 'customers', icon: <PeopleIcon /> },
     { text: 'Categoria de Produtos', path: 'productCategories', icon: <CategoryIcon /> },
     { text: 'Unidades', path: 'units', icon: <ScaleIcon /> },
+    { text: 'Configurações', path: 'settings', icon: <SettingsIcon /> },
   ];
 
   return (
