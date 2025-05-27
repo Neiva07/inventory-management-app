@@ -135,6 +135,14 @@ console.log('IPC handlers registered');
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
+// Set the feed URL for updates
+autoUpdater.setFeedURL({
+  provider: 'github',
+  owner: 'Neiva07',
+  repo: 'inventory-management-app',
+  private: false, // Set to true if your repo is private
+});
+
 const createWindow = (): void => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -191,16 +199,19 @@ app.on('activate', () => {
 
 // Auto-updater events
 autoUpdater.on('update-available', (info: UpdateInfo) => {
+  console.log('Update available:', info);
     mainWindow?.webContents.send('update-available', info);
 });
 
 autoUpdater.on('update-downloaded', (info: UpdateInfo) => {
+  console.log('Update downloaded:', info);
   if (mainWindow) {
     mainWindow.webContents.send('update-downloaded', info);
   }
 });
 
 autoUpdater.on('error', (err: Error) => {
+  console.error('Error in auto-updater:', err);
   if (mainWindow) {
     mainWindow.webContents.send('update-error', err);
   }
@@ -208,10 +219,12 @@ autoUpdater.on('error', (err: Error) => {
 
 // IPC handlers for update actions
 ipcMain.handle('download-update', () => {
+  console.log('Downloading update...');
   autoUpdater.downloadUpdate();
 });
 
 ipcMain.handle('install-update', () => {
+  console.log('Installing update...');
   autoUpdater.quitAndInstall();
 });
 
