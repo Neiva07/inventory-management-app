@@ -60,7 +60,7 @@ const config: ForgeConfig = {
     },
     new WebpackPlugin({
       mainConfig,
-      // devContentSecurityPolicy: "connect-src 'self' * 'unsafe-eval'",
+      devContentSecurityPolicy: "connect-src 'self' * 'unsafe-eval'",
       renderer: {
         config: rendererConfig,
         entryPoints: [

@@ -1,4 +1,4 @@
-import * as ReactDOM from "react-dom";
+import * as ReactDOM from "react-dom/client";
 import {
   Outlet,
   Route,
@@ -156,10 +156,19 @@ const theme = createTheme({
 const App = () => {
   const { layout } = useUI();
   return (
-    <>
-      <Box style={{
-        marginTop: "60px"
-      }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      {layout === 'navbar' ? <Navbar /> : <Sidebar />}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 2,
+          width: { sm: `calc(100% - ${layout === 'navbar' ? 0 : 270}px)` },
+          ml: { sm: layout === 'navbar' ? 0 : '270px' },
+          transition: 'margin 0.2s',
+          mt: layout === 'navbar' ? '60px' : 0,
+        }}
+      >
         <ToastContainer
           position="bottom-right"
           autoClose={5000}
@@ -174,10 +183,9 @@ const App = () => {
           theme="colored"
         />
         <UpdateNotification />
-        {layout === 'navbar' ? <Navbar /> : <Sidebar />}
         <Outlet />
       </Box>
-    </>
+    </Box>
   );
 };
 
@@ -231,21 +239,27 @@ const AppRouter = () => {
 }
 
 function render() {
-  ReactDOM.render(
-    <>
-      <React.StrictMode>
-        <AuthContextProvider>
-          <ThemeProvider theme={theme}>
-            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBRDateFns}>
-              <UIContextProvider>
-                <AppRouter />
-              </UIContextProvider>
-            </LocalizationProvider>
-          </ThemeProvider>
-        </AuthContextProvider>
-      </React.StrictMode>
-    </>,
-    document.body
+  // Create a root container if it doesn't exist
+  let rootContainer = document.getElementById('root');
+  if (!rootContainer) {
+    rootContainer = document.createElement('div');
+    rootContainer.id = 'root';
+    document.body.appendChild(rootContainer);
+  }
+
+  const root = ReactDOM.createRoot(rootContainer);
+  root.render(
+    <React.StrictMode>
+      <AuthContextProvider>
+        <ThemeProvider theme={theme}>
+          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBRDateFns}>
+            <UIContextProvider>
+              <AppRouter />
+            </UIContextProvider>
+          </LocalizationProvider>
+        </ThemeProvider>
+      </AuthContextProvider>
+    </React.StrictMode>
   );
 }
 

@@ -68,6 +68,7 @@ export const Sidebar = () => {
       sx={{
         width: open ? drawerWidth : 64,
         flexShrink: 0,
+        position: 'fixed',
         '& .MuiDrawer-paper': {
           width: open ? drawerWidth : 64,
           boxSizing: 'border-box',
@@ -76,6 +77,8 @@ export const Sidebar = () => {
           backgroundColor: theme.palette.primary.main,
           color: theme.palette.primary.contrastText,
           borderRight: 0,
+          position: 'fixed',
+          height: '100vh',
         },
       }}
     >
