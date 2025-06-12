@@ -131,11 +131,7 @@ ipcMain.handle('get-env-variable', (event, key: string) => {
 
 console.log('IPC handlers registered');
 
-// Remove all manual autoUpdater configuration and usage
-updateElectronApp({
-  repo: 'Neiva07/inventory-management-app',
-  // updateInterval: '10 minutes'
-});
+updateElectronApp()
 
 
 const createWindow = (): void => {
