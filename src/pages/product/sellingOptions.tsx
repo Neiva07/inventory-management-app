@@ -6,7 +6,9 @@ import {
   Grid,
   TextField,
   Typography,
+  IconButton,
 } from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
 import React from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
 import {
@@ -35,6 +37,12 @@ type PriceProps = {
 };
 
 const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
+  const handleRemovePrice = () => {
+    const currentPrices = formMethods.getValues(`sellingOptions.${parentIndex}.prices`);
+    const newPrices = currentPrices.filter((_, i) => i !== index);
+    formMethods.setValue(`sellingOptions.${parentIndex}.prices`, newPrices);
+  };
+
   return (
     <Grid
       spacing={2}
@@ -44,7 +52,8 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
         marginBottom: "8px",
       }}
     >
-      <Grid item xs={4}>
+    
+      <Grid item xs={3}>
         <FormControl fullWidth>
           <Controller
             control={formMethods.control}
@@ -119,6 +128,16 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
           />
         </FormControl>
       </Grid>
+      <Grid item xs={1}>
+        <IconButton 
+          color="error" 
+          onClick={handleRemovePrice}
+          size="small"
+          style={{ marginTop: '8px' }}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      </Grid>
     </Grid>
   );
 };
@@ -131,10 +150,14 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
     ]);
   };
 
+  const handleRemoveSellingOption = () => {
+    const currentOptions = formMethods.getValues('sellingOptions');
+    const newOptions = currentOptions.filter((_, i) => i !== index);
+    formMethods.setValue('sellingOptions', newOptions);
+  };
 
   const [units, setUnits] = React.useState<Array<Unit>>([]);
   const { user } = useAuth();
-
 
   React.useEffect(() => {
     getUnits(user.id).then(qr => setUnits(qr.docs.map(d => d.data() as Unit)));
@@ -143,7 +166,8 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
   return (
     <Box>
       <Grid container spacing={2}>
-        <Grid item xs={3}>
+       
+        <Grid item xs={2}>
           <FormControl fullWidth>
             <Controller
               control={formMethods.control}
@@ -227,14 +251,11 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
             <Controller
               control={formMethods.control}
               render={({ field: { ...props } }) => {
-
-
                 return (
                   <TextField
                     {...props}
                     variant="outlined"
                     label="Custo da unidade"
-
                     onFocus={(e) => e.target.select()}
                   />
                 );
@@ -242,6 +263,16 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
               name={`sellingOptions.${index}.unitCost`}
             />
           </FormControl>
+        </Grid>
+        <Grid item xs={1}>
+          <IconButton 
+            color="error" 
+            onClick={handleRemoveSellingOption}
+            size="medium"
+            style={{ marginTop: '8px' }}
+          >
+            <DeleteIcon />
+          </IconButton>
         </Grid>
         <Grid item xs={12}>
           <Controller
@@ -274,7 +305,7 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
           />
         </Grid>
 
-        <Grid item xs={6}>
+        <Grid item xs={6} style={{ marginBottom: '16px' }}>
           <Button onClick={handleAddPrice}>+ preço sugerido</Button>
         </Grid>
       </Grid>

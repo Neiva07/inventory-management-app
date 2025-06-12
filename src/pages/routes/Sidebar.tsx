@@ -27,10 +27,10 @@ import { useTheme } from '@mui/material/styles';
 const drawerWidth = 270;
 
 const cadastros = [
-  { text: 'Produtos', icon: <InventoryIcon />, path: '/products' },
-  { text: 'Clientes', icon: <PeopleIcon />, path: '/customers' },
-  { text: 'Fornecedores', icon: <PeopleIcon />, path: '/suppliers' },
-  { text: 'Funcionários', icon: <PeopleIcon />, path: '/employees' }, // Placeholder
+  { text: 'Produtos', icon: <InventoryIcon />, path: '/products/create' },
+  { text: 'Clientes', icon: <PeopleIcon />, path: '/customers/create' },
+  { text: 'Fornecedores', icon: <PeopleIcon />, path: '/suppliers/create' },
+  { text: 'Funcionários', icon: <PeopleIcon />, path: '/employees/create' }, // Placeholder
   { text: 'Categoria de Produtos', icon: <CategoryIcon />, path: '/productCategories' },
   { text: 'Unidades', icon: <ScaleIcon />, path: '/units' },
 ];
