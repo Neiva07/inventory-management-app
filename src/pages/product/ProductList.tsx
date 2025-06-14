@@ -1,27 +1,28 @@
 import * as React from 'react';
 import { DataGrid, GridCellParams, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
-import { deactiveProduct, deleteProduct, getProducts, Product } from '../../model/products';
-import { Autocomplete, Button, Grid, InputAdornment, TextField, Skeleton } from '@mui/material';
-import { ProductCategory, getProductCategories } from '../../model/productCategories';
+import { deactiveProduct, deleteProduct, getProducts, Product } from 'model/products';
+import { Autocomplete, Button, Grid, InputAdornment, TextField, Skeleton, Typography, Box } from '@mui/material';
+import { ProductCategory, getProductCategories } from 'model/productCategories';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from './useProductCreateForm';
 import { useAuth } from 'context/auth';
 import { ptBR } from '@mui/x-data-grid/locales';
+import { PageTitle } from 'components/PageTitle';
 
 const columns: GridColDef[] = [
   // { field: 'id', headerName: 'ID', width: 200 },
-  { field: 'title', headerName: 'Nome', width: 200 },
+  { field: 'title', headerName: 'Nome', flex: 1 },
   {
     field: 'inventory',
     headerName: 'Estoque',
     type: 'number',
-    width: 140,
+    flex: 1,
   },
   {
     field: 'productCategory.name',
     headerName: 'Categoria',
     type: 'string',
-    width: 140,
+    flex: 1,
     valueGetter: (params: GridCellParams<Product>) => {
       return params.row.productCategory.name
     }
@@ -31,9 +32,8 @@ const columns: GridColDef[] = [
     headerName: 'Custo Compra',
     type: 'number',
     sortable: false,
-    width: 140,
+    flex: 1,
     renderCell: (params) => {
-
       return params.row.cost
     }
   },
@@ -41,9 +41,8 @@ const columns: GridColDef[] = [
     field: 'buyUnit',
     headerName: 'Unidade Compra',
     sortable: false,
-    width: 140,
+    flex: 1,
     renderCell: (params: GridCellParams<Product>) => {
-
       return params.row.buyUnit.name
     }
   },
@@ -51,13 +50,13 @@ const columns: GridColDef[] = [
     field: 'minInventory',
     headerName: 'Estoque Mínimo',
     type: 'number',
-    width: 140,
+    flex: 1,
   },
   {
     field: 'status',
     headerName: 'Status',
     type: 'string',
-    width: 140,
+    flex: 1,
   }
 ];
 
@@ -154,6 +153,7 @@ export const ProductList = () => {
 
   return (
     <>
+      <PageTitle>Produtos</PageTitle>
       <Grid spacing={2} container>
 
         <Grid item xs={4}>

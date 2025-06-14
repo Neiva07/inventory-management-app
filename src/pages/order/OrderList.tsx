@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { DataGrid, GridCellParams, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
-import { deleteOrder, getOrders, Order, OrderStatus } from '../../model/orders';
-import { Autocomplete, Button, Grid, TextField, Skeleton } from '@mui/material';
+import { deleteOrder, getOrders, Order, OrderStatus } from 'model/orders';
+import { Autocomplete, Button, Grid, TextField, Skeleton, Typography, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { Customer, getCustomers } from 'model/customer';
 import { useAuth } from 'context/auth';
@@ -10,12 +10,13 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { SelectField } from 'pages/product/useProductCreateForm';
 import { format } from "date-fns"
 import { ptBR } from '@mui/x-data-grid/locales';
+import { PageTitle } from 'components/PageTitle';
 
 const columns: GridColDef[] = [
   {
     field: 'customer',
     headerName: 'Cliente',
-    width: 140,
+    flex: 1,
     sortable: false,
     valueGetter: (cell: GridCellParams<Order>) => {
       return cell.row.customer.name
@@ -25,7 +26,7 @@ const columns: GridColDef[] = [
     field: 'createdAt',
     headerName: 'Data',
     type: 'string',
-    width: 140,
+    flex: 1,
     sortable: false,
     valueGetter: (cell: GridCellParams<Order>) => {
       return format(new Date(cell.row.createdAt), "dd/MM/yyyy")
@@ -35,22 +36,22 @@ const columns: GridColDef[] = [
     field: 'totalCost',
     headerName: 'Custo Total (R$)',
     type: 'number',
-    width: 140,
+    flex: 1,
     sortable: false,
   },
   {
     field: 'totalComission',
     headerName: 'Comissão Total (R$)',
     type: 'number',
+    flex: 1,
     sortable: false,
-    width: 180,
   },
   {
     field: 'dueDate',
     headerName: 'Vencimento',
     type: 'string',
+    flex: 1,
     sortable: false,
-    width: 140,
     valueGetter: (cell: GridCellParams<Order>) => {
       return format(new Date(cell.row.dueDate), "dd/MM/yyyy")
     }
@@ -58,9 +59,9 @@ const columns: GridColDef[] = [
   {
     field: 'paymentType',
     headerName: 'Tipo de pagamento',
+    flex: 1,
     sortable: false,
     type: 'number',
-    width: 180,
     valueGetter: (cell: GridCellParams<Order>) => {
       return cell.row.paymentType.name
     }
@@ -68,9 +69,9 @@ const columns: GridColDef[] = [
   {
     field: 'items',
     headerName: 'N de items',
+    flex: 1,
     sortable: false,
     type: 'number',
-    width: 120,
     valueGetter: (cell: GridCellParams<Order>) => {
       return cell.row.items.length
     }
@@ -149,6 +150,7 @@ export const OrderList = () => {
 
   return (
     <>
+      <PageTitle>Pedidos</PageTitle>
       <Grid spacing={2} container>
         <Grid item xs={4}>
           <Autocomplete

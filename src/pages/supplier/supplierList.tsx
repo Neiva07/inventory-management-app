@@ -1,24 +1,25 @@
 import * as React from 'react';
 import { DataGrid, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
-import { Autocomplete, Button, Grid, InputAdornment, TextField, Skeleton } from '@mui/material';
-import { ProductCategory, getProductCategories } from '../../model/productCategories';
+import { Autocomplete, Button, Grid, InputAdornment, TextField } from '@mui/material';
+import { ProductCategory, getProductCategories } from 'model/productCategories';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
-import { Supplier, getSuppliers, deactiveSupplier, deleteSupplier } from '../../model/suppliers';
+import { Supplier, getSuppliers, deactiveSupplier, deleteSupplier } from 'model/suppliers';
 import { useAuth } from 'context/auth';
 import { ptBR } from '@mui/x-data-grid/locales';
+import { PageTitle } from 'components/PageTitle';
 
 const columns: GridColDef[] = [
   // { field: 'id', headerName: 'ID', width: 200 },
-  { field: 'tradeName', headerName: 'Nome Fantasia', width: 200 },
-  { field: 'legalName', headerName: 'Razão Social', width: 200 },
-  { field: 'description', headerName: 'Descrição', width: 200 },
-  { field: 'companyPhone', headerName: 'Telefone', width: 200 },
+  { field: 'tradeName', headerName: 'Nome Fantasia', flex: 1 },
+  { field: 'legalName', headerName: 'Razão Social', flex: 1 },
+  { field: 'description', headerName: 'Descrição', flex: 1 },
+  { field: 'companyPhone', headerName: 'Telefone', flex: 1 },
   {
     field: 'status',
     headerName: 'Status',
     type: 'string',
-    width: 200,
+    flex: 1,
   }
 ];
 
@@ -113,6 +114,7 @@ export const SupplierList = () => {
 
   return (
     <>
+      <PageTitle>Fornecedores</PageTitle>
       <Grid spacing={2} container>
 
         <Grid item xs={4}>

@@ -1,10 +1,12 @@
-import { Autocomplete, Button, FormControl, Grid, TextField, Typography } from '@mui/material';
+import { Autocomplete, Button, FormControl, Grid, TextField, Typography, Box } from '@mui/material';
 import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import ReactInputMask from 'react-input-mask';
 import { useParams } from 'react-router-dom';
 import { useCustomerCreateForm } from './useCustomerForm';
 import { states } from '../../model/region';
+import { PageTitle } from 'components/PageTitle';
+import { FormActions } from 'components/FormActions';
 
 export const CustomerForm = () => {
   const { customerID } = useParams();
@@ -13,29 +15,22 @@ export const CustomerForm = () => {
 
   return (
     <FormProvider register={register} {...formMethods}>
-      <>
+      <Box sx={{ position: 'relative', pt: 8 }}>
+        <FormActions
+          showDelete={!!customerID}
+          showInactivate={!!customer && customer.status === 'active'}
+          showActivate={!!customer && customer.status === 'inactive'}
+          onDelete={onDelete}
+          onInactivate={onDeactivate}
+          onActivate={onActivate}
+        />
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom>
-              {customerID ? "Editar  Cliente" : "Cadastro de  Cliente"}
-            </Typography>
+            <PageTitle>
+              {customerID ? "Editar Cliente" : "Cadastro de Cliente"}
+            </PageTitle>
           </Grid>
-          {customerID && <Grid item xs={4}>
-            <Button fullWidth hidden={!customerID} onClick={onDelete}
-            > Deletar  Cliente </Button>
-          </Grid>}
-          {customer && customer.status === 'active' && <Grid item xs={4}>
-            <Button fullWidth hidden={!customerID} onClick={onDeactivate}
-            > Desativar  Cliente </Button>
-          </Grid>}
-          {customer && customer.status === 'inactive' && (
-            <Grid item xs={4}>
-              <Button fullWidth hidden={!customerID} onClick={onActivate}
-              > Ativar  Cliente</Button>
-            </Grid>
-          )}
         </Grid>
-
 
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -280,7 +275,7 @@ export const CustomerForm = () => {
             </Button>
 
         }
-      </>
+      </Box>
     </FormProvider>
   );
 }

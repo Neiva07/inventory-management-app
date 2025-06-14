@@ -10,7 +10,7 @@ Stockify é um aplicativo desktop moderno para gestão de estoque, desenvolvido 
 - Gestão completa de produtos
 - Controle de fornecedores
 - Gestão de clientes
-- Controle de pedidos
+- Controle de vendas
 - Categorização de produtos
 - Gestão de unidades de medida
 - Interface moderna e intuitiva

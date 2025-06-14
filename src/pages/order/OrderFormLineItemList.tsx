@@ -16,72 +16,71 @@ export const OrderFormLineItemList = () => {
   }
   const columns: GridColDef[] = [
     {
-      field: 'title', headerName: 'Produto', width: 120, sortable: false,
+      field: 'title', headerName: 'Produto', flex: 1, sortable: false,
     },
     {
       field: 'balance',
       headerName: 'Saldo Estoque',
       type: 'number',
-      width: 120,
+      flex: 1,
       sortable: false,
     },
     {
       field: 'quantity',
       headerName: 'Quantidade',
       type: 'string',
-      width: 100,
+      flex: 1,
       sortable: false,
     },
     {
       field: 'unit',
       headerName: 'Unidade',
       type: 'number',
-      width: 100,
+      flex: 1,
       valueGetter: (params: GridCellParams<ItemDataInterface>) => {
         return params.row.unit.name
       },
       sortable: false,
     },
-
     {
       field: 'cost',
       headerName: 'Custo Compra',
       type: 'number',
       sortable: false,
-      width: 120,
+      flex: 1,
     },
     {
       field: 'unitPrice',
       headerName: 'Preço Venda',
       sortable: false,
-      width: 120,
+      flex: 1,
     },
     {
       field: 'descount',
       headerName: 'Desconto (%)',
       type: 'string',
-      width: 120,
+      flex: 1,
       sortable: false,
     },
     {
       field: 'commissionRate',
       headerName: 'Comissão (%)',
       type: 'number',
-      width: 140,
+      flex: 1,
       sortable: false,
     },
     {
       field: 'itemTotalCost',
       headerName: 'Total do Produto',
       type: 'number',
-      width: 140,
+      flex: 1,
       sortable: false,
     },
     {
       headerName: 'Remover',
       field: 'delete',
+      flex: 1,
       renderCell: (cell: GridCellParams<ItemDataInterface>) => {
-
         return <Button onClick={() => {
           formMethods.setValue('items', items.filter(i => i.productID !== cell.row.productID))
           const prevTotalCost = formMethods.getValues('totalCost')
@@ -89,7 +88,6 @@ export const OrderFormLineItemList = () => {
           formMethods.setValue('totalCost', prevTotalCost - cell.row.itemTotalCost)
           formMethods.setValue('totalComission', prevTotalCommission - (cell.row.commissionRate * cell.row.itemTotalCost) / 100)
         }}> <GridDeleteIcon /> </Button>;
-
       },
     }
   ];

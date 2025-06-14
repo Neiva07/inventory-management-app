@@ -1,4 +1,4 @@
-import { Autocomplete, Button, FormControl, Grid, TextField, Typography } from '@mui/material';
+import { Autocomplete, Button, FormControl, Grid, TextField, Typography, Box } from '@mui/material';
 import { useSupplierCreateForm } from './useSupplierCreateForm';
 import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
@@ -8,6 +8,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { states } from '../../model/region';
 import { useAuth } from 'context/auth';
+import { PageTitle } from 'components/PageTitle';
+import { FormActions } from 'components/FormActions';
 
 export const SupplierForm = () => {
   const { user } = useAuth();
@@ -22,29 +24,22 @@ export const SupplierForm = () => {
 
   return (
     <FormProvider register={register} {...formMethods}>
-      <>
+      <Box sx={{ position: 'relative', pt: 8 }}>
+        <FormActions
+          showDelete={!!supplierID}
+          showInactivate={!!supplier && supplier.status === 'active'}
+          showActivate={!!supplier && supplier.status === 'inactive'}
+          onDelete={onDelete}
+          onInactivate={onDeactivate}
+          onActivate={onActivate}
+        />
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom>
+            <PageTitle>
               {supplierID ? "Editar Fornecedor" : "Cadastro de Fornecedor"}
-            </Typography>
+            </PageTitle>
           </Grid>
-          {supplierID && <Grid item xs={4}>
-            <Button fullWidth hidden={!supplierID} onClick={onDelete}
-            > Deletar Fornecedor </Button>
-          </Grid>}
-          {supplier && supplier.status === 'active' && <Grid item xs={4}>
-            <Button fullWidth hidden={!supplierID} onClick={onDeactivate}
-            > Desativar Fornecedor </Button>
-          </Grid>}
-          {supplier && supplier.status === 'inactive' && (
-            <Grid item xs={4}>
-              <Button fullWidth hidden={!supplierID} onClick={onActivate}
-              > Ativar Fornecedor</Button>
-            </Grid>
-          )}
         </Grid>
-
 
         <Grid container spacing={2}>
           <Grid item xs={12}>
@@ -394,7 +389,7 @@ export const SupplierForm = () => {
             </Button>
 
         }
-      </>
+      </Box>
     </FormProvider>
   );
 }

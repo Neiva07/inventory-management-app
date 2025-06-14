@@ -15,6 +15,10 @@ const useOrderFormValidationSchema = (): yup.ObjectSchema<OrderFormDataInterface
         label: yup.string().required('O tipo de pagamento é obrigatório'),
         value: yup.string().required('O tipo de pagamento é obrigatório'),
       }),
+      status: yup.object().shape({
+        label: yup.string().required('O status é obrigatório'),
+        value: yup.string().required('O status é obrigatório'),
+      }),
     }) as yup.ObjectSchema<OrderFormDataInterface>;
   }, []);
 };

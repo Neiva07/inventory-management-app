@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
+import { Box } from "@mui/material";
 
 import {
   Autocomplete,
@@ -17,6 +18,8 @@ import { Supplier, getSuppliers } from "model/suppliers";
 import { getUnits, Unit } from "model/units";
 import { useParams } from "react-router-dom";
 import { useAuth } from "context/auth";
+import { PageTitle } from 'components/PageTitle';
+import { FormActions } from 'components/FormActions';
 
 export const ProductForm = () => {
   const { user } = useAuth();
@@ -42,27 +45,21 @@ export const ProductForm = () => {
 
   return (
     <FormProvider register={register} {...formMethods}>
-      <>
+      <Box sx={{ position: 'relative', pt: 8 }}>
+        <FormActions
+          showDelete={!!productID}
+          showInactivate={!!product && product.status === 'active'}
+          showActivate={!!product && product.status === 'inactive'}
+          onDelete={onDelete}
+          onInactivate={onDeactiveProduct}
+          onActivate={onActivateProduct}
+        />
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <Typography variant="h5" gutterBottom>
+            <PageTitle>
               {productID ? "Editar Produto" : "Cadastro de Produto"}
-            </Typography>
+            </PageTitle>
           </Grid>
-          {productID && <Grid item xs={4}>
-            <Button fullWidth hidden={!productID} onClick={onDelete}
-            > Deletar Produto </Button>
-          </Grid>}
-          {product && product.status === 'active' && <Grid item xs={4}>
-            <Button fullWidth hidden={!productID} onClick={onDeactiveProduct}
-            > Desativar Produto </Button>
-          </Grid>}
-          {product && product.status === 'inactive' && (
-            <Grid item xs={4}>
-              <Button fullWidth onClick={onActivateProduct}
-              > Ativar Produto</Button>
-            </Grid>
-          )}
         </Grid>
         <Grid container spacing={2}>
           <Grid item xs={6}>
@@ -222,12 +219,7 @@ export const ProductForm = () => {
             </FormControl>
           </Grid>
         </Grid>
-      </>
-
-      <Divider
-        style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }}
-      />
-      <>
+        <Divider style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }} />
         <Typography variant="h6" gutterBottom>
           Unidade de compra
         </Typography>
@@ -351,28 +343,18 @@ export const ProductForm = () => {
             </FormControl>
           </Grid>
         </Grid>
-      </>
-      <Divider
-        style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }}
-      />
-      <SellingOptions {...formMethods} />
-      {
-        productID ?
-          <Button
-            onClick={onFormUpdate}
-            variant="contained"
-            style={{ marginTop: "12px" }}
-          > Atualizar Produto </Button>
-          :
-          <Button
-
-            onClick={onFormSubmit}
-            variant="contained"
-            style={{ marginTop: "12px" }}
-          >
+        <Divider style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }} />
+        <SellingOptions {...formMethods} />
+        {productID ? (
+          <Button onClick={onFormUpdate} variant="contained" style={{ marginTop: "12px" }}>
+            Atualizar Produto
+          </Button>
+        ) : (
+          <Button onClick={onFormSubmit} variant="contained" style={{ marginTop: "12px" }}>
             Criar produto
           </Button>
-      }
+        )}
+      </Box>
     </FormProvider>
   );
 };

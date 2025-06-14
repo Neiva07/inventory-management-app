@@ -1,22 +1,23 @@
 import * as React from 'react';
 import { DataGrid, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
-import { Autocomplete, Button, Grid, InputAdornment, TextField } from '@mui/material';
+import { Autocomplete, Button, Grid, InputAdornment, TextField} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
-import { Customer, deactiveCustomer, deleteCustomer, getCustomers } from '../../model/customer';
+import { Customer, deactiveCustomer, deleteCustomer, getCustomers } from 'model/customer';
 import { useAuth } from 'context/auth';
 import { ptBR } from '@mui/x-data-grid/locales';
+import { PageTitle } from 'components/PageTitle';
 
 const columns: GridColDef[] = [
-  { field: 'name', headerName: 'Nome', width: 200 },
-  { field: 'cpf', headerName: 'CPF', width: 200 },
-  { field: 'rg', headerName: 'RG', width: 200 },
-  { field: 'phone', headerName: 'Telefone', width: 200 },
+  { field: 'name', headerName: 'Nome', flex: 1 },
+  { field: 'cpf', headerName: 'CPF', flex: 1 },
+  { field: 'rg', headerName: 'RG', flex: 1 },
+  { field: 'phone', headerName: 'Telefone', flex: 1 },
   {
     field: 'status',
     headerName: 'Status',
     type: 'string',
-    width: 140,
+    flex: 1,
   }
 ];
 
@@ -101,6 +102,7 @@ export const CustomerList = () => {
 
   return (
     <>
+      <PageTitle>Clientes</PageTitle>
       <Grid spacing={2} container>
 
         <Grid item xs={6}>

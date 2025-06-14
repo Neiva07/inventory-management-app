@@ -6,6 +6,10 @@ import { Controller, useFormContext } from "react-hook-form"
 import { OrderFormDataInterface } from "./useOrderForm";
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useAuth } from "context/auth";
+import { PageTitle } from 'components/PageTitle';
+import { useParams } from 'react-router-dom';
+import { FormActions } from 'components/FormActions';
+import { Box } from '@mui/material';
 
 export const statuses = [
   {
@@ -37,8 +41,9 @@ export const paymentOptions = [
   }
 ]
 
-export const OrderFormHeader = () => {
+export const OrderFormHeader = ({ onDelete }: { onDelete?: () => void }) => {
   const { user } = useAuth();
+  const { orderID } = useParams();
   const [customers, setCustomers] = useState<Array<Customer>>([]);
 
   const formMethods = useFormContext<OrderFormDataInterface>()
@@ -47,7 +52,11 @@ export const OrderFormHeader = () => {
   }, []);
 
   return (
-    <>
+    <Box sx={{ position: 'relative', pt: 8 }}>
+      <FormActions
+        showDelete={!!orderID}
+        onDelete={onDelete}
+      />
       <Grid container spacing={2}>
         <Grid item xs={4}>
           <FormControl fullWidth>
@@ -238,7 +247,12 @@ export const OrderFormHeader = () => {
             />
           </FormControl>
         </Grid>
+        <Grid item xs={12}>
+          <PageTitle>
+            {orderID ? "Editar Nota Fiscal" : "Cadastro de Nota Fiscal"}
+          </PageTitle>
+        </Grid>
       </Grid>
-    </>
+    </Box>
   )
 }
