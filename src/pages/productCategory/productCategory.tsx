@@ -7,6 +7,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { SearchField } from "../../components/SearchField";
 
 export const ProductCategories = () => {
   const { user } = useAuth();
@@ -14,6 +15,8 @@ export const ProductCategories = () => {
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [productCategories, setProductCategories] = useState<Array<ProductCategory>>([]);
+  const [filteredCategories, setFilteredCategories] = useState<Array<ProductCategory>>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
@@ -26,10 +29,31 @@ export const ProductCategories = () => {
     setDescription(e.target.value)
   }
 
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Filter categories based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredCategories(productCategories);
+    } else {
+      const filtered = productCategories.filter(category =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      setFilteredCategories(filtered);
+    }
+  }, [searchTerm, productCategories]);
+
   useEffect(() => {
     setLoading(true);
     getProductCategories(user.id)
-      .then(queryResult => setProductCategories(queryResult.docs.map(r => r.data() as ProductCategory)))
+      .then(queryResult => {
+        const categories = queryResult.docs.map(r => r.data() as ProductCategory);
+        setProductCategories(categories);
+        setFilteredCategories(categories);
+      })
       .finally(() => setLoading(false));
   }, [user])
 
@@ -101,7 +125,11 @@ export const ProductCategories = () => {
   const refreshCategories = () => {
     setLoading(true);
     getProductCategories(user.id)
-      .then(queryResult => setProductCategories(queryResult.docs.map(r => r.data() as ProductCategory)))
+      .then(queryResult => {
+        const categories = queryResult.docs.map(r => r.data() as ProductCategory);
+        setProductCategories(categories);
+        setFilteredCategories(categories);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -131,6 +159,7 @@ export const ProductCategories = () => {
             sx={{ 
               p: 3, 
               height: '100%',
+              maxHeight: '800px',
               display: 'flex',
               flexDirection: 'column'
             }}
@@ -138,15 +167,22 @@ export const ProductCategories = () => {
             <Typography variant="h5" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
               Categorias Cadastradas
             </Typography>
-            <List sx={{ flex: 1 }}>
+            <Box sx={{ mb: 2 }}>
+              <SearchField
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Buscar categorias..."
+              />
+            </Box>
+            <List sx={{ flex: 1, overflow: 'auto' }}>
               {loading ? (
                 <LoadingSkeleton />
-              ) : productCategories.length === 0 ? (
+              ) : filteredCategories.length === 0 ? (
                 <Typography color="text.secondary" align="center">
-                  Nenhuma categoria cadastrada
+                  {searchTerm ? 'Nenhuma categoria encontrada' : 'Nenhuma categoria cadastrada'}
                 </Typography>
               ) : (
-                productCategories.map((category, index) => (
+                filteredCategories.map((category, index) => (
                   <React.Fragment key={category.id}>
                     <ListItem 
                       sx={{ 
@@ -190,7 +226,7 @@ export const ProductCategories = () => {
                         }
                       />
                     </ListItem>
-                    {index < productCategories.length - 1 && <Divider />}
+                    {index < filteredCategories.length - 1 && <Divider />}
                   </React.Fragment>
                 ))
               )}
@@ -218,7 +254,6 @@ export const ProductCategories = () => {
             elevation={2} 
             sx={{ 
               p: 3,
-              height: '100%',
               display: 'flex',
               flexDirection: 'column'
             }}
@@ -226,7 +261,7 @@ export const ProductCategories = () => {
             <Typography variant="h5" gutterBottom sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
               {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
             </Typography>
-            <Grid container spacing={3} sx={{ flex: 1 }}>
+            <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
                   id="name"
@@ -235,7 +270,6 @@ export const ProductCategories = () => {
                   value={name}
                   fullWidth
                   required
-                  sx={{ mb: 2 }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -249,7 +283,7 @@ export const ProductCategories = () => {
                   rows={3}
                 />
               </Grid>
-              <Grid item xs={12} sx={{ mt: 'auto', display: 'flex', gap: 2 }}>
+              <Grid item xs={12} sx={{ mt: 2, display: 'flex', gap: 2 }}>
                 {editingCategory && (
                   <Button
                     variant="outlined"

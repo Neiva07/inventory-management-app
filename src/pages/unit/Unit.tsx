@@ -7,6 +7,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { SearchField } from "../../components/SearchField";
 
 export const Units = () => {
   const { user } = useAuth();
@@ -14,6 +15,8 @@ export const Units = () => {
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [units, setUnits] = useState<Array<Unit>>([]);
+  const [filteredUnits, setFilteredUnits] = useState<Array<Unit>>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
@@ -26,10 +29,31 @@ export const Units = () => {
     setDescription(e.target.value)
   }
 
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Filter units based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredUnits(units);
+    } else {
+      const filtered = units.filter(unit =>
+        unit.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (unit.description && unit.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      setFilteredUnits(filtered);
+    }
+  }, [searchTerm, units]);
+
   useEffect(() => {
     setLoading(true);
     getUnits(user.id)
-      .then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)))
+      .then(queryResult => {
+        const unitsData = queryResult.docs.map(r => r.data() as Unit);
+        setUnits(unitsData);
+        setFilteredUnits(unitsData);
+      })
       .finally(() => setLoading(false));
   }, [user])
 
@@ -71,7 +95,11 @@ export const Units = () => {
   const refreshUnits = () => {
     setLoading(true);
     getUnits(user.id)
-      .then(queryResult => setUnits(queryResult.docs.map(r => r.data() as Unit)))
+      .then(queryResult => {
+        const unitsData = queryResult.docs.map(r => r.data() as Unit);
+        setUnits(unitsData);
+        setFilteredUnits(unitsData);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -133,6 +161,7 @@ export const Units = () => {
             sx={{ 
               p: 3, 
               height: '100%',
+              maxHeight: '800px',
               display: 'flex',
               flexDirection: 'column'
             }}
@@ -140,17 +169,31 @@ export const Units = () => {
             <Typography variant="h5" gutterBottom sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
               Unidades Cadastradas
             </Typography>
-            <List sx={{ flex: 1 }}>
+            <Box sx={{ mb: 2 }}>
+              <SearchField
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Buscar unidades..."
+              />
+            </Box>
+            <List sx={{ flex: 1, overflow: 'auto' }}>
               {loading ? (
                 <LoadingSkeleton />
-              ) : units.length === 0 ? (
+              ) : filteredUnits.length === 0 ? (
                 <Typography color="text.secondary" align="center">
-                  Nenhuma unidade cadastrada
+                  {searchTerm ? 'Nenhuma unidade encontrada' : 'Nenhuma unidade cadastrada'}
                 </Typography>
               ) : (
-                units.map((unit, index) => (
+                filteredUnits.map((unit, index) => (
                   <React.Fragment key={unit.id}>
                     <ListItem
+                      sx={{ 
+                        py: 2,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                          borderRadius: 1
+                        }
+                      }}
                       secondaryAction={
                         <IconButton 
                           edge="end" 
@@ -163,14 +206,29 @@ export const Units = () => {
                       }
                     >
                       <ListItemText
-                        primary={unit.name}
-                        secondary={unit.description}
-                        primaryTypographyProps={{
-                          fontWeight: 500,
-                        }}
+                        primary={
+                          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                            {unit.name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography 
+                            variant="body2" 
+                            color="text.secondary"
+                            sx={{ 
+                              mt: 0.5,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden'
+                            }}
+                          >
+                            {unit.description || 'Sem descrição'}
+                          </Typography>
+                        }
                       />
                     </ListItem>
-                    {index < units.length - 1 && <Divider />}
+                    {index < filteredUnits.length - 1 && <Divider />}
                   </React.Fragment>
                 ))
               )}
@@ -198,7 +256,6 @@ export const Units = () => {
             elevation={2} 
             sx={{ 
               p: 3,
-              height: '100%',
               display: 'flex',
               flexDirection: 'column'
             }}
@@ -206,7 +263,7 @@ export const Units = () => {
             <Typography variant="h5" gutterBottom sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
               {editingUnit ? 'Editar Unidade' : 'Nova Unidade'}
             </Typography>
-            <Grid container spacing={3} sx={{ flex: 1 }}>
+            <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
                   id="name"
@@ -215,7 +272,6 @@ export const Units = () => {
                   value={name}
                   fullWidth
                   required
-                  sx={{ mb: 2 }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -229,7 +285,7 @@ export const Units = () => {
                   rows={3}
                 />
               </Grid>
-              <Grid item xs={12} sx={{ mt: 'auto', display: 'flex', gap: 2 }}>
+              <Grid item xs={12} sx={{ mt: 2, display: 'flex', gap: 2 }}>
                 {editingUnit && (
                   <Button
                     variant="outlined"
