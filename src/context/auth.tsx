@@ -42,7 +42,8 @@ export const AuthContextProvider = ({ children }: { children: ReactElement }) =>
           setUser(firebaseUser);
           storeInCache("user", firebaseUser);
         } else {
-          setUser(null);
+          const user = getFromCache("user")
+          setUser(user);
         }
       });
     }

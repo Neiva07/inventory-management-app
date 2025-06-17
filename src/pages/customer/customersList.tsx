@@ -60,7 +60,7 @@ export const CustomerList = () => {
       status: statusSelected?.value
     }).then(result => {
       setCustomers(result[0].docs.map(qr => qr.data() as Customer))
-      setCount(result[1].data().count)
+      setCount(result[1].count)
     }).finally(() => {
       setLoading(false);
     });

@@ -2,6 +2,7 @@ import { uuidv4 } from "@firebase/util";
 import { db } from "firebase";
 import { collection, doc, getCountFromServer, getDoc, getDocs, limit, orderBy, query, QueryConstraint, setDoc, startAfter, updateDoc, where } from "firebase/firestore";
 import { getProduct, Product, ProductUnit, updateProduct } from "./products";
+import { getDocumentCount } from "../lib/count";
 
 export interface OrderCustomer {
   id: string;
@@ -106,7 +107,7 @@ export const getOrders = (searchParams: OrderSearchParams) => {
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(orderCollection, ...constrains);
-  return Promise.all([getDocs(q), getCountFromServer(countQuery)])
+  return Promise.all([getDocs(q), getDocumentCount(orderCollection, constrains.slice(0, -1), searchParams.pageSize)])
 }
 
 export const getOrder = (orderID: string) => {

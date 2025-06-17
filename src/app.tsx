@@ -31,6 +31,7 @@ import { UpdateNotification } from './components/UpdateNotification';
 import { Settings } from "pages/routes/settings";
 import { UIContextProvider, useUI } from './context/ui';
 import { Sidebar } from './pages/routes/Sidebar';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 declare module '@mui/material/styles' {
   interface Components {
@@ -295,6 +296,7 @@ const App = () => {
   const { layout } = useUI();
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      <OfflineIndicator />
       {layout === 'navbar' ? <Navbar /> : <Sidebar />}
       <Box
         component="main"

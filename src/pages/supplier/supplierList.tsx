@@ -69,7 +69,7 @@ export const SupplierList = () => {
       status: statusSelected?.value
     }).then(result => {
       setSuppliers(result[0].docs.map(qr => qr.data() as Supplier))
-      setCount(result[1].data().count)
+      setCount(result[1].count)
     }).finally(() => {
       setLoading(false);
     });

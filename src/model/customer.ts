@@ -2,6 +2,7 @@ import { collection, getDocs, where, query, setDoc, doc, updateDoc, QueryConstra
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 import { Address } from "./suppliers";
+import { getDocumentCount } from "../lib/count";
 
 export interface Customer {
   id: string;
@@ -55,7 +56,10 @@ export const getCustomers = (searchParams: CustomerSearchParams) => {
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(customerCollection, ...constrains);
-  return Promise.all([getDocs(q), getCountFromServer(countQuery)])
+  return Promise.all([
+    getDocs(q), 
+    getDocumentCount(customerCollection, constrains.slice(0, -1), searchParams.pageSize)
+  ]);
 }
 
 export const createCustomer = (customerInfo: Customer) => {
@@ -64,14 +68,16 @@ export const createCustomer = (customerInfo: Customer) => {
 
   const customerDoc = doc(db, CUSTOMER_COLLECTION, customerID);
 
-  return setDoc(customerDoc, {
+  const customerData = {
     ...customerInfo,
     id: customerID,
-    createdAt: Date.now(),
+    createdAt: new Date(Date.now()),
     deleted: {
       isDeleted: false,
     },
-  });
+  };
+
+  return setDoc(customerDoc, customerData).then(() => customerData as Customer);
 }
 
 export const getCustomer = (customerID: string) => {

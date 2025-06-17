@@ -107,7 +107,7 @@ export const ProductList = () => {
       status: statusSelected?.value
     }).then(result => { 
       setProducts(result[0].docs.map(qr => qr.data() as Product))
-      setCount(result[1].data().count)
+      setCount(result[1].count)
     }).finally(() => {
       setLoading(false);
     });

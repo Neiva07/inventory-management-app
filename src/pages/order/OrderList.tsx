@@ -112,7 +112,7 @@ export const OrderList = () => {
       status: statusSelected,
     }).then(result => {
       setOrders(result[0].docs.map(qr => qr.data() as Order))
-      setCount(result[1].data().count)
+      setCount(result[1].count)
     }).finally(() => {
       setLoading(false);
     });

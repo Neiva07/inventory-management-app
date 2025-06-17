@@ -1,7 +1,6 @@
 import { initializeApp, setLogLevel } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { CACHE_SIZE_UNLIMITED, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -24,13 +23,14 @@ if (!firebaseConfig.apiKey || !firebaseConfig.messagingSenderId || !firebaseConf
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
 const analytics = getAnalytics(app);
 
-initializeFirestore(app,
-  {
-    localCache:
-      persistentLocalCache(/*settings*/{ tabManager: persistentMultipleTabManager(), cacheSizeBytes: CACHE_SIZE_UNLIMITED }),
-  });
+// Initialize Firestore with offline persistence
+const firestore = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+    cacheSizeBytes: CACHE_SIZE_UNLIMITED
+  })
+});
 
-export const db = getFirestore(app);
+export const db = firestore;

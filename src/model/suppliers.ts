@@ -2,6 +2,7 @@ import { collection, getDocs, where, query, setDoc, doc, updateDoc, QueryConstra
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 import { ProductCategory } from "./productCategories";
+import { getDocumentCount } from "../lib/count";
 
 export interface Address {
   region: string;
@@ -77,7 +78,8 @@ export const getSuppliers = (searchParams: SuppliersSearchParams) => {
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(supplierColletion, ...constrains);
-  return Promise.all([getDocs(q), getCountFromServer(countQuery)])
+  
+  return Promise.all([getDocs(q), getDocumentCount(supplierColletion, constrains.slice(0, -1), searchParams.pageSize)])
 }
 
 export const createSupplier = (supplierInfo: Supplier) => {

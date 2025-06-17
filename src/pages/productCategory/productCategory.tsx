@@ -50,9 +50,9 @@ export const ProductCategories = () => {
     handleMenuClose();
   };
 
-  const handleDeleteClick = async (category: ProductCategory) => {
+  const handleDeleteClick = (category: ProductCategory) => {
     try {
-      await deleteProductCategory(category.id);
+      deleteProductCategory(category.id);
       toast.success('Categoria excluída com sucesso');
       refreshCategories();
     } catch (err: unknown) {
@@ -77,28 +77,21 @@ export const ProductCategories = () => {
     try {
       if (editingCategory) {
         updateProductCategory(editingCategory.id, { name, description, userID: user.id })
-          .then(() => {
-            toast.success('Categoria atualizada com sucesso');
-            handleCancelEdit();
-            refreshCategories();
-          })
           .catch((err: Error) => {
             console.error(err);
             toast.error('Erro ao atualizar categoria');
           });
+          toast.success('Categoria atualizada com sucesso');
       } else {
         createProductCategories({ name, description, userID: user.id })
-          .then(() => {
-            toast.success('Categoria criada com sucesso');
-            setName("");
-            setDescription("");
-            refreshCategories();
-          })
           .catch((err: Error) => {
             console.error(err);
             toast.error('Erro ao criar categoria');
           });
+      toast.success('Categoria criada com sucesso');
       }
+      handleCancelEdit(); 
+      refreshCategories();
     } catch (err: unknown) {
       console.error(err);
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde');

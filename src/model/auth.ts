@@ -7,7 +7,7 @@ import {
   doc,
   setDoc,
 } from "firebase/firestore";
-import { db, auth } from "../firebase";
+import { db } from "../firebase";
 
 export interface User {
   id: string;
@@ -35,7 +35,6 @@ export const upsertUserFromSession = async (session: Session): Promise<User> => 
   const { user_id } = session;
   // Fetch user info from Clerk API
     const clerkUser = await fetchClerkUser(user_id);
-    console.log("CLERK USER",clerkUser);
     const fullName = clerkUser.first_name ? `${clerkUser.first_name} ${clerkUser.last_name || ''}`.trim() : clerkUser.username || '';
     const mainEmailAddress = clerkUser.email_addresses?.find(email => email.id === clerkUser.primary_email_address_id);
     const mainPhoneNumber = clerkUser.phone_numbers?.find(phone_number => phone_number.id === clerkUser.primary_phone_number_id);

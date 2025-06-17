@@ -2,6 +2,7 @@ import { DocumentData, collection, getDocs, where, query, setDoc, doc, QueryCons
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 import { ProductCategory } from "./productCategories";
+import { getDocumentCount } from "../lib/count";
 
 export interface SellingOption extends DocumentData {
   unit: ProductUnit;
@@ -94,7 +95,7 @@ export const getProducts = async (searchParams: ProductSearchParams) => {
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(productColletion, ...constrains);
-  return Promise.all([getDocs(q), getCountFromServer(countQuery)])
+  return Promise.all([getDocs(q), getDocumentCount(productColletion, constrains.slice(0, -1), searchParams.pageSize)])
 }
 
 export const getProduct = (productID: string) => {

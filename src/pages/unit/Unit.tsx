@@ -50,9 +50,9 @@ export const Units = () => {
     handleMenuClose();
   };
 
-  const handleDeleteClick = async (unit: Unit) => {
+  const handleDeleteClick = (unit: Unit) => {
     try {
-      await deleteUnit(unit.id);
+      deleteUnit(unit.id);
       toast.success('Unidade excluída com sucesso');
       refreshUnits();
     } catch (err: unknown) {
@@ -84,28 +84,23 @@ export const Units = () => {
     try {
       if (editingUnit) {
         updateUnit(editingUnit.id, { name, description, userID: user.id })
-          .then(() => {
-            toast.success('Unidade atualizada com sucesso');
-            handleCancelEdit();
-            refreshUnits();
-          })
           .catch((err: Error) => {
             console.error(err);
             toast.error('Erro ao atualizar unidade');
           });
+          toast.success('Unidade atualizada com sucesso');
+
       } else {
         createUnit({ name, description, userID: user.id })
-          .then(() => {
-            toast.success('Unidade criada com sucesso');
-            setName("");
-            setDescription("");
-            refreshUnits();
-          })
           .catch((err: Error) => {
             console.error(err);
             toast.error('Erro ao criar unidade');
           });
+          toast.success('Unidade criada com sucesso');
       }
+      handleCancelEdit();
+      refreshUnits();
+
     } catch (err: unknown) {
       console.error(err);
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde');
