@@ -68,7 +68,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
 
   const watchedRegion = form.watch('address.region');
 
-  // Update available cities when region changes
+  // Update available cities when region changes or when form is reset with fetched data
   useEffect(() => {
     if (watchedRegion?.value) {
       const cities = citiesByState.get(watchedRegion.value) || [];
@@ -78,12 +78,26 @@ export const useSupplierCreateForm = (supplierID?: string) => {
       }));
       setAvailableCities(cityOptions);
       
-      // Clear city selection when region changes
-      form.setValue('address.city', { label: '', value: '' });
+      // Clear city selection when region changes (but not when loading existing data)
+      if (!fetchedSupplierForm) {
+        form.setValue('address.city', { label: '', value: '' });
+      }
     } else {
       setAvailableCities([]);
     }
-  }, [watchedRegion, form.setValue]);
+  }, [watchedRegion, form.setValue, fetchedSupplierForm]);
+
+  // Populate cities when form is reset with fetched data
+  useEffect(() => {
+    if (fetchedSupplierForm?.address?.region?.value) {
+      const cities = citiesByState.get(fetchedSupplierForm.address.region.value) || [];
+      const cityOptions = cities.map(city => ({
+        label: city,
+        value: city,
+      }));
+      setAvailableCities(cityOptions);
+    }
+  }, [fetchedSupplierForm]);
 
   const getSupplierFormData = React.useCallback(async (supplierID?: string) => {
 
@@ -201,8 +215,8 @@ export const useSupplierCreateForm = (supplierID?: string) => {
       updateSupplier(supplierID, {
         address: {
           country: 'Brazil',
-          region: region.value,
-          city: city.value,
+          region: region?.value ?? '',
+          city: city?.value ?? '',
           postalCode: cleanedPostalCode,
           ...restAddress,
         },

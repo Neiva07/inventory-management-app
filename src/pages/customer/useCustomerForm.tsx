@@ -14,9 +14,11 @@ import { useAuth } from 'context/auth';
 export interface CustomerFormDataInterface {
   name: string;
   address: AddressFormDataInterface;
-  phone: string;
-  cpf: string;
-  rg: string;
+  companyPhone?: string;
+  contactPhone?: string;
+  contactName?: string;
+  cpf?: string;
+  rg?: string;
 }
 
 const INITIAL_CUSTOMER_VALUES: CustomerFormDataInterface = {
@@ -33,7 +35,9 @@ const INITIAL_CUSTOMER_VALUES: CustomerFormDataInterface = {
     } as SelectField,
     street: '',
   } as AddressFormDataInterface,
-  phone: '',
+  companyPhone: '',
+  contactPhone: '',
+  contactName: '',
   rg: '',
   cpf: '',
 };
@@ -48,11 +52,12 @@ export const useCustomerCreateForm = (customerID?: string) => {
     resolver: yupResolver(useCustomerFormValidationSchema()) as Resolver<CustomerFormDataInterface>,
     defaultValues: INITIAL_CUSTOMER_VALUES,
     mode: 'onBlur',
+    shouldFocusError: false,
   });
 
   const watchedRegion = form.watch('address.region');
 
-  // Update available cities when region changes
+  // Update available cities when region changes or when form is reset with fetched data
   useEffect(() => {
     if (watchedRegion?.value) {
       const cities = citiesByState.get(watchedRegion.value) || [];
@@ -62,12 +67,26 @@ export const useCustomerCreateForm = (customerID?: string) => {
       }));
       setAvailableCities(cityOptions);
       
-      // Clear city selection when region changes
-      form.setValue('address.city', { label: '', value: '' });
+      // Clear city selection when region changes (but not when loading existing data)
+      if (!fetchedCustomerForm) {
+        form.setValue('address.city', { label: '', value: '' });
+      }
     } else {
       setAvailableCities([]);
     }
-  }, [watchedRegion, form.setValue]);
+  }, [watchedRegion, form.setValue, fetchedCustomerForm]);
+
+  // Populate cities when form is reset with fetched data
+  useEffect(() => {
+    if (fetchedCustomerForm?.address?.region?.value) {
+      const cities = citiesByState.get(fetchedCustomerForm.address.region.value) || [];
+      const cityOptions = cities.map(city => ({
+        label: city,
+        value: city,
+      }));
+      setAvailableCities(cityOptions);
+    }
+  }, [fetchedCustomerForm]);
 
   const getCustomerFormData = React.useCallback(async (customerID?: string) => {
 
@@ -88,6 +107,9 @@ export const useCustomerCreateForm = (customerID?: string) => {
           label: queriedCustomer.address.city,
         },
       },
+      companyPhone: queriedCustomer.companyPhone,
+      contactPhone: queriedCustomer.contactPhone,
+      contactName: queriedCustomer.contactName,
     } as CustomerFormDataInterface
 
     setFetchedCustomerForm(customerForm);
@@ -105,14 +127,15 @@ export const useCustomerCreateForm = (customerID?: string) => {
   }, [fetchedCustomerForm, form.reset])
 
   const onSubmit = useCallback((data: CustomerFormDataInterface) => {
-    const { address, phone, rg, cpf, name } = data;
+    const { address, companyPhone, contactPhone, contactName, rg, cpf, name } = data;
 
     const { region, city, postalCode, ...restAddress } = address;
 
     const cleanedPostalCode = postalCode.replace(/[^0-9]/gi, "");
     const cleanedCPF = cpf.replace(/[^0-9]/gi, "");
     const cleanedRG = rg.replace(/[^0-9]/gi, "");
-    const cleanedPhone = phone.replace(/[^0-9]/gi, "");
+    const cleanedCompanyPhone = companyPhone.replace(/[^0-9]/gi, "");
+    const cleanedContactPhone = contactPhone.replace(/[^0-9]/gi, "");
     try {
       createCustomer({
         address: {
@@ -124,7 +147,9 @@ export const useCustomerCreateForm = (customerID?: string) => {
         },
         name,
         status: 'active',
-        phone: cleanedPhone,
+        companyPhone: cleanedCompanyPhone,
+        contactPhone: cleanedContactPhone,
+        contactName,
         userID: user.id,
         cpf: cleanedCPF,
         rg: cleanedRG,
@@ -145,28 +170,30 @@ export const useCustomerCreateForm = (customerID?: string) => {
   }, []);
 
   const onUpdate = useCallback((data: CustomerFormDataInterface) => {
-    const { address, phone, rg, cpf, name } = data;
+    const { address, companyPhone, contactPhone, contactName, rg, cpf, name } = data;
 
     const { region, city, postalCode, ...restAddress } = address;
 
     const cleanedPostalCode = postalCode.replace(/[^0-9]/gi, "");
     const cleanedCPF = cpf.replace(/[^0-9]/gi, "");
     const cleanedRG = rg.replace(/[^0-9]/gi, "");
-    const cleanedPhone = phone.replace(/[^0-9]/gi, "");
-
+    const cleanedCompanyPhone = companyPhone.replace(/[^0-9]/gi, "");
+    const cleanedContactPhone = contactPhone.replace(/[^0-9]/gi, "");
 
     try {
       updateCustomer(customerID, {
         address: {
           country: 'Brazil',
-          region: region.value,
-          city: city.value,
+          region: region?.value ?? '',
+          city: city?.value ?? '',
           postalCode: cleanedPostalCode,
           ...restAddress,
         },
         name,
         status: 'active',
-        phone: cleanedPhone,
+        companyPhone: cleanedCompanyPhone,
+        contactPhone: cleanedContactPhone,
+        contactName,
         cpf: cleanedCPF,
         rg: cleanedRG,
       } as Customer);

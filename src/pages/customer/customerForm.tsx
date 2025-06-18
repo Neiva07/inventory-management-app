@@ -265,15 +265,65 @@ export const CustomerForm = () => {
                         <TextField
                           {...field}
                           variant="outlined"
-                          label="Telefone"
-                          error={!!form.formState.errors.phone}
-                          helperText={form.formState.errors.phone?.message}
+                          label="Telefone da Empresa"
+                          error={!!form.formState.errors.companyPhone}
+                          helperText={form.formState.errors.companyPhone?.message}
                         />
                       }
                     </ReactInputMask>
                   );
                 }}
-                name="phone"
+                name="companyPhone"
+              />
+            </FormControl>
+          </Grid>
+          <Grid item xs={6}>
+            <FormControl fullWidth>
+              <Controller
+                control={form.control}
+                render={({ field }) => {
+                  return (
+                    <TextField
+                      {...field}
+                      variant="outlined"
+                      label="Nome do contato"
+                      error={!!form.formState.errors.contactName}
+                      helperText={form.formState.errors.contactName?.message}
+                    />
+                  );
+                }}
+                name="contactName"
+              />
+            </FormControl>
+          </Grid>
+          <Grid item xs={6}>
+            <FormControl fullWidth>
+              <Controller
+                control={form.control}
+                //FIX: https://github.com/react-hook-form/react-hook-form/issues/9126#issuecomment-1370843816 related to ref
+                render={({ field: { ref, ...field } }) => {
+
+                  return (
+                    // @ts-ignore
+                    <ReactInputMask
+                      {...field}
+                      mask={"(99) 9999-99999"}
+                    >
+                      {/* @ts-ignore */}
+                      {() =>
+
+                        <TextField
+                          {...field}
+                          variant="outlined"
+                          label="Telefone do Contato"
+                          error={!!form.formState.errors.contactPhone}
+                          helperText={form.formState.errors.contactPhone?.message}
+                        />
+                      }
+                    </ReactInputMask>
+                  );
+                }}
+                name="contactPhone"
               />
             </FormControl>
           </Grid>

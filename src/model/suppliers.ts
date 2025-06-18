@@ -16,9 +16,9 @@ export interface Supplier {
   id: string;
   userID: string;
   tradeName: string;
-  legalName: string;
-  entityID: string;
-  description: string;
+  legalName?: string;
+  entityID?: string;
+  description?: string;
   createdAt?: Date;
   updatedAt?: Date;
   deleted?: {
@@ -27,11 +27,11 @@ export interface Supplier {
   }
   status: string;
   address?: Address;
-  daysToPay: number;
-  companyPhone: string;
-  contactPhone: string;
+  daysToPay?: number;
+  companyPhone?: string;
+  contactPhone?: string;
   productCategories: Array<Partial<ProductCategory>>;
-  contactName: string;
+  contactName?: string;
 
 }
 

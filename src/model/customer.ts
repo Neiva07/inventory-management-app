@@ -8,8 +8,8 @@ export interface Customer {
   id: string;
   userID: string;
   name: string;
-  cpf: string;
-  rg: string;
+  cpf?: string;
+  rg?: string;
   createdAt?: Date;
   updatedAt?: Date;
   deleted?: {
@@ -18,7 +18,9 @@ export interface Customer {
   }
   status: string;
   address?: Address;
-  phone: string;
+  companyPhone?: string;
+  contactPhone?: string;
+  contactName?: string;
   // sailsman: Sailsman
 }
 
