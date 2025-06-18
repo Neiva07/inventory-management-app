@@ -5,22 +5,43 @@ import { SelectField } from '../product/useProductCreateForm';
 import ReactInputMask from 'react-input-mask';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { states } from '../../model/region';
 import { useAuth } from 'context/auth';
 import { PageTitle } from 'components/PageTitle';
 import { FormActions } from 'components/FormActions';
+import { CreateModeToggle } from 'components/CreateModeToggle';
 
 export const SupplierForm = () => {
   const { user } = useAuth();
   const { supplierID } = useParams();
+  const navigate = useNavigate();
+  const [isCreateMode, setIsCreateMode] = useState(false);
+  const [categories, setCategories] = useState<Array<ProductCategory>>([]);
 
   const { form, supplier, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, availableCities } = useSupplierCreateForm(supplierID);
-  const [categories, setCategories] = useState<Array<ProductCategory>>([]);
 
   useEffect(() => {
     getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
-  }, []);
+  }, [user]);
+
+  const handleSubmit = async () => {
+    if (supplierID) {
+      // Edit mode - always redirect to listing
+      await onFormUpdate();
+      navigate('/suppliers');
+    } else {
+      // Create mode
+      await onFormSubmit();
+      if (isCreateMode) {
+        // Reset form for new record
+        form.reset();
+      } else {
+        // Redirect to listing
+        navigate('/suppliers');
+      }
+    }
+  };
 
   return (
     <FormProvider {...form}>
@@ -392,26 +413,34 @@ export const SupplierForm = () => {
             </FormControl>
           </Grid>
         </Grid>
-        {
-          supplierID ?
-            <Button
-              onClick={onFormUpdate}
-              variant="contained"
-              style={{ marginTop: "12px" }}
-            >
-              Editar Fornecedor
-            </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, marginTop: "12px" }}>
+          {
+            supplierID ?
+              <Button
+                onClick={handleSubmit}
+                variant="contained"
+              >
+                Editar Fornecedor
+              </Button>
 
-            :
-            <Button
-              onClick={onFormSubmit}
-              variant="contained"
-              style={{ marginTop: "12px" }}
-            >
-              Criar Fornecedor
-            </Button>
+              :
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <CreateModeToggle
+                  isCreateMode={isCreateMode}
+                  onToggle={setIsCreateMode}
+                  listingText="Redirecionar para listagem de fornecedores"
+                  createText="Criar mais fornecedores"
+                />
+                <Button
+                  onClick={handleSubmit}
+                  variant="contained"
+                >
+                  Criar Fornecedor
+                </Button>
+              </Box>
 
-        }
+          }
+        </Box>
       </Box>
     </FormProvider>
   );

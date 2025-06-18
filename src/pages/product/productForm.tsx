@@ -16,15 +16,19 @@ import { SellingOptions } from "./sellingOptions";
 import { getProductCategories, ProductCategory } from "../../model/productCategories";
 import { Supplier, getSuppliers } from "model/suppliers";
 import { getUnits, Unit } from "model/units";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "context/auth";
 import { PageTitle } from 'components/PageTitle';
 import { FormActions } from 'components/FormActions';
+import { CreateModeToggle } from 'components/CreateModeToggle';
 
 export const ProductForm = () => {
   const { user } = useAuth();
 
   const { productID } = useParams();
+  const navigate = useNavigate();
+  const [isCreateMode, setIsCreateMode] = useState(false);
+  
   const formMethods = useProductCreateForm(productID);
   const { register, product, onFormSubmit, onFormUpdate, onDeactiveProduct, onActivateProduct, onDelete } = formMethods; 
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
@@ -42,6 +46,24 @@ export const ProductForm = () => {
   useEffect(() => {
     getUnits(user.id).then(queryResult => setUnits(queryResult.docs.map(qr => qr.data() as Unit)))
   }, [user]);
+
+  const handleSubmit = async () => {
+    if (productID) {
+      // Edit mode - always redirect to listing
+      await onFormUpdate();
+      navigate('/products');
+    } else {
+      // Create mode
+      await onFormSubmit();
+      if (isCreateMode) {
+        // Reset form for new record
+        formMethods.reset();
+      } else {
+        // Redirect to listing
+        navigate('/products');
+      }
+    }
+  };
 
   return (
     <FormProvider register={register} {...formMethods}>
@@ -345,15 +367,25 @@ export const ProductForm = () => {
         </Grid>
         <Divider style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }} />
         <SellingOptions {...formMethods} />
-        {productID ? (
-          <Button onClick={onFormUpdate} variant="contained" style={{ marginTop: "12px" }}>
-            Atualizar Produto
-          </Button>
-        ) : (
-          <Button onClick={onFormSubmit} variant="contained" style={{ marginTop: "12px" }}>
-            Criar produto
-          </Button>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, marginTop: "12px" }}>
+          {productID ? (
+            <Button onClick={handleSubmit} variant="contained">
+              Atualizar Produto
+            </Button>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <CreateModeToggle
+                isCreateMode={isCreateMode}
+                onToggle={setIsCreateMode}
+                listingText="Redirecionar para listagem de produtos"
+                createText="Criar mais produtos"
+              />
+              <Button onClick={handleSubmit} variant="contained">
+                Criar produto
+              </Button>
+            </Box>
+          )}
+        </Box>
       </Box>
     </FormProvider>
   );

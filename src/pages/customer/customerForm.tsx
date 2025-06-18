@@ -2,16 +2,38 @@ import { Autocomplete, Button, FormControl, Grid, TextField, Typography, Box } f
 import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import ReactInputMask from 'react-input-mask';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useCustomerCreateForm } from './useCustomerForm';
 import { states } from '../../model/region';
 import { PageTitle } from 'components/PageTitle';
 import { FormActions } from 'components/FormActions';
+import { CreateModeToggle } from 'components/CreateModeToggle';
+import { useState } from 'react';
 
 export const CustomerForm = () => {
   const { customerID } = useParams();
+  const navigate = useNavigate();
+  const [isCreateMode, setIsCreateMode] = useState(false);
 
   const { form, customer, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, availableCities } = useCustomerCreateForm(customerID);
+
+  const handleSubmit = async () => {
+    if (customerID) {
+      // Edit mode - always redirect to listing
+      await onFormUpdate();
+      navigate('/customers');
+    } else {
+      // Create mode
+      await onFormSubmit();
+      if (isCreateMode) {
+        // Reset form for new record
+        form.reset();
+      } else {
+        // Redirect to listing
+        navigate('/customers');
+      }
+    }
+  };
 
   return (
     <FormProvider {...form}>
@@ -328,26 +350,34 @@ export const CustomerForm = () => {
             </FormControl>
           </Grid>
         </Grid>
-        {
-          customerID ?
-            <Button
-              onClick={onFormUpdate}
-              variant="contained"
-              style={{ marginTop: "12px" }}
-            >
-              Editar Cliente
-            </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, marginTop: "12px" }}>
+          {
+            customerID ?
+              <Button
+                onClick={handleSubmit}
+                variant="contained"
+              >
+                Editar Cliente
+              </Button>
 
-            :
-            <Button
-              onClick={onFormSubmit}
-              variant="contained"
-              style={{ marginTop: "12px" }}
-            >
-              Criar Cliente
-            </Button>
+              :
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <CreateModeToggle
+                  isCreateMode={isCreateMode}
+                  onToggle={setIsCreateMode}
+                  listingText="Redirecionar para listagem de clientes"
+                  createText="Criar mais clientes"
+                />
+                <Button
+                  onClick={handleSubmit}
+                  variant="contained"
+                >
+                  Criar Cliente
+                </Button>
+              </Box>
 
-        }
+          }
+        </Box>
       </Box>
     </FormProvider>
   );

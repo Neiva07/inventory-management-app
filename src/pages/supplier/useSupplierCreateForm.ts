@@ -173,7 +173,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
         ...restData,
       } as Supplier);
 
-      toast.success('Cliente registrado com sucesso', {
+      toast.success('Fornecedor registrado com sucesso', {
         position: "bottom-right",
         autoClose: 5000,
         hideProgressBar: false,
