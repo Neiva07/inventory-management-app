@@ -150,7 +150,7 @@ export const OrderList = () => {
 
   return (
     <>
-      <PageTitle>Pedidos</PageTitle>
+      <PageTitle>Vendas</PageTitle>
       <Grid spacing={2} container>
         <Grid item xs={4}>
           <Autocomplete
