@@ -215,13 +215,14 @@ export const useCustomerCreateForm = (customerID?: string) => {
   }, [customerID]);
 
 
-  const onDelete = useCallback(() => {
+  const onDelete = useCallback((onSuccess?: () => void) => {
     try {
       deleteCustomer(customerID)
       toast.success('Cliente deletado com sucesso', {
         position: "bottom-right",
         theme: "colored",
       })
+      onSuccess?.()
 
     } catch (err) {
       console.error(err)
@@ -232,9 +233,11 @@ export const useCustomerCreateForm = (customerID?: string) => {
     }
   }, [customerID])
 
-  const onDeactivate = useCallback(() => {
+  const onDeactivate = useCallback(async () => {
     try {
-      deactiveCustomer(customerID)
+      await deactiveCustomer(customerID)
+      // Re-fetch customer data to update UI
+      await getCustomerFormData(customerID)
       toast.success('Cliente desativado com sucesso', {
         position: "bottom-right",
         theme: "colored",
@@ -248,11 +251,13 @@ export const useCustomerCreateForm = (customerID?: string) => {
       })
     }
 
-  }, [customerID])
+  }, [customerID, getCustomerFormData])
 
-  const onActivate = useCallback(() => {
+  const onActivate = useCallback(async () => {
     try {
-      activeCustomer(customerID)
+      await activeCustomer(customerID)
+      // Re-fetch customer data to update UI
+      await getCustomerFormData(customerID)
       toast.success('Cliente ativado com sucesso', {
         position: "bottom-right",
         theme: "colored",
@@ -266,7 +271,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
       })
     }
 
-  }, [customerID])
+  }, [customerID, getCustomerFormData])
 
 
   return {

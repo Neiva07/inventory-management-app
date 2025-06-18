@@ -72,7 +72,7 @@ export const ProductForm = () => {
           showDelete={!!productID}
           showInactivate={!!product && product.status === 'active'}
           showActivate={!!product && product.status === 'inactive'}
-          onDelete={onDelete}
+          onDelete={() => onDelete(() => navigate('/products'))}
           onInactivate={onDeactiveProduct}
           onActivate={onActivateProduct}
         />

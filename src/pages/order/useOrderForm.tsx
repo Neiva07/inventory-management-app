@@ -141,13 +141,15 @@ export const useOrderForm = (orderID?: string) => {
     }
   }, [orderID]);
 
-  const onDelete = useCallback(() => {
+  const onDelete = useCallback((onSuccess?: () => void) => {
     try {
       deleteOrder(orderID)
       toast.success('Venda deletada com sucesso', {
         position: "bottom-right",
         theme: "colored",
       })
+      // Call the success callback (navigation) after successful deletion
+      onSuccess?.()
 
     } catch (err) {
       console.error(err)

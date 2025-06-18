@@ -42,7 +42,7 @@ export const CustomerForm = () => {
           showDelete={!!customerID}
           showInactivate={!!customer && customer.status === 'active'}
           showActivate={!!customer && customer.status === 'inactive'}
-          onDelete={onDelete}
+          onDelete={() => onDelete(() => navigate('/customers'))}
           onInactivate={onDeactivate}
           onActivate={onActivate}
         />

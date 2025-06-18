@@ -50,7 +50,7 @@ export const SupplierForm = () => {
           showDelete={!!supplierID}
           showInactivate={!!supplier && supplier.status === 'active'}
           showActivate={!!supplier && supplier.status === 'inactive'}
-          onDelete={onDelete}
+          onDelete={() => onDelete(() => navigate('/suppliers'))}
           onInactivate={onDeactivate}
           onActivate={onActivate}
         />

@@ -231,10 +231,11 @@ export const useProductCreateForm = (productID?: string) => {
   }, [productID])
 
 
-  const onDelete = useCallback(async () => {
+  const onDelete = useCallback((onSuccess?: () => void) => {
     try {
-      await deleteProduct(productID);
-      toast.success('Produto ativado com sucesso')
+      deleteProduct(productID);
+      toast.success('Produto deletado com sucesso')
+      onSuccess?.()
 
     } catch (err) {
       console.error(err)
@@ -245,19 +246,21 @@ export const useProductCreateForm = (productID?: string) => {
 
   const onDeactiveProduct = useCallback(async () => {
     try {
-      await deactiveProduct(productID);
-      toast.success('Produto ativado com sucesso')
+      deactiveProduct(productID);
+      getFormProductData(productID)
+      toast.success('Produto desativado com sucesso')
 
     } catch (err) {
       console.error(err)
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
 
-  }, [productID])
+  }, [productID, getFormProductData])
 
   const onActivateProduct = useCallback(async () => {
     try {
-      await activeProduct(productID);
+      activeProduct(productID);
+      getFormProductData(productID)
       toast.success('Produto ativado com sucesso')
 
     } catch (err) {
@@ -265,7 +268,7 @@ export const useProductCreateForm = (productID?: string) => {
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
 
-  }, [productID])
+  }, [productID, getFormProductData])
 
 
   return {

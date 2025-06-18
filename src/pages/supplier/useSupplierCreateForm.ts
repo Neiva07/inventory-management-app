@@ -243,10 +243,12 @@ export const useSupplierCreateForm = (supplierID?: string) => {
   }, [supplierID]);
 
 
-  const onDelete = useCallback(() => {
+  const onDelete = useCallback((onSuccess?: () => void) => {
     try {
       deleteSupplier(supplierID)
       toast.success('Fornecedor deletado com sucesso')
+      // Call the success callback (navigation) after successful deletion
+      onSuccess?.()
 
     } catch (err) {
       console.error(err)
@@ -255,9 +257,11 @@ export const useSupplierCreateForm = (supplierID?: string) => {
 
   }, [supplierID])
 
-  const onDeactivate = useCallback(() => {
+  const onDeactivate = useCallback(async () => {
     try {
-      deactiveSupplier(supplierID)
+      await deactiveSupplier(supplierID)
+      // Re-fetch supplier data to update UI
+      await getSupplierFormData(supplierID)
       toast.success('Fornecedor desativado com sucesso'
       )
 
@@ -266,11 +270,13 @@ export const useSupplierCreateForm = (supplierID?: string) => {
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
 
-  }, [supplierID])
+  }, [supplierID, getSupplierFormData])
 
-  const onActivate = useCallback(() => {
+  const onActivate = useCallback(async () => {
     try {
-      activeSupplier(supplierID)
+      await activeSupplier(supplierID)
+      // Re-fetch supplier data to update UI
+      await getSupplierFormData(supplierID)
       toast.success('Fornecedor ativado com sucesso')
 
     } catch (err) {
@@ -278,7 +284,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
 
-  }, [supplierID])
+  }, [supplierID, getSupplierFormData])
 
 
   return {

@@ -1,7 +1,7 @@
 import { Button } from "@mui/material";
 import { Box } from "@mui/system";
 import { FormProvider } from "react-hook-form"
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { OrderFormHeader } from "./OrderFormHeader";
 import { OrderFormLineItemForm } from "./OrderFormLineItemForm";
 import { OrderFormLineItemList } from "./OrderFormLineItemList";
@@ -9,11 +9,12 @@ import { useOrderForm } from "./useOrderForm";
 
 export const OrderForm = () => {
   const { orderID } = useParams();
+  const navigate = useNavigate();
   const { register, onFormSubmit, onDelete, ...formMethods } = useOrderForm(orderID);
 
   return (
     <FormProvider register={register} {...formMethods}>
-      <OrderFormHeader />
+      <OrderFormHeader onDelete={() => onDelete(() => navigate('/orders'))} />
       <Box style={{ marginTop: 40 }}>
         <OrderFormLineItemForm />
       </Box>
