@@ -2,15 +2,15 @@ import { Resolver, useForm } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import useSupplierFormValidationSchema from './useSupplierFormValidationSchema';
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Supplier, createSupplier, getSupplier, updateSupplier, deleteSupplier, deactiveSupplier, activeSupplier } from '../../model/suppliers';
 import { ProductCategory } from '../../model/productCategories';
-import { regionByCode } from '../../model/region';
+import { regionByCode, citiesByState } from '../../model/region';
 import { toast } from 'react-toastify';
 import { useAuth } from 'context/auth';
 
 export interface AddressFormDataInterface {
-  city: string;
+  city: SelectField;
   region: SelectField; //state
   street: string;
   postalCode: string;
@@ -38,10 +38,13 @@ const INITIAL_SUPPLIER_FORM_STATE: SupplierFormDataInterface = {
   address: {
     postalCode: '',
     region: {
+      label: 'Pará',
+      value: 'PA',
+    } as SelectField,
+    city: {
       label: '',
       value: '',
     } as SelectField,
-    city: '',
     street: '',
   } as AddressFormDataInterface,
   productCategories: [] as Array<SelectField>,
@@ -54,16 +57,33 @@ const INITIAL_SUPPLIER_FORM_STATE: SupplierFormDataInterface = {
 
 export const useSupplierCreateForm = (supplierID?: string) => {
   const { user } = useAuth();
-  const [fetchedSupplierForm, setFetchedSupplierForm] = React.useState<SupplierFormDataInterface>();
-  const [supplier, setSupplier] = React.useState<Supplier>();
+  const [supplier, setSupplier] = useState<Supplier | null>(null);
+  const [fetchedSupplierForm, setFetchedSupplierForm] = useState<SupplierFormDataInterface | null>(null);
+  const [availableCities, setAvailableCities] = useState<Array<SelectField>>([]);
 
-  const formValidationSchema = useSupplierFormValidationSchema();
-  const formMethods = useForm<SupplierFormDataInterface>({
+  const form = useForm<SupplierFormDataInterface>({
+    resolver: yupResolver(useSupplierFormValidationSchema()) as Resolver<SupplierFormDataInterface>,
     defaultValues: INITIAL_SUPPLIER_FORM_STATE,
-    mode: 'onBlur',
-    resolver: yupResolver(formValidationSchema) as Resolver<SupplierFormDataInterface>,
   });
 
+  const watchedRegion = form.watch('address.region');
+
+  // Update available cities when region changes
+  useEffect(() => {
+    if (watchedRegion?.value) {
+      const cities = citiesByState.get(watchedRegion.value) || [];
+      const cityOptions = cities.map(city => ({
+        label: city,
+        value: city,
+      }));
+      setAvailableCities(cityOptions);
+      
+      // Clear city selection when region changes
+      form.setValue('address.city', { label: '', value: '' });
+    } else {
+      setAvailableCities([]);
+    }
+  }, [watchedRegion, form.setValue]);
 
   const getSupplierFormData = React.useCallback(async (supplierID?: string) => {
 
@@ -78,6 +98,10 @@ export const useSupplierCreateForm = (supplierID?: string) => {
         region: {
           value: queriedSupplier.address.region,
           label: regionByCode.get(queriedSupplier.address.region),
+        },
+        city: {
+          value: queriedSupplier.address.city,
+          label: queriedSupplier.address.city,
         },
       },
       productCategories: queriedSupplier.productCategories.map(pc => ({
@@ -96,15 +120,15 @@ export const useSupplierCreateForm = (supplierID?: string) => {
 
   }, [supplierID])
   React.useEffect(() => {
-    formMethods.reset(fetchedSupplierForm)
-  }, [fetchedSupplierForm])
+    form.reset(fetchedSupplierForm)
+  }, [fetchedSupplierForm, form.reset])
 
 
 
   const onSubmit = useCallback((data: SupplierFormDataInterface) => {
     const { productCategories, address, contactPhone, companyPhone, entityID, ...restData } = data;
 
-    const { region, postalCode, ...restAddress } = address;
+    const { region, city, postalCode, ...restAddress } = address;
 
     const cleanedPostalCode = postalCode.replace(/[^0-9]/gi, "");
     const cleanedEntityID = entityID.replace(/[^0-9]/gi, "");
@@ -114,10 +138,12 @@ export const useSupplierCreateForm = (supplierID?: string) => {
     try {
       createSupplier({
         address: {
+          ...restAddress,
+
           country: 'Brazil',
           region: region.value,
+          city: city.value,
           postalCode: cleanedPostalCode,
-          ...restAddress,
         },
         status: 'active',
         entityID: cleanedEntityID,
@@ -163,7 +189,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
   const onUpdate = useCallback((data: SupplierFormDataInterface) => {
     const { productCategories, address, contactPhone, companyPhone, entityID, ...restData } = data;
 
-    const { region, postalCode, ...restAddress } = address;
+    const { region, city, postalCode, ...restAddress } = address;
 
     const cleanedPostalCode = postalCode.replace(/[^0-9]/gi, "");
     const cleanedEntityID = entityID.replace(/[^0-9]/gi, "");
@@ -176,6 +202,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
         address: {
           country: 'Brazil',
           region: region.value,
+          city: city.value,
           postalCode: cleanedPostalCode,
           ...restAddress,
         },
@@ -241,12 +268,15 @@ export const useSupplierCreateForm = (supplierID?: string) => {
 
 
   return {
-    ...formMethods,
-    onFormSubmit: formMethods.handleSubmit(onSubmit),
-    onFormUpdate: formMethods.handleSubmit(onUpdate),
+    form,
+    supplier,
+    availableCities,
+    onFormSubmit: form.handleSubmit(onSubmit),
+    onFormUpdate: form.handleSubmit(onUpdate),
     onDelete,
     onDeactivate,
     onActivate,
-    supplier,
+    getSupplierFormData,
+    fetchedSupplierForm,
   };
 };

@@ -11,10 +11,10 @@ import { FormActions } from 'components/FormActions';
 export const CustomerForm = () => {
   const { customerID } = useParams();
 
-  const { register, customer, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, ...formMethods } = useCustomerCreateForm(customerID);
+  const { form, customer, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, availableCities } = useCustomerCreateForm(customerID);
 
   return (
-    <FormProvider register={register} {...formMethods}>
+    <FormProvider {...form}>
       <Box sx={{ position: 'relative', pt: 8 }}>
         <FormActions
           showDelete={!!customerID}
@@ -36,15 +36,15 @@ export const CustomerForm = () => {
           <Grid item xs={12}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     <TextField
                       {...field}
                       variant="outlined"
                       label="Nome"
-                      error={!!formMethods.formState.errors.name}
-                      helperText={formMethods.formState.errors.name?.message}
+                      error={!!form.formState.errors.name}
+                      helperText={form.formState.errors.name?.message}
                     />
                   );
                 }}
@@ -55,7 +55,7 @@ export const CustomerForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     // @ts-ignore
@@ -69,8 +69,8 @@ export const CustomerForm = () => {
                           {...field}
                           variant="outlined"
                           label="CPF"
-                          error={!!formMethods.formState.errors.cpf}
-                          helperText={formMethods.formState.errors.cpf?.message}
+                          error={!!form.formState.errors.cpf}
+                          helperText={form.formState.errors.cpf?.message}
                         />
                       }
                     </ReactInputMask>
@@ -83,7 +83,7 @@ export const CustomerForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     // @ts-ignore
@@ -97,8 +97,8 @@ export const CustomerForm = () => {
                           {...field}
                           variant="outlined"
                           label="RG(Identidade)"
-                          error={!!formMethods.formState.errors.rg}
-                          helperText={formMethods.formState.errors.rg?.message}
+                          error={!!form.formState.errors.rg}
+                          helperText={form.formState.errors.rg?.message}
                         />
                       }
                     </ReactInputMask>
@@ -111,15 +111,15 @@ export const CustomerForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     <TextField
                       {...field}
                       variant="outlined"
                       label="Endereço"
-                      error={!!(formMethods.formState.errors.address?.street)}
-                      helperText={formMethods.formState.errors.address?.street?.message}
+                      error={!!(form.formState.errors.address?.street)}
+                      helperText={form.formState.errors.address?.street?.message}
                     />
                   );
                 }}
@@ -130,7 +130,7 @@ export const CustomerForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     // @ts-ignore
@@ -144,8 +144,8 @@ export const CustomerForm = () => {
                           {...field}
                           variant="outlined"
                           label="CEP"
-                          error={!!formMethods.formState.errors.address?.postalCode}
-                          helperText={formMethods.formState.errors.address?.postalCode?.message}
+                          error={!!form.formState.errors.address?.postalCode}
+                          helperText={form.formState.errors.address?.postalCode?.message}
                         />
                       }
                     </ReactInputMask>
@@ -158,26 +158,7 @@ export const CustomerForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
-                render={({ field }) => {
-                  return (
-                    <TextField
-                      {...field}
-                      variant="outlined"
-                      label="Cidade"
-                      error={!!(formMethods.formState.errors.address?.city)}
-                      helperText={formMethods.formState.errors.address?.city?.message}
-                    />
-                  );
-                }}
-                name="address.city"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field: { value: region, ...props } }) => {
                   const handleChange = (
                     e: React.SyntheticEvent<Element, Event>,
@@ -203,8 +184,8 @@ export const CustomerForm = () => {
                             {...params}
                             variant="outlined"
                             label="Estado"
-                            error={!!(formMethods.formState.errors.address?.region)}
-                            helperText={formMethods.formState.errors.address?.region?.message}
+                            error={!!(form.formState.errors.address?.region)}
+                            helperText={form.formState.errors.address?.region?.message}
                           />
                         )}
                         value={region}
@@ -225,7 +206,49 @@ export const CustomerForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
+                render={({ field: { value: city, ...props } }) => {
+                  const handleChange = (
+                    e: React.SyntheticEvent<Element, Event>,
+                    value: SelectField
+                  ) => {
+                    props.onChange(value);
+                  };
+
+                  return (
+                    <>
+                      <Autocomplete
+                        {...props}
+                        id="cities"
+                        options={availableCities || []}
+                        getOptionLabel={(option) => option.label}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            variant="outlined"
+                            label="Cidade"
+                            error={!!(form.formState.errors.address?.city)}
+                            helperText={form.formState.errors.address?.city?.message}
+                          />
+                        )}
+                        value={city}
+                        isOptionEqualToValue={(option, value) =>
+                          option.value === value.value
+                        }
+                        onChange={handleChange}
+                        disabled={!availableCities || availableCities.length === 0}
+                      />
+                    </>
+                  );
+                }}
+                name="address.city"
+              />
+            </FormControl>
+          </Grid>
+          <Grid item xs={6}>
+            <FormControl fullWidth>
+              <Controller
+                control={form.control}
 
                 //FIX: https://github.com/react-hook-form/react-hook-form/issues/9126#issuecomment-1370843816 related to ref
                 render={({ field: { ref, ...field } }) => {
@@ -243,8 +266,8 @@ export const CustomerForm = () => {
                           {...field}
                           variant="outlined"
                           label="Telefone"
-                          error={!!formMethods.formState.errors.phone}
-                          helperText={formMethods.formState.errors.phone?.message}
+                          error={!!form.formState.errors.phone}
+                          helperText={form.formState.errors.phone?.message}
                         />
                       }
                     </ReactInputMask>

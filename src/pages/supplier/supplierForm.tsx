@@ -15,7 +15,7 @@ export const SupplierForm = () => {
   const { user } = useAuth();
   const { supplierID } = useParams();
 
-  const { register, supplier, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, ...formMethods } = useSupplierCreateForm(supplierID);
+  const { form, supplier, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, availableCities } = useSupplierCreateForm(supplierID);
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export const SupplierForm = () => {
   }, []);
 
   return (
-    <FormProvider register={register} {...formMethods}>
+    <FormProvider {...form}>
       <Box sx={{ position: 'relative', pt: 8 }}>
         <FormActions
           showDelete={!!supplierID}
@@ -45,7 +45,7 @@ export const SupplierForm = () => {
           <Grid item xs={12}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 //FIX: https://github.com/react-hook-form/react-hook-form/issues/9126#issuecomment-1370843816 related to ref
                 render={({ field: { ref, ...field } }) => {
                   return (
@@ -53,8 +53,8 @@ export const SupplierForm = () => {
                       {...field}
                       variant="outlined"
                       label="Nome Fantasia"
-                      error={!!formMethods.formState.errors.tradeName}
-                      helperText={formMethods.formState.errors.tradeName?.message}
+                      error={!!form.formState.errors.tradeName}
+                      helperText={form.formState.errors.tradeName?.message}
                     />
                   );
                 }}
@@ -65,15 +65,15 @@ export const SupplierForm = () => {
           <Grid item xs={12}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     <TextField
                       {...field}
                       variant="outlined"
                       label="Razão Social"
-                      error={!!formMethods.formState.errors.legalName}
-                      helperText={formMethods.formState.errors.legalName?.message}
+                      error={!!form.formState.errors.legalName}
+                      helperText={form.formState.errors.legalName?.message}
                     />
                   );
                 }}
@@ -84,7 +84,7 @@ export const SupplierForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     // @ts-ignore
@@ -97,8 +97,8 @@ export const SupplierForm = () => {
                           {...field}
                           variant="outlined"
                           label="CNPJ"
-                          error={!!formMethods.formState.errors.entityID}
-                          helperText={formMethods.formState.errors.entityID?.message}
+                          error={!!form.formState.errors.entityID}
+                          helperText={form.formState.errors.entityID?.message}
                         />
                       }
                     </ReactInputMask>
@@ -111,15 +111,15 @@ export const SupplierForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     <TextField
                       {...field}
                       variant="outlined"
                       label="Endereço"
-                      error={!!(formMethods.formState.errors.address?.street)}
-                      helperText={formMethods.formState.errors.address?.street?.message}
+                      error={!!(form.formState.errors.address?.street)}
+                      helperText={form.formState.errors.address?.street?.message}
                     />
                   );
                 }}
@@ -130,7 +130,7 @@ export const SupplierForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     // @ts-ignore
@@ -144,8 +144,8 @@ export const SupplierForm = () => {
                           {...field}
                           variant="outlined"
                           label="CEP"
-                          error={!!formMethods.formState.errors.address?.postalCode}
-                          helperText={formMethods.formState.errors.address?.postalCode?.message}
+                          error={!!form.formState.errors.address?.postalCode}
+                          helperText={form.formState.errors.address?.postalCode?.message}
                         />
                       }
                     </ReactInputMask>
@@ -158,26 +158,7 @@ export const SupplierForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
-                render={({ field }) => {
-                  return (
-                    <TextField
-                      {...field}
-                      variant="outlined"
-                      label="Cidade"
-                      error={!!(formMethods.formState.errors.address?.city)}
-                      helperText={formMethods.formState.errors.address?.city?.message}
-                    />
-                  );
-                }}
-                name="address.city"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field: { value: region, ...props } }) => {
                   const handleChange = (
                     _: React.SyntheticEvent<Element, Event>,
@@ -203,8 +184,8 @@ export const SupplierForm = () => {
                             {...params}
                             variant="outlined"
                             label="Estado"
-                            error={!!(formMethods.formState.errors.address?.region)}
-                            helperText={formMethods.formState.errors.address?.region?.message}
+                            error={!!(form.formState.errors.address?.region)}
+                            helperText={form.formState.errors.address?.region?.message}
                           />
                         )}
                         value={region}
@@ -223,7 +204,49 @@ export const SupplierForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
+                render={({ field: { value: city, ...props } }) => {
+                  const handleChange = (
+                    _: React.SyntheticEvent<Element, Event>,
+                    value: SelectField
+                  ) => {
+                    props.onChange(value);
+                  };
+
+                  return (
+                    <>
+                      <Autocomplete
+                        {...props}
+                        id="cities"
+                        options={availableCities || []}
+                        getOptionLabel={(option) => option.label}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            variant="outlined"
+                            label="Cidade"
+                            error={!!(form.formState.errors.address?.city)}
+                            helperText={form.formState.errors.address?.city?.message}
+                          />
+                        )}
+                        value={city}
+                        isOptionEqualToValue={(option, value) =>
+                          option.value === value.value
+                        }
+                        onChange={handleChange}
+                        disabled={!availableCities || availableCities.length === 0}
+                      />
+                    </>
+                  );
+                }}
+                name="address.city"
+              />
+            </FormControl>
+          </Grid>
+          <Grid item xs={6}>
+            <FormControl fullWidth>
+              <Controller
+                control={form.control}
                 //FIX: https://github.com/react-hook-form/react-hook-form/issues/9126#issuecomment-1370843816 related to ref
                 render={({ field: { ref, ...field } }) => {
 
@@ -240,8 +263,8 @@ export const SupplierForm = () => {
                           {...field}
                           variant="outlined"
                           label="Telefone da Empresa"
-                          error={!!formMethods.formState.errors.companyPhone}
-                          helperText={formMethods.formState.errors.companyPhone?.message}
+                          error={!!form.formState.errors.companyPhone}
+                          helperText={form.formState.errors.companyPhone?.message}
                         />
                       }
                     </ReactInputMask>
@@ -254,7 +277,7 @@ export const SupplierForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 //FIX: https://github.com/react-hook-form/react-hook-form/issues/9126#issuecomment-1370843816 related to ref
                 render={({ field: { ref, ...field } }) => {
 
@@ -271,8 +294,8 @@ export const SupplierForm = () => {
                           {...field}
                           variant="outlined"
                           label="Telefone do Contato"
-                          error={!!formMethods.formState.errors.contactPhone}
-                          helperText={formMethods.formState.errors.contactPhone?.message}
+                          error={!!form.formState.errors.contactPhone}
+                          helperText={form.formState.errors.contactPhone?.message}
                         />
                       }
                     </ReactInputMask>
@@ -285,15 +308,15 @@ export const SupplierForm = () => {
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     <TextField
                       {...field}
                       variant="outlined"
                       label="Nome do contato"
-                      error={!!formMethods.formState.errors.contactName}
-                      helperText={formMethods.formState.errors.contactName?.message}
+                      error={!!form.formState.errors.contactName}
+                      helperText={form.formState.errors.contactName?.message}
                     />
                   );
                 }}
@@ -304,7 +327,7 @@ export const SupplierForm = () => {
           <Grid item xs={8}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field: { value, ...props } }) => {
                   const handleChange = (
                     _: React.SyntheticEvent<Element, Event>,
@@ -326,8 +349,8 @@ export const SupplierForm = () => {
                           {...params}
                           variant="outlined"
                           label="Categorias de Produto"
-                          error={!!formMethods.formState.errors.productCategories}
-                          helperText={formMethods.formState.errors.productCategories?.message}
+                          error={!!form.formState.errors.productCategories}
+                          helperText={form.formState.errors.productCategories?.message}
                         />
                       )}
                       value={value}
@@ -352,15 +375,15 @@ export const SupplierForm = () => {
           <Grid item xs={4}>
             <FormControl fullWidth>
               <Controller
-                control={formMethods.control}
+                control={form.control}
                 render={({ field }) => {
                   return (
                     <TextField
                       {...field}
                       variant="outlined"
                       label="Prazo de crédito"
-                      error={!!formMethods.formState.errors.daysToPay}
-                      helperText={formMethods.formState.errors.daysToPay?.message}
+                      error={!!form.formState.errors.daysToPay}
+                      helperText={form.formState.errors.daysToPay?.message}
                     />
                   );
                 }}

@@ -7,10 +7,11 @@ const useSupplierFormValidationSchema = (): yup.ObjectSchema<CustomerFormDataInt
   return useMemo(() => {
     return yup.object().shape({
       name: yup.string().required('O nome do fornecedor é obrigatório'),
-      phone: yup.string().transform(val => {
+      phone: yup.string().optional().transform(val => {
+        if (!val) return val;
         return val.replace(/[^0-9]/gi, "");
       })
-        .test('len', 'Telefone precisa ter 10 ou 11 digitos', val => val.length === 10 || val.length === 11),
+        .test('len', 'Telefone precisa ter 10 ou 11 digitos', val => !val || val.length === 10 || val.length === 11),
     }) as yup.ObjectSchema<CustomerFormDataInterface>;
   }, []);
 };

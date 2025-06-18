@@ -2,10 +2,10 @@ import { Resolver, useForm } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import useCustomerFormValidationSchema from './useCustomerFormValidationSchema';
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { activeCustomer, createCustomer, Customer, deactiveCustomer, deleteCustomer, getCustomer, updateCustomer } from '../../model/customer';
 import { AddressFormDataInterface } from '../supplier/useSupplierCreateForm';
-import { regionByCode } from '../../model/region';
+import { regionByCode, citiesByState } from '../../model/region';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from 'context/auth';
@@ -24,10 +24,13 @@ const INITIAL_CUSTOMER_VALUES: CustomerFormDataInterface = {
   address: {
     postalCode: '',
     region: {
+      label: 'Pará',
+      value: 'PA',
+    } as SelectField,
+    city: {
       label: '',
       value: '',
     } as SelectField,
-    city: '',
     street: '',
   } as AddressFormDataInterface,
   phone: '',
@@ -37,15 +40,34 @@ const INITIAL_CUSTOMER_VALUES: CustomerFormDataInterface = {
 
 export const useCustomerCreateForm = (customerID?: string) => {
   const { user } = useAuth();
-  const [fetchedCustomerForm, setFetchedCustomerForm] = React.useState<CustomerFormDataInterface>();
-  const [customer, setCustomer] = React.useState<Customer>();
+  const [customer, setCustomer] = useState<Customer>();
+  const [fetchedCustomerForm, setFetchedCustomerForm] = useState<CustomerFormDataInterface | null>(null);
+  const [availableCities, setAvailableCities] = useState<Array<SelectField>>([]);
 
-  const formValidationSchema = useCustomerFormValidationSchema();
-  const formMethods = useForm<CustomerFormDataInterface>({
+  const form = useForm<CustomerFormDataInterface>({
+    resolver: yupResolver(useCustomerFormValidationSchema()) as Resolver<CustomerFormDataInterface>,
     defaultValues: INITIAL_CUSTOMER_VALUES,
     mode: 'onBlur',
-    resolver: yupResolver(formValidationSchema) as Resolver<CustomerFormDataInterface>,
   });
+
+  const watchedRegion = form.watch('address.region');
+
+  // Update available cities when region changes
+  useEffect(() => {
+    if (watchedRegion?.value) {
+      const cities = citiesByState.get(watchedRegion.value) || [];
+      const cityOptions = cities.map(city => ({
+        label: city,
+        value: city,
+      }));
+      setAvailableCities(cityOptions);
+      
+      // Clear city selection when region changes
+      form.setValue('address.city', { label: '', value: '' });
+    } else {
+      setAvailableCities([]);
+    }
+  }, [watchedRegion, form.setValue]);
 
   const getCustomerFormData = React.useCallback(async (customerID?: string) => {
 
@@ -61,6 +83,10 @@ export const useCustomerCreateForm = (customerID?: string) => {
           value: queriedCustomer.address.region,
           label: regionByCode.get(queriedCustomer.address.region),
         },
+        city: {
+          value: queriedCustomer.address.city,
+          label: queriedCustomer.address.city,
+        },
       },
     } as CustomerFormDataInterface
 
@@ -75,13 +101,13 @@ export const useCustomerCreateForm = (customerID?: string) => {
   }, [customerID])
 
   React.useEffect(() => {
-    formMethods.reset(fetchedCustomerForm)
-  }, [fetchedCustomerForm])
+    form.reset(fetchedCustomerForm)
+  }, [fetchedCustomerForm, form.reset])
 
   const onSubmit = useCallback((data: CustomerFormDataInterface) => {
     const { address, phone, rg, cpf, name } = data;
 
-    const { region, postalCode, ...restAddress } = address;
+    const { region, city, postalCode, ...restAddress } = address;
 
     const cleanedPostalCode = postalCode.replace(/[^0-9]/gi, "");
     const cleanedCPF = cpf.replace(/[^0-9]/gi, "");
@@ -92,6 +118,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
         address: {
           country: 'Brazil',
           region: region.value,
+          city: city.value,
           postalCode: cleanedPostalCode,
           ...restAddress,
         },
@@ -120,7 +147,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
   const onUpdate = useCallback((data: CustomerFormDataInterface) => {
     const { address, phone, rg, cpf, name } = data;
 
-    const { region, postalCode, ...restAddress } = address;
+    const { region, city, postalCode, ...restAddress } = address;
 
     const cleanedPostalCode = postalCode.replace(/[^0-9]/gi, "");
     const cleanedCPF = cpf.replace(/[^0-9]/gi, "");
@@ -133,6 +160,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
         address: {
           country: 'Brazil',
           region: region.value,
+          city: city.value,
           postalCode: cleanedPostalCode,
           ...restAddress,
         },
@@ -215,12 +243,13 @@ export const useCustomerCreateForm = (customerID?: string) => {
 
 
   return {
-    ...formMethods,
-    onFormSubmit: formMethods.handleSubmit(onSubmit),
-    onFormUpdate: formMethods.handleSubmit(onUpdate),
+    form,
+    customer,
+    availableCities,
+    onFormSubmit: form.handleSubmit(onSubmit),
+    onFormUpdate: form.handleSubmit(onUpdate),
     onDelete,
     onDeactivate,
     onActivate,
-    customer,
   };
 }
