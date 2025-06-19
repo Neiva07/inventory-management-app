@@ -3,6 +3,8 @@ import { db } from "firebase";
 import { collection, doc, getCountFromServer, getDoc, getDocs, limit, orderBy, query, QueryConstraint, setDoc, startAfter, updateDoc, where } from "firebase/firestore";
 import { getProduct, Product, ProductUnit, updateProduct } from "./products";
 import { getDocumentCount } from "../lib/count";
+import { generatePublicId } from "../lib/publicId";
+import { COLLECTION_NAMES } from "./index";
 
 export interface OrderCustomer {
   id: string;
@@ -30,6 +32,7 @@ export type OrderStatus = "request" | "complete"
 
 export interface Order {
   id: string;
+  publicId: string;
   userID: string;
   customer: OrderCustomer;
   createdAt: number;
@@ -66,7 +69,7 @@ interface OrderSearchParams {
   pageSize: number;
 }
 
-const ORDER_COLLECTION = "orders"
+const ORDER_COLLECTION = COLLECTION_NAMES.ORDERS
 const orderCollection = collection(db, ORDER_COLLECTION)
 
 
@@ -115,12 +118,14 @@ export const getOrder = (orderID: string) => {
 }
 
 
-export const createOrder = (orderInfo: Partial<Order>) => {
+export const createOrder = async (orderInfo: Partial<Order>) => {
   const orderID = uuidv4();
+  const publicId = await generatePublicId(ORDER_COLLECTION);
   const newOrder = doc(db, ORDER_COLLECTION, orderID);
 
   const newOrderDoc = setDoc(newOrder, {
     id: orderID,
+    publicId,
     createdAt: Date.now(),
     deleted: {
       isDeleted: false,

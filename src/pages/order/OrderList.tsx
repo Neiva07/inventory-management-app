@@ -14,71 +14,44 @@ import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 const columns: GridColDef[] = [
+  { 
+    field: 'publicId', 
+    headerName: 'ID', 
+    width: 200,
+  },
   {
-    field: 'customer',
+    field: 'customer.name',
     headerName: 'Cliente',
     flex: 1,
-    sortable: false,
-    valueGetter: (cell: GridCellParams<Order>) => {
-      return cell.row.customer.name
+    valueGetter: (params: GridCellParams<Order>) => {
+      return params.row.customer.name
     }
   },
   {
     field: 'createdAt',
     headerName: 'Data',
-    type: 'string',
     flex: 1,
-    sortable: false,
-    valueGetter: (cell: GridCellParams<Order>) => {
-      return format(new Date(cell.row.createdAt), "dd/MM/yyyy")
+    valueGetter: (params: GridCellParams<Order>) => {
+      return format(params.row.createdAt, 'dd/MM/yyyy')
     }
   },
   {
     field: 'totalCost',
-    headerName: 'Custo Total (R$)',
+    headerName: 'Total',
     type: 'number',
     flex: 1,
-    sortable: false,
+    valueGetter: (params: GridCellParams<Order>) => {
+      return params.row.totalCost
+    }
   },
   {
-    field: 'totalComission',
-    headerName: 'Comissão Total (R$)',
-    type: 'number',
-    flex: 1,
-    sortable: false,
-  },
-  {
-    field: 'dueDate',
-    headerName: 'Vencimento',
+    field: 'status',
+    headerName: 'Status',
     type: 'string',
     flex: 1,
-    sortable: false,
-    valueGetter: (cell: GridCellParams<Order>) => {
-      return format(new Date(cell.row.dueDate), "dd/MM/yyyy")
-    }
-  },
-  {
-    field: 'paymentType',
-    headerName: 'Tipo de pagamento',
-    flex: 1,
-    sortable: false,
-    type: 'number',
-    valueGetter: (cell: GridCellParams<Order>) => {
-      return cell.row.paymentType.name
-    }
-  },
-  {
-    field: 'items',
-    headerName: 'N de items',
-    flex: 1,
-    sortable: false,
-    type: 'number',
-    valueGetter: (cell: GridCellParams<Order>) => {
-      return cell.row.items.length
-    }
   }
-  //sailsman
 ];
+
 export const OrderList = () => {
   const { user } = useAuth();
 

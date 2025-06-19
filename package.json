@@ -57,6 +57,7 @@
     "axios": "^1.7.9",
     "babel-plugin-module-resolver": "^5.0.0",
     "date-fns": "^2.30.0",
+    "decimal.js": "^10.5.0",
     "dotenv": "^16.5.0",
     "electron-squirrel-startup": "^1.0.0",
     "electron-updater": "^6.6.2",

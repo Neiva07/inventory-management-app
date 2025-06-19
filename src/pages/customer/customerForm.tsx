@@ -10,6 +10,7 @@ import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import { useState } from 'react';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
+import { PublicIdDisplay } from 'components/PublicIdDisplay';
 
 export const CustomerForm = () => {
   const { customerID } = useParams();
@@ -63,9 +64,14 @@ export const CustomerForm = () => {
         />
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <PageTitle>
-              {customerID ? "Editar Cliente" : "Cadastro de Cliente"}
-            </PageTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 3 }}>
+              <PageTitle>
+                {customerID ? "Editar Cliente" : "Cadastro de Cliente"}
+              </PageTitle>
+              {customer?.publicId && (
+                <PublicIdDisplay publicId={customer.publicId} />
+              )}
+            </Box>
           </Grid>
         </Grid>
 

@@ -12,6 +12,7 @@ import { PageTitle } from 'components/PageTitle';
 import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
+import { PublicIdDisplay } from 'components/PublicIdDisplay';
 
 export const SupplierForm = () => {
   const { user } = useAuth();
@@ -71,9 +72,16 @@ export const SupplierForm = () => {
         />
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <PageTitle>
-              {supplierID ? "Editar Fornecedor" : "Cadastro de Fornecedor"}
-            </PageTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 3 }}>
+              <PageTitle>
+                {supplierID ? "Editar Fornecedor" : "Cadastro de Fornecedor"}
+              </PageTitle>
+              {supplier?.publicId && (
+                <PublicIdDisplay 
+                  publicId={supplier.publicId} 
+                />
+              )}
+            </Box>
           </Grid>
         </Grid>
 

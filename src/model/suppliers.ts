@@ -3,6 +3,8 @@ import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 import { ProductCategory } from "./productCategories";
 import { getDocumentCount } from "../lib/count";
+import { generatePublicId } from "../lib/publicId";
+import { COLLECTION_NAMES } from "./index";
 
 export interface Address {
   region: string;
@@ -14,6 +16,7 @@ export interface Address {
 
 export interface Supplier {
   id: string;
+  publicId: string;
   userID: string;
   tradeName: string;
   legalName?: string;
@@ -44,7 +47,7 @@ interface SuppliersSearchParams {
   productCategory?: ProductCategory;
 }
 
-const SUPPLIERS_COLLECTION = "suppliers"
+const SUPPLIERS_COLLECTION = COLLECTION_NAMES.SUPPLIERS
 
 const supplierColletion = collection(db, SUPPLIERS_COLLECTION)
 
@@ -82,14 +85,15 @@ export const getSuppliers = (searchParams: SuppliersSearchParams) => {
   return Promise.all([getDocs(q), getDocumentCount(supplierColletion, constrains.slice(0, -1), searchParams.pageSize)])
 }
 
-export const createSupplier = (supplierInfo: Supplier) => {
-
+export const createSupplier = async (supplierInfo: Supplier) => {
   const supplierID = uuidv4();
+  const publicId = await generatePublicId(SUPPLIERS_COLLECTION);
 
   const newSupplier = doc(db, SUPPLIERS_COLLECTION, supplierID);
 
   return setDoc(newSupplier, {
     id: supplierID,
+    publicId,
     createdAt: Date.now(),
     deleted: {
       isDeleted: false,

@@ -9,6 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { SearchField } from "../../components/SearchField";
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
+import { PublicIdDisplay } from 'components/PublicIdDisplay';
 
 export const ProductCategories = () => {
   const { user } = useAuth();
@@ -274,9 +275,16 @@ export const ProductCategories = () => {
               flexDirection: 'column'
             }}
           >
-            <Typography variant="h5" gutterBottom sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
-              {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 3 }}>
+              <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+              </Typography>
+              {editingCategory?.publicId && (
+                <PublicIdDisplay 
+                  publicId={editingCategory.publicId} 
+                />
+              )}
+            </Box>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField

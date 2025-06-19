@@ -22,6 +22,7 @@ import { PageTitle } from 'components/PageTitle';
 import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
+import { PublicIdDisplay } from 'components/PublicIdDisplay';
 
 export const ProductForm = () => {
   const { user } = useAuth();
@@ -93,9 +94,14 @@ export const ProductForm = () => {
         />
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <PageTitle>
-              {productID ? "Editar Produto" : "Cadastro de Produto"}
-            </PageTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 3 }}>
+              <PageTitle>
+                {productID ? "Editar Produto" : "Cadastro de Produto"}
+              </PageTitle>
+              {product?.publicId && (
+                <PublicIdDisplay publicId={product.publicId} />
+              )}
+            </Box>
           </Grid>
         </Grid>
         <Grid container spacing={2}>

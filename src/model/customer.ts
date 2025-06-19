@@ -3,9 +3,12 @@ import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 import { Address } from "./suppliers";
 import { getDocumentCount } from "../lib/count";
+import { generatePublicId } from "../lib/publicId";
+import { COLLECTION_NAMES } from "./index";
 
 export interface Customer {
   id: string;
+  publicId: string;
   userID: string;
   name: string;
   cpf?: string;
@@ -32,7 +35,7 @@ interface CustomerSearchParams {
   pageSize: number;
 }
 
-const CUSTOMER_COLLECTION = "customers"
+const CUSTOMER_COLLECTION = COLLECTION_NAMES.CUSTOMERS
 
 const customerCollection = collection(db, CUSTOMER_COLLECTION)
 
@@ -53,8 +56,6 @@ export const getCustomers = (searchParams: CustomerSearchParams) => {
 
   constrains.push(where("name", ">=", title), where('name', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
 
-  const countQuery = query(customerCollection, ...constrains)
-
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(customerCollection, ...constrains);
@@ -64,15 +65,16 @@ export const getCustomers = (searchParams: CustomerSearchParams) => {
   ]);
 }
 
-export const createCustomer = (customerInfo: Customer) => {
-
+export const createCustomer = async (customerInfo: Customer) => {
   const customerID = uuidv4();
+  const publicId = await generatePublicId(CUSTOMER_COLLECTION);
 
   const customerDoc = doc(db, CUSTOMER_COLLECTION, customerID);
 
   const customerData = {
     ...customerInfo,
     id: customerID,
+    publicId,
     createdAt: new Date(Date.now()),
     deleted: {
       isDeleted: false,

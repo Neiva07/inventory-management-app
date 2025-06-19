@@ -13,7 +13,7 @@ export const OrderForm = () => {
   const { orderID } = useParams();
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { register, onFormSubmit, onDelete, ...formMethods } = useOrderForm(orderID);
+  const { register, onFormSubmit, onDelete, order, ...formMethods } = useOrderForm(orderID);
 
   const handleDelete = () => {
     setDeleteDialogOpen(true);
@@ -30,7 +30,7 @@ export const OrderForm = () => {
 
   return (
     <FormProvider register={register} {...formMethods}>
-      <OrderFormHeader onDelete={handleDelete} />
+      <OrderFormHeader onDelete={handleDelete} order={order} />
       <Box style={{ marginTop: 40 }}>
         <OrderFormLineItemForm />
       </Box>

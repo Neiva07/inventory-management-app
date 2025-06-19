@@ -3,6 +3,8 @@ import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 import { ProductCategory } from "./productCategories";
 import { getDocumentCount } from "../lib/count";
+import { generatePublicId } from "../lib/publicId";
+import { COLLECTION_NAMES } from "./index";
 
 export interface SellingOption extends DocumentData {
   unit: ProductUnit;
@@ -33,6 +35,7 @@ export interface ProductSupplier {
 
 export interface Product extends DocumentData {
   id: string;
+  publicId: string;
   userID: string;
   title: string;
   description: string;
@@ -64,7 +67,7 @@ export interface ProductSearchParams {
 }
 
 
-const PRODUCTS_COLLECTION = "products"
+const PRODUCTS_COLLECTION = COLLECTION_NAMES.PRODUCTS
 
 const productColletion = collection(db, PRODUCTS_COLLECTION)
 
@@ -103,14 +106,15 @@ export const getProduct = (productID: string) => {
 }
 
 
-export const createProduct = (productInfo: Partial<Product>) => {
-
+export const createProduct = async (productInfo: Partial<Product>) => {
   const productID = uuidv4();
+  const publicId = await generatePublicId(PRODUCTS_COLLECTION);
 
   const newProduct = doc(db, PRODUCTS_COLLECTION, productID);
 
   return setDoc(newProduct, {
     id: productID,
+    publicId,
     createdAt: Date.now(),
     deleted: {
       isDeleted: false,

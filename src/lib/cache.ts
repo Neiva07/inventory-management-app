@@ -50,4 +50,3 @@ export const isFirestoreOnline = async (): Promise<boolean> => {
     return false;
   }
 };
-

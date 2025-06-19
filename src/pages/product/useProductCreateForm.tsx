@@ -174,7 +174,7 @@ export const useProductCreateForm = (productID?: string) => {
         })
       })
 
-      toast.success('Produto ativado com sucesso')
+      toast.success('Produto criado com sucesso')
 
     } catch (err) {
       console.error(err)

@@ -1,11 +1,14 @@
 import { collection, getDocs, where, query, setDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
+import { generatePublicId } from "../lib/publicId";
+import { COLLECTION_NAMES } from "./index";
 
 export interface Unit {
   name: string;
   description: string;
   id: string;
+  publicId: string;
   createdAt?: Date;
   updatedAt?: Date;
   userID: string;
@@ -16,7 +19,7 @@ export interface Unit {
 }
 
 
-const UNIT_COLLECTION = "units"
+const UNIT_COLLECTION = COLLECTION_NAMES.UNITS
 
 const unitColletion = collection(db, UNIT_COLLECTION);
 
@@ -31,12 +34,14 @@ export const getUnits = (userID: string, name = '') => {
   return getDocs(q);
 }
 
-export const createUnit = (unitInfo: Partial<Unit>) => {
+export const createUnit = async (unitInfo: Partial<Unit>) => {
   const id = uuidv4();
+  const publicId = await generatePublicId(UNIT_COLLECTION);
   const newUnit = doc(db, UNIT_COLLECTION, id);
 
   return setDoc(newUnit, {
     id,
+    publicId,
     createdAt: Date.now(),
     deleted: {
       isDeleted: false,

@@ -1,11 +1,14 @@
 import { collection, getDocs, where, query, setDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
+import { generatePublicId } from "../lib/publicId";
+import { COLLECTION_NAMES } from "./index";
 
 export interface ProductCategory {
   name: string;
   description: string;
   id: string;
+  publicId: string;
   createdAt?: Date;
   updatedAt?: Date;
   userID: string;
@@ -16,7 +19,7 @@ export interface ProductCategory {
 }
 
 
-const PRODUCT_CATEGORIES_COLLECTION = "product_categories"
+const PRODUCT_CATEGORIES_COLLECTION = COLLECTION_NAMES.PRODUCT_CATEGORIES
 
 const productCategoryColletion = collection(db, PRODUCT_CATEGORIES_COLLECTION);
 
@@ -32,12 +35,14 @@ export const getProductCategories = (userID: string, name = '') => {
   return getDocs(q);
 }
 
-export const createProductCategories = (productCategoryInfo: Partial<ProductCategory>) => {
+export const createProductCategories = async (productCategoryInfo: Partial<ProductCategory>) => {
   const id = uuidv4();
+  const publicId = await generatePublicId(PRODUCT_CATEGORIES_COLLECTION);
   const newProductCategory = doc(db, PRODUCT_CATEGORIES_COLLECTION, id);
 
   return setDoc(newProductCategory, {
     id,
+    publicId,
     createdAt: Date.now(),
     deleted: {
       isDeleted: false,

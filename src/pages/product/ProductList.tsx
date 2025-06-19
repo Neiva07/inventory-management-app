@@ -11,7 +11,11 @@ import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 const columns: GridColDef[] = [
-  // { field: 'id', headerName: 'ID', width: 200 },
+  { 
+    field: 'publicId', 
+    headerName: 'ID', 
+    width: 200,
+  },
   { field: 'title', headerName: 'Nome', flex: 1 },
   {
     field: 'inventory',

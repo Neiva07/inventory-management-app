@@ -9,6 +9,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { SearchField } from "../../components/SearchField";
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
+import { PublicIdDisplay } from 'components/PublicIdDisplay';
 
 export const Units = () => {
   const { user } = useAuth();
@@ -276,9 +277,16 @@ export const Units = () => {
               flexDirection: 'column'
             }}
           >
-            <Typography variant="h5" gutterBottom sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
-              {editingUnit ? 'Editar Unidade' : 'Nova Unidade'}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 3 }}>
+              <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                {editingUnit ? 'Editar Unidade' : 'Nova Unidade'}
+              </Typography>
+              {editingUnit?.publicId && (
+                <PublicIdDisplay 
+                  publicId={editingUnit.publicId} 
+                />
+              )}
+            </Box>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField

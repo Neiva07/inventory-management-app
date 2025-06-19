@@ -10,6 +10,8 @@ import { PageTitle } from 'components/PageTitle';
 import { useParams } from 'react-router-dom';
 import { FormActions } from 'components/FormActions';
 import { Box } from '@mui/material';
+import { PublicIdDisplay } from 'components/PublicIdDisplay';
+import { Order } from 'model/orders';
 
 export const statuses = [
   {
@@ -41,7 +43,7 @@ export const paymentOptions = [
   }
 ]
 
-export const OrderFormHeader = ({ onDelete }: { onDelete?: () => void }) => {
+export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; order?: Order }) => {
   const { user } = useAuth();
   const { orderID } = useParams();
   const [customers, setCustomers] = useState<Array<Customer>>([]);
@@ -57,6 +59,16 @@ export const OrderFormHeader = ({ onDelete }: { onDelete?: () => void }) => {
         showDelete={!!orderID}
         onDelete={onDelete}
       />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <PageTitle>
+          {orderID ? "Editar Nota Fiscal" : "Cadastro de Nota Fiscal"}
+        </PageTitle>
+        {order?.publicId && (
+          <PublicIdDisplay 
+            publicId={order.publicId} 
+          />
+        )}
+      </Box>
       <Grid container spacing={2}>
         <Grid item xs={4}>
           <FormControl fullWidth>
@@ -246,11 +258,6 @@ export const OrderFormHeader = ({ onDelete }: { onDelete?: () => void }) => {
               }}
             />
           </FormControl>
-        </Grid>
-        <Grid item xs={12}>
-          <PageTitle>
-            {orderID ? "Editar Nota Fiscal" : "Cadastro de Nota Fiscal"}
-          </PageTitle>
         </Grid>
       </Grid>
     </Box>
