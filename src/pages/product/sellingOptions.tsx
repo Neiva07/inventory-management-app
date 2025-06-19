@@ -43,6 +43,24 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
     formMethods.setValue(`sellingOptions.${parentIndex}.prices`, newPrices);
   };
 
+  // Watch for unit cost changes to recalculate profit percentages
+  const unitCost = formMethods.watch(`sellingOptions.${parentIndex}.unitCost`) || 0;
+  
+  React.useEffect(() => {
+    if (unitCost > 0) {
+      const currentPrices = formMethods.getValues(`sellingOptions.${parentIndex}.prices`);
+      const updatedPrices = currentPrices.map((price, i) => {
+        if (i === index && price.profit !== undefined) {
+          // Recalculate the price value based on the new unit cost and existing profit percentage
+          const newValue = unitCost * ((price.profit / 100) + 1);
+          return { ...price, value: newValue };
+        }
+        return price;
+      });
+      formMethods.setValue(`sellingOptions.${parentIndex}.prices`, updatedPrices);
+    }
+  }, [unitCost, parentIndex, index, formMethods]);
+
   return (
     <Grid
       spacing={2}
@@ -163,6 +181,43 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
     getUnits(user.id).then(qr => setUnits(qr.docs.map(d => d.data() as Unit)));
   }, [])
 
+  // Watch the main inventory and cost values
+  const mainInventory = formMethods.watch('inventory') || 0;
+  const mainCost = formMethods.watch('cost') || 0;
+  const buyUnit = formMethods.watch('buyUnit');
+  const currentUnit = formMethods.watch(`sellingOptions.${index}.unit`);
+
+  // Auto-set conversion rate to 1 when unit matches buy unit
+  React.useEffect(() => {
+    if (currentUnit?.value && buyUnit?.value && currentUnit.value === buyUnit.value) {
+      formMethods.setValue(`sellingOptions.${index}.conversionRate`, 1);
+    }
+  }, [currentUnit?.value, buyUnit?.value, index, formMethods]);
+
+  // Recalculate inventory and unit cost when main inventory or cost changes
+  React.useEffect(() => {
+    const conversionRate = formMethods.getValues(`sellingOptions.${index}.conversionRate`) || 0;
+    if (conversionRate > 0) {
+      const newInventory = mainInventory * conversionRate;
+      const newUnitCost = mainCost / conversionRate;
+      formMethods.setValue(`sellingOptions.${index}.inventory`, newInventory);
+      formMethods.setValue(`sellingOptions.${index}.unitCost`, newUnitCost);
+    }
+  }, [mainInventory, mainCost, index, formMethods]);
+
+  // Calculate inventory and unit cost when conversion rate changes
+  const handleConversionRateChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const conversionRate = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0;
+    
+    // Calculate new inventory and unit cost
+    const newInventory = mainInventory * conversionRate;
+    const newUnitCost = conversionRate > 0 ? mainCost / conversionRate : 0;
+    
+    // Update the form values
+    formMethods.setValue(`sellingOptions.${index}.inventory`, newInventory);
+    formMethods.setValue(`sellingOptions.${index}.unitCost`, newUnitCost);
+  };
+
   return (
     <Box>
       <Grid container spacing={2}>
@@ -177,6 +232,11 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
                   value: SelectField
                 ) => {
                   props.onChange(value);
+                  
+                  // Auto-set conversion rate to 1 if unit matches buy unit
+                  if (value?.value && buyUnit?.value && value.value === buyUnit.value) {
+                    formMethods.setValue(`sellingOptions.${index}.conversionRate`, 1);
+                  }
                 };
                 return (
                   <>
@@ -215,10 +275,15 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
               control={formMethods.control}
               render={({ field: { ...props } }) => {
                 return (
-                  <TextField {...props}
+                  <TextField 
+                    {...props}
                     variant="outlined"
                     label="Conversão"
                     onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      props.onChange(e);
+                      handleConversionRateChange(e);
+                    }}
                   />
                 );
               }}
@@ -238,6 +303,9 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
                     label="Estoque"
                     value={inventory}
                     onFocus={(e) => e.target.select()}
+                    InputProps={{
+                      readOnly: true,
+                    }}
                   />
                 );
               }}
@@ -257,6 +325,9 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
                     variant="outlined"
                     label="Custo da unidade"
                     onFocus={(e) => e.target.select()}
+                    InputProps={{
+                      readOnly: true,
+                    }}
                   />
                 );
               }}
