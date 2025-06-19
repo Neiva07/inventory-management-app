@@ -11,6 +11,7 @@ import { SelectField } from 'pages/product/useProductCreateForm';
 import { format } from "date-fns"
 import { ptBR } from '@mui/x-data-grid/locales';
 import { PageTitle } from 'components/PageTitle';
+import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 const columns: GridColDef[] = [
   {
@@ -91,6 +92,7 @@ export const OrderList = () => {
   const [startDate, setStartDate] = React.useState<Date>();
   const [endDate, setEndDate] = React.useState<Date>();
   const [loading, setLoading] = React.useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
   const navigate = useNavigate();
 
@@ -144,8 +146,17 @@ export const OrderList = () => {
   }
 
   const handleDeleteOrder = () => {
+    setDeleteDialogOpen(true);
+  }
+
+  const handleConfirmDelete = () => {
     deleteOrder(selectedRowID)
     queryOrders();
+    setDeleteDialogOpen(false);
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
   }
 
   return (
@@ -236,6 +247,12 @@ export const OrderList = () => {
           </div>
         </Grid>
       </Grid>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        resourceName="venda"
+      />
     </>
   );
 }

@@ -9,11 +9,13 @@ import { PageTitle } from 'components/PageTitle';
 import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import { useState } from 'react';
+import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 export const CustomerForm = () => {
   const { customerID } = useParams();
   const navigate = useNavigate();
   const [isCreateMode, setIsCreateMode] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { form, customer, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, availableCities } = useCustomerCreateForm(customerID);
 
@@ -35,6 +37,19 @@ export const CustomerForm = () => {
     }
   };
 
+  const handleDelete = () => {
+    setDeleteDialogOpen(true);
+  }
+
+  const handleConfirmDelete = () => {
+    onDelete(() => navigate('/customers'));
+    setDeleteDialogOpen(false);
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+  }
+
   return (
     <FormProvider {...form}>
       <Box sx={{ position: 'relative', pt: 8 }}>
@@ -42,7 +57,7 @@ export const CustomerForm = () => {
           showDelete={!!customerID}
           showInactivate={!!customer && customer.status === 'active'}
           showActivate={!!customer && customer.status === 'inactive'}
-          onDelete={() => onDelete(() => navigate('/customers'))}
+          onDelete={handleDelete}
           onInactivate={onDeactivate}
           onActivate={onActivate}
         />
@@ -378,6 +393,12 @@ export const CustomerForm = () => {
 
           }
         </Box>
+        <DeleteConfirmationDialog
+          open={deleteDialogOpen}
+          onClose={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+          resourceName="cliente"
+        />
       </Box>
     </FormProvider>
   );

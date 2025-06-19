@@ -8,6 +8,7 @@ import { SelectField } from './useProductCreateForm';
 import { useAuth } from 'context/auth';
 import { ptBR } from '@mui/x-data-grid/locales';
 import { PageTitle } from 'components/PageTitle';
+import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 const columns: GridColDef[] = [
   // { field: 'id', headerName: 'ID', width: 200 },
@@ -84,6 +85,7 @@ export const ProductList = () => {
   const [searchTitle, setSearchTitle] = React.useState<string>('');
   const [selectedRowID, setSelectedRowID] = React.useState<string>();
   const [loading, setLoading] = React.useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
   const [categories, setCategories] = React.useState<Array<ProductCategory>>([]);
   const [categorySelected, setCategorySelected] = React.useState<ProductCategory>();
@@ -147,8 +149,17 @@ export const ProductList = () => {
     queryProducts();
   }
   const handleDeleteProduct = () => {
+    setDeleteDialogOpen(true);
+  }
+
+  const handleConfirmDelete = () => {
     deleteProduct(selectedRowID)
     queryProducts();
+    setDeleteDialogOpen(false);
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
   }
 
   return (
@@ -253,6 +264,12 @@ export const ProductList = () => {
           />
         </Grid>
       </Grid>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        resourceName="produto"
+      />
     </>
   );
 }

@@ -21,6 +21,7 @@ import { useAuth } from "context/auth";
 import { PageTitle } from 'components/PageTitle';
 import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
+import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 export const ProductForm = () => {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ export const ProductForm = () => {
   const { productID } = useParams();
   const navigate = useNavigate();
   const [isCreateMode, setIsCreateMode] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   const formMethods = useProductCreateForm(productID);
   const { register, product, onFormSubmit, onFormUpdate, onDeactiveProduct, onActivateProduct, onDelete } = formMethods; 
@@ -65,6 +67,19 @@ export const ProductForm = () => {
     }
   };
 
+  const handleDelete = () => {
+    setDeleteDialogOpen(true);
+  }
+
+  const handleConfirmDelete = () => {
+    onDelete(() => navigate('/products'));
+    setDeleteDialogOpen(false);
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+  }
+
   return (
     <FormProvider register={register} {...formMethods}>
       <Box sx={{ position: 'relative', pt: 8 }}>
@@ -72,7 +87,7 @@ export const ProductForm = () => {
           showDelete={!!productID}
           showInactivate={!!product && product.status === 'active'}
           showActivate={!!product && product.status === 'inactive'}
-          onDelete={() => onDelete(() => navigate('/products'))}
+          onDelete={handleDelete}
           onInactivate={onDeactiveProduct}
           onActivate={onActivateProduct}
         />
@@ -386,6 +401,12 @@ export const ProductForm = () => {
             </Box>
           )}
         </Box>
+        <DeleteConfirmationDialog
+          open={deleteDialogOpen}
+          onClose={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+          resourceName="produto"
+        />
       </Box>
     </FormProvider>
   );

@@ -8,6 +8,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { SearchField } from "../../components/SearchField";
+import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 export const Units = () => {
   const { user } = useAuth();
@@ -21,6 +22,7 @@ export const Units = () => {
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleChangeName = (e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value)
@@ -75,16 +77,30 @@ export const Units = () => {
   };
 
   const handleDeleteClick = (unit: Unit) => {
-    try {
-      deleteUnit(unit.id);
-      toast.success('Unidade excluída com sucesso');
-      refreshUnits();
-    } catch (err: unknown) {
-      console.error(err);
-      toast.error('Erro ao excluir unidade');
-    }
+    setSelectedUnit(unit);
+    setDeleteDialogOpen(true);
     handleMenuClose();
   };
+
+  const handleConfirmDelete = () => {
+    if (selectedUnit) {
+      try {
+        deleteUnit(selectedUnit.id);
+        toast.success('Unidade excluída com sucesso');
+        refreshUnits();
+      } catch (err: unknown) {
+        console.error(err);
+        toast.error('Erro ao excluir unidade');
+      }
+    }
+    setDeleteDialogOpen(false);
+    setSelectedUnit(null);
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setSelectedUnit(null);
+  }
 
   const handleCancelEdit = () => {
     setEditingUnit(null);
@@ -314,6 +330,12 @@ export const Units = () => {
           </Paper>
         </Grid>
       </Grid>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        resourceName="unidade"
+      />
     </Container>
   )
 }

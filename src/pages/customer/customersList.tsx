@@ -7,6 +7,7 @@ import { Customer, deactiveCustomer, deleteCustomer, getCustomers } from 'model/
 import { useAuth } from 'context/auth';
 import { ptBR } from '@mui/x-data-grid/locales';
 import { PageTitle } from 'components/PageTitle';
+import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 const columns: GridColDef[] = [
   { field: 'name', headerName: 'Nome', flex: 1 },
@@ -44,6 +45,7 @@ export const CustomerList = () => {
   const [searchName, setSearchName] = React.useState<string>('');
   const [selectedRowID, setSelectedRowID] = React.useState<string>();
   const [loading, setLoading] = React.useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
   const [statusSelected, setStatusSelected] = React.useState<SelectField<string>>();
   const [pageSize, setPageSize] = React.useState<number>(10);
@@ -96,8 +98,17 @@ export const CustomerList = () => {
     queryCustomers();
   }
   const handleDeleteCustomer = () => {
+    setDeleteDialogOpen(true);
+  }
+
+  const handleConfirmDelete = () => {
     deleteCustomer(selectedRowID)
     queryCustomers();
+    setDeleteDialogOpen(false);
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
   }
 
   return (
@@ -181,6 +192,12 @@ export const CustomerList = () => {
           </div>
         </Grid>
       </Grid>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        resourceName="cliente"
+      />
     </>
   );
 }

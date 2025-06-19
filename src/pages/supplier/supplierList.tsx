@@ -8,6 +8,7 @@ import { Supplier, getSuppliers, deactiveSupplier, deleteSupplier } from 'model/
 import { useAuth } from 'context/auth';
 import { ptBR } from '@mui/x-data-grid/locales';
 import { PageTitle } from 'components/PageTitle';
+import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 const columns: GridColDef[] = [
   // { field: 'id', headerName: 'ID', width: 200 },
@@ -46,6 +47,7 @@ export const SupplierList = () => {
   const [searchTitle, setSearchTitle] = React.useState<string>('');
   const [selectedRowID, setSelectedRowID] = React.useState<string>();
   const [loading, setLoading] = React.useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
   const [categories, setCategories] = React.useState<Array<ProductCategory>>([]);
   const [categorySelected, setCategorySelected] = React.useState<ProductCategory>();
@@ -108,8 +110,17 @@ export const SupplierList = () => {
     querySuppliers();
   }
   const handleDeleteSupplier = () => {
+    setDeleteDialogOpen(true);
+  }
+
+  const handleConfirmDelete = () => {
     deleteSupplier(selectedRowID)
     querySuppliers();
+    setDeleteDialogOpen(false);
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
   }
 
   return (
@@ -215,6 +226,12 @@ export const SupplierList = () => {
           </div>
         </Grid>
       </Grid>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        resourceName="fornecedor"
+      />
     </>
   );
 }

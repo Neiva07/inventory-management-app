@@ -11,6 +11,7 @@ import { useAuth } from 'context/auth';
 import { PageTitle } from 'components/PageTitle';
 import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
+import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 export const SupplierForm = () => {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export const SupplierForm = () => {
   const navigate = useNavigate();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { form, supplier, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, availableCities } = useSupplierCreateForm(supplierID);
 
@@ -43,6 +45,19 @@ export const SupplierForm = () => {
     }
   };
 
+  const handleDelete = () => {
+    setDeleteDialogOpen(true);
+  }
+
+  const handleConfirmDelete = () => {
+    onDelete(() => navigate('/suppliers'));
+    setDeleteDialogOpen(false);
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+  }
+
   return (
     <FormProvider {...form}>
       <Box sx={{ position: 'relative', pt: 8 }}>
@@ -50,7 +65,7 @@ export const SupplierForm = () => {
           showDelete={!!supplierID}
           showInactivate={!!supplier && supplier.status === 'active'}
           showActivate={!!supplier && supplier.status === 'inactive'}
-          onDelete={() => onDelete(() => navigate('/suppliers'))}
+          onDelete={handleDelete}
           onInactivate={onDeactivate}
           onActivate={onActivate}
         />
@@ -441,6 +456,12 @@ export const SupplierForm = () => {
 
           }
         </Box>
+        <DeleteConfirmationDialog
+          open={deleteDialogOpen}
+          onClose={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+          resourceName="fornecedor"
+        />
       </Box>
     </FormProvider>
   );

@@ -8,6 +8,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { SearchField } from "../../components/SearchField";
+import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 
 export const ProductCategories = () => {
   const { user } = useAuth();
@@ -21,6 +22,7 @@ export const ProductCategories = () => {
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleChangeName = (e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value)
@@ -75,16 +77,30 @@ export const ProductCategories = () => {
   };
 
   const handleDeleteClick = (category: ProductCategory) => {
-    try {
-      deleteProductCategory(category.id);
-      toast.success('Categoria excluída com sucesso');
-      refreshCategories();
-    } catch (err: unknown) {
-      console.error(err);
-      toast.error('Erro ao excluir categoria');
-    }
+    setSelectedCategory(category);
+    setDeleteDialogOpen(true);
     handleMenuClose();
   };
+
+  const handleConfirmDelete = () => {
+    if (selectedCategory) {
+      try {
+        deleteProductCategory(selectedCategory.id);
+        toast.success('Categoria excluída com sucesso');
+        refreshCategories();
+      } catch (err: unknown) {
+        console.error(err);
+        toast.error('Erro ao excluir categoria');
+      }
+    }
+    setDeleteDialogOpen(false);
+    setSelectedCategory(null);
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setSelectedCategory(null);
+  }
 
   const handleCancelEdit = () => {
     setEditingCategory(null);
@@ -312,6 +328,12 @@ export const ProductCategories = () => {
           </Paper>
         </Grid>
       </Grid>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        resourceName="categoria"
+      />
     </Container>
   )
 }
