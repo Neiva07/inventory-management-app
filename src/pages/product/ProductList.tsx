@@ -112,7 +112,7 @@ export const ProductList = () => {
       cursor: products[-1],
       status: statusSelected?.value
     }).then(result => { 
-      setProducts(result[0].docs.map(qr => qr.data() as Product))
+      setProducts(result[0].map(p => p as Product))
       setCount(result[1].count)
     }).finally(() => {
       setLoading(false);

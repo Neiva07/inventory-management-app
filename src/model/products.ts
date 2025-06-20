@@ -5,6 +5,7 @@ import { ProductCategory } from "./productCategories";
 import { getDocumentCount } from "../lib/count";
 import { generatePublicId } from "../lib/publicId";
 import { COLLECTION_NAMES } from "./index";
+import { divide, multiply } from "lib/math";
 
 export interface SellingOption extends DocumentData {
   unit: ProductUnit;
@@ -93,16 +94,16 @@ export const getProducts = async (searchParams: ProductSearchParams) => {
 
   constrains.push(where("title", ">=", title), where('title', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
 
-  const countQuery = query(productColletion, ...constrains)
-
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(productColletion, ...constrains);
-  return Promise.all([getDocs(q), getDocumentCount(productColletion, constrains.slice(0, -1), searchParams.pageSize)])
+  return Promise.all([getDocs(q).then(docs => docs.docs.map(doc => convertProductUnitsDisplay(doc.data() as Product))), getDocumentCount(productColletion, constrains.slice(0, -1), searchParams.pageSize)])
 }
 
 export const getProduct = (productID: string) => {
-  return getDoc(doc(db, PRODUCTS_COLLECTION, productID));
+  return getDoc(doc(db, PRODUCTS_COLLECTION, productID)).then(doc => {
+    return convertProductUnitsDisplay(doc.data() as Product);
+  });
 }
 
 
@@ -119,7 +120,7 @@ export const createProduct = async (productInfo: Partial<Product>) => {
     deleted: {
       isDeleted: false,
     },
-    ...productInfo
+    ...convertProductUnitsStore(productInfo)
   });
 }
 
@@ -135,7 +136,6 @@ export const deleteProduct = async (productID: string) => {
 }
 
 export const deactiveProduct = async (productID: string) => {
-
   const productDoc = doc(db, PRODUCTS_COLLECTION, productID);
 
   return updateDoc(productDoc, {
@@ -145,7 +145,6 @@ export const deactiveProduct = async (productID: string) => {
 }
 
 export const activeProduct = async (productID: string) => {
-
   const productDoc = doc(db, PRODUCTS_COLLECTION, productID);
 
   return updateDoc(productDoc, {
@@ -158,6 +157,40 @@ export const updateProduct = (productID: string, productInfo: Partial<Product>) 
 
   return updateDoc(productDoc, {
     updatedAt: Date.now(),
-    ...productInfo,
+    ...convertProductUnitsStore(productInfo),
   })
+}
+
+const convertProductUnitsStore = (productInfo: Partial<Product>): Partial<Product> => {
+  return {
+    ...productInfo,
+    cost: multiply(productInfo.cost ?? 0, 100),
+    sailsmanComission: multiply(productInfo.sailsmanComission ?? 0, 100),
+    sellingOptions: productInfo.sellingOptions.map(so => ({
+      ...so,
+      unitCost: multiply(so.unitCost ?? 0, 100),
+      prices: so.prices.map(p => ({
+        ...p,
+        value: multiply(p.value ?? 0, 100),
+        profit: multiply(p.profit ?? 0, 100),
+      })),
+    })),
+  }
+}
+
+const convertProductUnitsDisplay = (productInfo: Partial<Product>): Partial<Product> => {
+  return {
+    ...productInfo,
+    cost: divide(productInfo.cost ?? 0, 100),
+    sailsmanComission: divide(productInfo.sailsmanComission ?? 0, 100),
+    sellingOptions: productInfo.sellingOptions.map(so => ({
+      ...so,
+      unitCost: divide(so.unitCost ?? 0, 100),
+      prices: so.prices.map(p => ({
+        ...p,
+        value: divide(p.value ?? 0, 100),
+        profit: divide(p.profit ?? 0, 100),
+      })),
+    })),
+  }
 }

@@ -87,8 +87,7 @@ export const useProductCreateForm = (productID?: string) => {
 
   const getFormProductData = React.useCallback(async (productID?: string) => {
 
-    const doc = await getProduct(productID)
-    const queriedProduct = doc.data() as Product
+    const queriedProduct = await getProduct(productID) as Product
 
     setProduct(queriedProduct)
 
@@ -144,7 +143,7 @@ export const useProductCreateForm = (productID?: string) => {
         } as ProductCategory,
         cost: data.cost,
         description: data.description,
-        inventory: data.inventory,
+        inventory: Number(data.inventory) ?? 0,
         title: data.title,
         sailsmanComission: data.sailsmanComission,
         buyUnit: {
@@ -154,18 +153,18 @@ export const useProductCreateForm = (productID?: string) => {
         status: "active",
         userID: user.id,
         sellingOptions: data.sellingOptions.map(so => {
-          const { unit, ...rest } = so;
+          const { unit, inventory, ...rest } = so;
           return {
             unit: {
               id: unit.value,
               name: unit.label,
             } as ProductUnit,
             ...rest,
-
+            inventory: Number(inventory) ?? 0,
           } as SellingOption
         }),
-        weight: data.weight,
-        minInventory: data.minInventory,
+        weight: Number(data.weight) ?? 0,
+        minInventory: Number(data.minInventory) ?? 0,
         suppliers: data.suppliers.map(s => {
           return {
             name: s.label,
@@ -193,7 +192,7 @@ export const useProductCreateForm = (productID?: string) => {
         } as ProductCategory,
         cost: data.cost,
         description: data.description,
-        inventory: data.inventory,
+        inventory: Number(data.inventory) ?? 0,
         title: data.title,
         sailsmanComission: data.sailsmanComission,
         buyUnit: {
@@ -202,18 +201,18 @@ export const useProductCreateForm = (productID?: string) => {
         } as ProductUnit,
         status: "active",
         sellingOptions: data.sellingOptions.map(so => {
-          const { unit, ...rest } = so;
+          const { unit, inventory, ...rest } = so;
           return {
             unit: {
               id: unit.value,
               name: unit.label,
             } as ProductUnit,
             ...rest,
-
+            inventory: Number(inventory) ?? 0,
           } as SellingOption
         }),
-        weight: data.weight,
-        minInventory: data.minInventory,
+        weight: Number(data.weight) ?? 0,
+        minInventory: Number(data.minInventory) ?? 0,
         suppliers: data.suppliers.map(s => {
           return {
             name: s.label,

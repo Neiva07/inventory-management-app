@@ -5,6 +5,7 @@ import { getProducts, Product, SellingOption } from "model/products";
 import React, { useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm";
+import { add, divide, multiply } from "lib/math";
 
 export const OrderFormLineItemForm = () => {
   const { user } = useAuth();
@@ -27,7 +28,7 @@ export const OrderFormLineItemForm = () => {
       status: 'active',
       userID: user.id,
     }).then(result => {
-      setProducts(result[0].docs.map(qr => qr.data() as Product))
+      setProducts(result[0].map(p => p as Product))
     })
 
   }, [user])
@@ -39,19 +40,24 @@ export const OrderFormLineItemForm = () => {
   const handleSelectProduct = (_: React.SyntheticEvent<Element, Event>, value: Product) => {
     setSelectedProduct(value)
 
+    console.log(value, "SELECTED_PRODUCT")
+
     if (!value) {
       setInventory(0);
       setProductComission(0);
       return;
     }
     setProductComission(value.sailsmanComission);
-    setInventory(value.inventory);
   }
 
   const handleSelectSellingOption = (_: React.SyntheticEvent<Element, Event>, value: SellingOption) => {
     setSellingOption(value)
     if (value) {
       setUnitCost(value.unitCost)
+      setInventory(value.inventory)
+    } else {
+      setUnitCost(0)
+      setInventory(0)
     }
   }
 
@@ -59,7 +65,7 @@ export const OrderFormLineItemForm = () => {
     const totalCost = calcItemTotalCost({
       unitPrice,
       descount,
-      quantity: quantity || 0,
+      quantity: quantity ?? 0,
     })
     return totalCost
 
@@ -87,8 +93,8 @@ export const OrderFormLineItemForm = () => {
     const prevCommission = formMethods.getValues("totalComission")
     const prevTotalCost = formMethods.getValues("totalCost")
 
-    formMethods.setValue("totalComission", prevCommission + (productComission * itemTotalCost) / 100)
-    formMethods.setValue("totalCost", prevTotalCost + itemTotalCost)
+    formMethods.setValue("totalComission", add(prevCommission, divide(multiply(productComission, itemTotalCost), 100)))
+    formMethods.setValue("totalCost", add(prevTotalCost, itemTotalCost))
 
 
 
@@ -128,26 +134,6 @@ export const OrderFormLineItemForm = () => {
         />
       </Grid>
       <Grid item xs={3}>
-        <TextField
-          label="Invantário"
-          fullWidth
-          variant="outlined"
-          disabled
-          value={inventory}
-        />
-
-      </Grid>
-      <Grid item xs={3}>
-        <TextField
-          label="Quantidade"
-          fullWidth
-          variant="outlined"
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          value={quantity}
-        />
-      </Grid>
-
-      <Grid item xs={3}>
         <Autocomplete
           id="unit-select"
           options={selectedProduct?.sellingOptions || []}
@@ -170,6 +156,24 @@ export const OrderFormLineItemForm = () => {
           onChange={handleSelectSellingOption}
         />
       </Grid>
+      <Grid item xs={3}>
+        <TextField
+          label="Estoque"
+          fullWidth
+          variant="outlined"
+          disabled
+          value={inventory}
+        />
+      </Grid>
+      <Grid item xs={3}>
+        <TextField
+          label="Quantidade"
+          fullWidth
+          variant="outlined"
+          onChange={(e) => setQuantity(Number(e.target.value))}
+          value={quantity}
+        />
+      </Grid>
       <Grid item xs={2}>
         <TextField
           label="Custo Unitário"
@@ -179,17 +183,16 @@ export const OrderFormLineItemForm = () => {
           value={unitCost}
         />
       </Grid>
-
       <Grid item xs={2}>
         <TextField
           label="Preço"
           fullWidth
           variant="outlined"
-          onChange={(e) => setUnitPrice(Number(e.target.value))}
+          onChange={(e) => setUnitPrice(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
+          onFocus={(e) => e.target.select()}
           value={unitPrice}
         />
       </Grid>
-
       <Grid item xs={2}>
         <TextField
           label="Desconto (%)"
@@ -197,9 +200,9 @@ export const OrderFormLineItemForm = () => {
           variant="outlined"
           onChange={(e) => setDescount(Number(e.target.value))}
           value={descount}
+          onFocus={(e) => e.target.select()}
         />
       </Grid>
-
       <Grid item xs={2}>
         <TextField
           label="Comissão do Vendedor (%)"
@@ -207,8 +210,8 @@ export const OrderFormLineItemForm = () => {
           variant="outlined"
           onChange={(e) => setInventory(Number(e.target.value))}
           value={productComission}
+          onFocus={(e) => e.target.select()}
         />
-
       </Grid>
       <Grid item xs={2}>
         <TextField
@@ -217,6 +220,7 @@ export const OrderFormLineItemForm = () => {
           variant="outlined"
           disabled
           value={itemTotalCost}
+          onFocus={(e) => e.target.select()}
         />
       </Grid>
       <Grid item xs={2}>

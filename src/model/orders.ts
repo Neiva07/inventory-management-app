@@ -5,6 +5,7 @@ import { getProduct, Product, ProductUnit, updateProduct } from "./products";
 import { getDocumentCount } from "../lib/count";
 import { generatePublicId } from "../lib/publicId";
 import { COLLECTION_NAMES } from "./index";
+import { add, divide, multiply, subtract } from "lib/math";
 
 export interface OrderCustomer {
   id: string;
@@ -25,7 +26,7 @@ export interface Item {
 }
 
 export function calcItemTotalCost(item: Partial<Item>) {
-  return item.unitPrice * item.quantity * Math.round((100 - item.descount)) / 100
+  return divide(multiply(multiply(item.unitPrice, item.quantity),subtract(100, item.descount)), 100) 
 }
 
 export type OrderStatus = "request" | "complete"
@@ -54,7 +55,7 @@ export interface Order {
 }
 
 export function calcOrderTotalCost(order: Order) {
-  return order.items.reduce((acc, i) => acc + i.itemTotalCost, 0)
+  return order.items.reduce((acc, i) => add(acc, i.itemTotalCost), 0)
 }
 
 interface OrderSearchParams {
@@ -149,7 +150,6 @@ export const deleteOrder = async (orderID: string) => {
   })
 
   getDoc(orderDoc).then(r => r.data() as Order).then(o => o.items.map(async i => {
-    const p = await getProduct(i.productID).then(r => r.data() as Product)
     updateProduct(i.productID, { inventory: p.inventory + i.quantity })
   }))
 }

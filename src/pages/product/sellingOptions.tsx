@@ -21,6 +21,7 @@ import {
 import { Price } from "../../model/products";
 import { getUnits, Unit } from "model/units";
 import { useAuth } from "context/auth";
+import { add, divide, multiply, subtract } from "lib/math";
 
 
 type SellingOptionProps = {
@@ -94,12 +95,12 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
           <Controller
             control={formMethods.control}
             render={({ field: { value: profit, ...props } }) => {
-              const currentCost = formMethods.watch(`sellingOptions.${parentIndex}.unitCost`) || 0
+              const currentCost = formMethods.watch(`sellingOptions.${parentIndex}.unitCost`) ?? 0
               const onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
                 props.onChange(event)
 
                 const value = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0
-                const finalValue = currentCost * ((value / 100) + 1)
+                const finalValue = divide(multiply(currentCost, add(value, 100)), 100)
                 formMethods.setValue(`sellingOptions.${parentIndex}.prices.${index}.value`, finalValue)
               }
               return (
@@ -128,7 +129,7 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
                 props.onChange(event)
 
                 const value = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0
-                const finalValue = (value - currentCost) * 100 / currentCost
+                const finalValue = divide(multiply(subtract(value, currentCost), 100),  currentCost)
                 formMethods.setValue(`sellingOptions.${parentIndex}.prices.${index}.profit`, finalValue)
               }
 
@@ -182,8 +183,8 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
   }, [])
 
   // Watch the main inventory and cost values
-  const mainInventory = formMethods.watch('inventory') || 0;
-  const mainCost = formMethods.watch('cost') || 0;
+  const mainInventory = formMethods.watch('inventory') ?? 0;
+  const mainCost = formMethods.watch('cost') ?? 0;
   const buyUnit = formMethods.watch('buyUnit');
   const currentUnit = formMethods.watch(`sellingOptions.${index}.unit`);
 
@@ -196,10 +197,10 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
 
   // Recalculate inventory and unit cost when main inventory or cost changes
   React.useEffect(() => {
-    const conversionRate = formMethods.getValues(`sellingOptions.${index}.conversionRate`) || 0;
+    const conversionRate = formMethods.getValues(`sellingOptions.${index}.conversionRate`) ?? 0;
     if (conversionRate > 0) {
-      const newInventory = mainInventory * conversionRate;
-      const newUnitCost = mainCost / conversionRate;
+      const newInventory = multiply(mainInventory, conversionRate);
+      const newUnitCost = divide(mainCost, conversionRate);
       formMethods.setValue(`sellingOptions.${index}.inventory`, newInventory);
       formMethods.setValue(`sellingOptions.${index}.unitCost`, newUnitCost);
     }
@@ -210,8 +211,8 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
     const conversionRate = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0;
     
     // Calculate new inventory and unit cost
-    const newInventory = mainInventory * conversionRate;
-    const newUnitCost = conversionRate > 0 ? mainCost / conversionRate : 0;
+    const newInventory = multiply(mainInventory, conversionRate);
+    const newUnitCost = conversionRate > 0 ? divide(mainCost, conversionRate) : 0;
     
     // Update the form values
     formMethods.setValue(`sellingOptions.${index}.inventory`, newInventory);
