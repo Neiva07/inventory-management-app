@@ -1,7 +1,7 @@
 {
   "name": "stockify-app",
   "productName": "Stockify App",
-  "version": "0.0.32",
+  "version": "0.0.33",
   "repository": "git@github.com:Neiva07/inventory-management-app.git",
   "description": "Stockify Application for Inventory Management",
   "main": ".webpack/main",
