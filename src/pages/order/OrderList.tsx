@@ -5,7 +5,7 @@ import { Autocomplete, Button, Grid, TextField, Skeleton, Typography, Box } from
 import { useNavigate } from 'react-router-dom';
 import { Customer, getCustomers } from 'model/customer';
 import { useAuth } from 'context/auth';
-import { statuses } from './OrderFormHeader';
+import { statuses } from './useOrderForm';
 import { DatePicker } from '@mui/x-date-pickers';
 import { SelectField } from 'pages/product/useProductCreateForm';
 import { format } from "date-fns"
@@ -29,10 +29,10 @@ const columns: GridColDef[] = [
   },
   {
     field: 'createdAt',
-    headerName: 'Data',
+    headerName: 'Data de Venda',
     flex: 1,
     valueGetter: (params: GridCellParams<Order>) => {
-      return format(params.row.createdAt, 'dd/MM/yyyy')
+      return format(params.row.orderDate ?? params.row.createdAt, 'dd/MM/yyyy')
     }
   },
   {
@@ -40,9 +40,6 @@ const columns: GridColDef[] = [
     headerName: 'Total',
     type: 'number',
     flex: 1,
-    valueGetter: (params: GridCellParams<Order>) => {
-      return params.row.totalCost
-    }
   },
   {
     field: 'status',
@@ -86,8 +83,8 @@ export const OrderList = () => {
       cursor: orders[-1],
       status: statusSelected,
     }).then(result => {
-      setOrders(result[0].docs.map(qr => qr.data() as Order))
-      setCount(result[1].count)
+      setOrders(result.orders)
+      setCount(result.count.count)
     }).finally(() => {
       setLoading(false);
     });

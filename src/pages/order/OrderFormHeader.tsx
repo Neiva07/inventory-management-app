@@ -12,17 +12,10 @@ import { FormActions } from 'components/FormActions';
 import { Box } from '@mui/material';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { Order } from 'model/orders';
+import { statuses } from './useOrderForm';
+import { paymentMethods } from "model";
 
-export const statuses = [
-  {
-    label: "requisição",
-    value: "request",
-  },
-  {
-    label: "venda",
-    value: "complete"
-  }
-]
+
 
 export const paymentOptions = [
   {
@@ -174,16 +167,19 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
                     <Autocomplete
                       value={paymentType}
                       {...props}
-                      id="payment-type-select"
-                      options={paymentOptions}
+                      id="payment-method-select"
+                      options={paymentMethods.map(pm => ({
+                        label: pm.label,
+                        value: pm.id,
+                      }))}
                       getOptionLabel={(option) => option.label}
                       renderInput={(params) => (
                         <TextField
                           {...params}
                           variant="outlined"
-                          label="Tipo de pagamento"
-                          error={!!formMethods.formState.errors.paymentType}
-                          helperText={formMethods.formState.errors.paymentType?.message}
+                          label="Método de pagamento"
+                          error={!!formMethods.formState.errors.paymentMethod}
+                          helperText={formMethods.formState.errors.paymentMethod?.message}
                         />
                       )}
                       isOptionEqualToValue={(option, value) =>
@@ -194,11 +190,33 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
                   </>
                 );
               }}
-              name="paymentType"
+              name="paymentMethod"
             />
           </FormControl>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
+          <FormControl fullWidth>
+            <Controller
+              name="orderDate"
+              control={formMethods.control}
+              render={({ field }) => {
+                return (
+                  <DatePicker 
+                    {...field} 
+                    label="Data da Venda" 
+                    slotProps={{
+                      textField: {
+                        error: !!formMethods.formState.errors.orderDate,
+                        helperText: formMethods.formState.errors.orderDate?.message
+                      }
+                    }}
+                  />
+                );
+              }}
+            />
+          </FormControl>
+        </Grid>
+        <Grid item xs={3}>
           <FormControl fullWidth>
             <Controller
               name="dueDate"
@@ -220,7 +238,7 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
             />
           </FormControl>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <FormControl fullWidth>
             <Controller
               name="totalComission"
@@ -240,7 +258,7 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
           </FormControl>
         </Grid>
 
-        <Grid item xs={4}>
+        <Grid item xs={3}>
           <FormControl fullWidth>
             <Controller
               name="totalCost"

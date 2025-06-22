@@ -1,4 +1,4 @@
-import { collection, getDocs, updateDoc, doc, DocumentData, DocumentReference, UpdateData, FieldValue } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, DocumentData, DocumentReference, UpdateData, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { ProductCategory } from "../src/model/productCategories";
 import { Unit } from "../src/model/units";
@@ -158,21 +158,70 @@ async function updateOrders() {
   });
 }
 
+// Delete all products
+async function deleteAllProducts() {
+  console.log("Starting deletion of all products...");
+  
+  try {
+    const collectionRef = collection(db, COLLECTION_NAMES.PRODUCTS);
+    const snapshot = await getDocs(collectionRef);
+    
+    console.log(`Found ${snapshot.size} products to delete`);
+    
+    let deletedCount = 0;
+    
+    for (const docSnapshot of snapshot.docs) {
+      await deleteDoc(doc(db, COLLECTION_NAMES.PRODUCTS, docSnapshot.id));
+      deletedCount++;
+      console.log(`Deleted product ${docSnapshot.id}`);
+    }
+    
+    console.log(`Product deletion completed: ${deletedCount} products deleted`);
+    
+  } catch (error) {
+    console.error("Error deleting products:", error);
+    throw error;
+  }
+}
+
+// Delete all orders
+async function deleteAllOrders() {
+  console.log("Starting deletion of all orders...");
+  
+  try {
+    const collectionRef = collection(db, COLLECTION_NAMES.ORDERS);
+    const snapshot = await getDocs(collectionRef);
+    
+    console.log(`Found ${snapshot.size} orders to delete`);
+    
+    let deletedCount = 0;
+    
+    for (const docSnapshot of snapshot.docs) {
+      await deleteDoc(doc(db, COLLECTION_NAMES.ORDERS, docSnapshot.id));
+      deletedCount++;
+      console.log(`Deleted order ${docSnapshot.id}`);
+    }
+    
+    console.log(`Order deletion completed: ${deletedCount} orders deleted`);
+    
+  } catch (error) {
+    console.error("Error deleting orders:", error);
+    throw error;
+  }
+}
+
 // Main function to run all updates
 async function main() {
   try {
-    console.log("Starting database updates to add public IDs...");
+    console.log("Starting database operations...");
     
-    await updateProductCategories();
-    await updateUnits();
-    await updateProducts();
-    await updateCustomers();
-    await updateSuppliers();
-    await updateOrders();
+    // Delete all products and orders first
+    await deleteAllProducts();
+    await deleteAllOrders();
     
-    console.log("All public ID updates completed successfully!");
+    console.log("All deletions completed successfully!");
   } catch (error) {
-    console.error("Error during updates:", error);
+    console.error("Error during operations:", error);
     process.exit(1);
   }
 }

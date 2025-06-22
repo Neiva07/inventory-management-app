@@ -78,3 +78,14 @@ export function divide(a: number | string | Decimal, b: number | string | Decima
   const result = createDecimal(a).dividedBy(b);
   return roundToTwoDecimals(result);
 }
+
+/**
+ * Performs division and returns only the integer part (truncates decimal)
+ * @param a - First operand
+ * @param b - Second operand
+ * @returns Integer part of the division result
+ */
+export function integerDivide(a: number | string | Decimal, b: number | string | Decimal): number {
+  const result = createDecimal(a).dividedBy(b);
+  return result.floor().toNumber();
+}

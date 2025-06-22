@@ -16,3 +16,6 @@ export const COLLECTION_NAMES = {
   ORDERS: 'orders',
   UNITS: 'units'
 } as const;
+
+// Export payment methods
+export * from './paymentMethods';

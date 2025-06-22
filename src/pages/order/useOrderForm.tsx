@@ -7,17 +7,30 @@ import { createOrder, Order, OrderStatus, deleteOrder, getOrder, Item, updateOrd
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from 'context/auth';
-import { ProductUnit } from 'model/products';
-import { statuses } from './OrderFormHeader';
+import { Product, Variant } from 'model/products';
+import { paymentMethodById } from 'model/paymentMethods';
+import { multiply, subtract } from 'lib/math';
+
+export const statuses = [
+  {
+    label: "requisição",
+    value: "request",
+  },
+  {
+    label: "venda",
+    value: "complete"
+  }
+]
 
 export interface ItemDataInterface {
   productID: string;
+  productBaseUnitInventory: number;
   title: string;
   balance: number;
   quantity: number;
   cost: number;
   unitPrice: number;
-  unit: ProductUnit;
+  variant: Variant;
   itemTotalCost: number;
   descount: number;
   commissionRate: number;
@@ -25,8 +38,9 @@ export interface ItemDataInterface {
 
 export interface OrderFormDataInterface {
   customer: SelectField;
-  paymentType: SelectField;
+  paymentMethod: SelectField;
   dueDate: Date;
+  orderDate: Date;
   totalComission: number;
   status: SelectField;
   items: Array<ItemDataInterface>;
@@ -38,17 +52,15 @@ const INITIAL_ORDER_VALUES: OrderFormDataInterface = {
     label: '',
     value: '',
   },
-  paymentType: {
-    label: '',
-    value: '',
+  paymentMethod: {
+    label: paymentMethodById.get('prazo') ?? '',
+    value: 'prazo',
   },
   items: [],
-  status: {
-    label: '',
-    value: ''
-  },
+  status: statuses[1],
   totalComission: 0,
-  dueDate: new Date(),
+  orderDate: new Date(),
+  dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
   totalCost: 0,
 
 };
@@ -67,13 +79,13 @@ export const useOrderForm = (orderID?: string) => {
 
   const getOrderFormData = React.useCallback(async (orderID?: string) => {
 
-    const doc = await getOrder(orderID)
-    const queriedOrder = doc.data() as Order
+    const queriedOrder = await getOrder(orderID)
     setOrder(queriedOrder);
 
     const orderForm = {
       ...queriedOrder,
       dueDate: new Date(queriedOrder.dueDate),
+      orderDate: new Date(queriedOrder.orderDate),
       customer: {
         label: queriedOrder.customer.name,
         value: queriedOrder.customer.id,
@@ -81,9 +93,9 @@ export const useOrderForm = (orderID?: string) => {
       status: {
         ...statuses.find(s => s.value === queriedOrder.status),
       },
-      paymentType: {
-        label: queriedOrder.paymentType.name,
-        value: queriedOrder.paymentType.id,
+      paymentMethod: {
+        label: queriedOrder.paymentMethod.label,
+        value: queriedOrder.paymentMethod.id,
       },
 
     } as OrderFormDataInterface
@@ -103,26 +115,26 @@ export const useOrderForm = (orderID?: string) => {
   }, [fetchedOrderForm])
 
   const onSubmit = useCallback((data: OrderFormDataInterface) => {
-    const { customer, dueDate, status, paymentType, items, ...rest } = data;
+    const { customer, dueDate, status, paymentMethod, items, orderDate, ...rest } = data;
 
     const order = {
       customer: {
         name: customer.label,
         id: customer.value,
       },
-      paymentType: {
-        name: paymentType.label,
-        id: paymentType.value,
+      paymentMethod: {
+        label: paymentMethod.label,
+        id: paymentMethod.value,
       },
       userID: user.id,
       status: status.value as OrderStatus,
       dueDate: dueDate.getTime(),
+      orderDate: orderDate.getTime(),
       items: items.map(i => ({
         ...i
       } as Item)),
       ...rest
     } as Order
-    console.log(orderID, order)
 
     try {
       orderID ? updateOrder(orderID, order) : createOrder(order);
@@ -160,10 +172,18 @@ export const useOrderForm = (orderID?: string) => {
     }
   }, [orderID])
 
+  const calculateBaseUnitBalance = useCallback((product: Product, itemVariant: Variant, submittedItemQuantity: number, items: ItemDataInterface[]) => {
+    const prevBalance = items.filter(item => item.productID === product.id).reduce((acc, item) => subtract(acc, multiply(item.quantity, item.variant.conversionRate)), product.inventory)
+
+    return subtract(prevBalance, multiply(submittedItemQuantity, itemVariant.conversionRate))
+  }, [])
+
   return {
     ...formMethods,
     onFormSubmit: formMethods.handleSubmit(onSubmit),
     onDelete,
     order,
+    reset: formMethods.reset,
+    calculateBaseUnitBalance,
   };
 }

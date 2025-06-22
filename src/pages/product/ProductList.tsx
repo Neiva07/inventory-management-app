@@ -43,12 +43,12 @@ const columns: GridColDef[] = [
     }
   },
   {
-    field: 'buyUnit',
-    headerName: 'Unidade Compra',
+    field: 'baseUnit',
+    headerName: 'Unidade Base',
     sortable: false,
     flex: 1,
     renderCell: (params: GridCellParams<Product>) => {
-      return params.row.buyUnit.name
+      return params.row.baseUnit.name
     }
   },
   {

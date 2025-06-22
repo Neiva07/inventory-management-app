@@ -1,26 +1,43 @@
 import { Autocomplete, Box, Button, Grid, TextField } from "@mui/material";
 import { useAuth } from "context/auth";
 import { calcItemTotalCost } from "model/orders";
-import { getProducts, Product, SellingOption } from "model/products";
-import React, { useMemo, useState } from "react";
+import { getProducts, Product, ProductUnit, Variant } from "model/products";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm";
-import { add, divide, multiply } from "lib/math";
+import { add, divide, integerDivide, multiply, subtract } from "lib/math";
 
-export const OrderFormLineItemForm = () => {
+
+export const OrderFormLineItemForm = ({ calculateBaseUnitInventory }: { calculateBaseUnitInventory: (product: Product) => number }) => {
   const { user } = useAuth();
+  const formMethods = useFormContext<OrderFormDataInterface>();
 
   const [products, setProducts] = useState<Array<Product>>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product>(null);
 
+  // Ref for the product selection Autocomplete
+  const productSelectRef = React.useRef<HTMLDivElement>(null);
 
   const [quantity, setQuantity] = useState<number>();
   const [inventory, setInventory] = useState<number>(0);
   const [descount, setDescount] = useState<number>(0);
   const [unitCost, setUnitCost] = useState<number>(0);
   const [productComission, setProductComission] = useState<number>(0);
-  const [sellingOption, setSellingOption] = useState<SellingOption>(null);
+  const [variant, setVariant] = useState<Variant>(null);
   const [unitPrice, setUnitPrice] = useState<number>(0);
+
+  const paymentMethod = formMethods.watch("paymentMethod")
+
+  useEffect(() => {
+    if (selectedProduct && variant) {
+      // Calculate available inventory for this variant
+      const availableInventory = integerDivide(calculateBaseUnitInventory(selectedProduct), variant.conversionRate);
+      setInventory(availableInventory);
+      setProductComission(selectedProduct.sailsmanComission);
+      setUnitCost(variant.unitCost);
+    }
+  }, [selectedProduct, variant, paymentMethod]);
+
 
   const queryProducts = React.useCallback(() => {
     getProducts({
@@ -31,7 +48,7 @@ export const OrderFormLineItemForm = () => {
       setProducts(result[0].map(p => p as Product))
     })
 
-  }, [user])
+  }, [user]);
 
   React.useEffect(() => {
     queryProducts();
@@ -39,22 +56,20 @@ export const OrderFormLineItemForm = () => {
 
   const handleSelectProduct = (_: React.SyntheticEvent<Element, Event>, value: Product) => {
     setSelectedProduct(value)
-
-    console.log(value, "SELECTED_PRODUCT")
-
-    if (!value) {
-      setInventory(0);
-      setProductComission(0);
-      return;
+    if(value) {
+      setVariant(value.variants[0])
+      setUnitPrice(value.variants[0].prices.find(p => p.paymentMethod.id === paymentMethod.value)?.value ?? 0)
     }
-    setProductComission(value.sailsmanComission);
   }
 
-  const handleSelectSellingOption = (_: React.SyntheticEvent<Element, Event>, value: SellingOption) => {
-    setSellingOption(value)
+  const handleSelectVariant = (_: React.SyntheticEvent<Element, Event>, value: Variant) => {
+    setVariant(value)
     if (value) {
       setUnitCost(value.unitCost)
-      setInventory(value.inventory)
+      // Calculate available inventory for this variant
+      const availableInventory = integerDivide(calculateBaseUnitInventory(selectedProduct), value.conversionRate);
+      setInventory(availableInventory)
+      setUnitPrice(value.prices.find(p => p.paymentMethod.id === paymentMethod.value)?.value ?? 0)
     } else {
       setUnitCost(0)
       setInventory(0)
@@ -71,23 +86,40 @@ export const OrderFormLineItemForm = () => {
 
   }, [quantity, descount, unitPrice])
 
-  const formMethods = useFormContext<OrderFormDataInterface>();
+  const calculateBaseUnitBalance = (product: Product, itemVariant: Variant, submittedItemQuantity: number) => {
+      const prevBalance = calculateBaseUnitInventory(product)
 
+    return subtract(prevBalance, multiply(submittedItemQuantity, itemVariant.conversionRate))
+  } 
+  
   const submitItem = () => {
-
     const prevItems = formMethods.getValues("items")
 
-    formMethods.setValue("items", [...prevItems, {
+    // Calculate the new balance in base units
+    const baseUnitBalance = calculateBaseUnitBalance(selectedProduct, variant, quantity);
+
+    const itemsFromSameProduct = prevItems.filter(item => item.productID === selectedProduct.id)
+
+    const updatedItems = itemsFromSameProduct.map(item => {
+      return {
+        ...item,
+        balance: integerDivide(baseUnitBalance, item.variant.conversionRate)
+      }
+    })
+
+    const itemsFromOtherProducts = prevItems.filter(item => item.productID !== selectedProduct.id)
+
+    formMethods.setValue("items", [...itemsFromOtherProducts, ...updatedItems, {
       quantity,
       cost: unitCost,
       descount,
-      unit: sellingOption.unit,
+      variant,
       unitPrice,
       itemTotalCost,
       title: selectedProduct.title,
       productID: selectedProduct.id,
       commissionRate: productComission,
-      balance: inventory - quantity,
+      balance: integerDivide(baseUnitBalance, variant.conversionRate),
     } as ItemDataInterface])
 
     const prevCommission = formMethods.getValues("totalComission")
@@ -96,16 +128,18 @@ export const OrderFormLineItemForm = () => {
     formMethods.setValue("totalComission", add(prevCommission, divide(multiply(productComission, itemTotalCost), 100)))
     formMethods.setValue("totalCost", add(prevTotalCost, itemTotalCost))
 
-
-
-    setSelectedProduct(null);
-    setUnitCost(null);
-    setSellingOption(null);
+    const nextIndex = products.findIndex(p => p.id === selectedProduct.id) + 1
+    const nextProduct = nextIndex === products.length ? products[0] : products[nextIndex]
+    handleSelectProduct(null, nextProduct);
     setQuantity(0);
-    setUnitPrice(0);
-    setProductComission(0);
-    setUnitCost(0);
-    setInventory(0);
+    
+    // Focus the product selection component after a short delay to ensure state updates
+    setTimeout(() => {
+      if (productSelectRef.current) {
+        const inputElement = productSelectRef.current.querySelector('input');
+          inputElement?.focus();
+      }
+    }, 100);
   }
 
   const isFormCompleted = useMemo(() => itemTotalCost > 0, [itemTotalCost])
@@ -125,26 +159,28 @@ export const OrderFormLineItemForm = () => {
               fullWidth
               variant="outlined"
               label="Produto"
+              onFocus={(e) => e.target.select()}
             />
           )}
           isOptionEqualToValue={(option, value) =>
             option.id === value.id
           }
           onChange={handleSelectProduct}
+          ref={productSelectRef}
         />
       </Grid>
       <Grid item xs={3}>
         <Autocomplete
           id="unit-select"
-          options={selectedProduct?.sellingOptions || []}
+          options={selectedProduct?.variants ?? []}
           getOptionLabel={(option) => option.unit.name}
-          value={sellingOption}
+          value={variant}
           fullWidth
           renderInput={(params) => (
             <TextField
               {...params}
               fullWidth
-              value={sellingOption}
+              value={variant}
               variant="outlined"
               label="Unidade"
             />
@@ -153,7 +189,7 @@ export const OrderFormLineItemForm = () => {
             option.unit.id === value.unit.id
           }
           disabled={!selectedProduct}
-          onChange={handleSelectSellingOption}
+          onChange={handleSelectVariant}
         />
       </Grid>
       <Grid item xs={3}>
@@ -170,7 +206,8 @@ export const OrderFormLineItemForm = () => {
           label="Quantidade"
           fullWidth
           variant="outlined"
-          onChange={(e) => setQuantity(Number(e.target.value))}
+          onChange={(e) => setQuantity(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
+          onFocus={(e) => e.target.select()}
           value={quantity}
         />
       </Grid>
@@ -198,7 +235,7 @@ export const OrderFormLineItemForm = () => {
           label="Desconto (%)"
           fullWidth
           variant="outlined"
-          onChange={(e) => setDescount(Number(e.target.value))}
+          onChange={(e) => setDescount(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
           value={descount}
           onFocus={(e) => e.target.select()}
         />
@@ -208,7 +245,7 @@ export const OrderFormLineItemForm = () => {
           label="Comissão do Vendedor (%)"
           fullWidth
           variant="outlined"
-          onChange={(e) => setInventory(Number(e.target.value))}
+          onChange={(e) => setProductComission(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
           value={productComission}
           onFocus={(e) => e.target.select()}
         />

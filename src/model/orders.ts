@@ -1,7 +1,7 @@
 import { uuidv4 } from "@firebase/util";
 import { db } from "firebase";
-import { collection, doc, getCountFromServer, getDoc, getDocs, limit, orderBy, query, QueryConstraint, setDoc, startAfter, updateDoc, where } from "firebase/firestore";
-import { getProduct, Product, ProductUnit, updateProduct } from "./products";
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, QueryConstraint, writeBatch, setDoc, startAfter, updateDoc, where, increment } from "firebase/firestore";
+import {  Product, Variant } from "./products";
 import { getDocumentCount } from "../lib/count";
 import { generatePublicId } from "../lib/publicId";
 import { COLLECTION_NAMES } from "./index";
@@ -14,19 +14,20 @@ export interface OrderCustomer {
 
 export interface Item {
   productID: string;
+  productBaseUnitInventory: number;
+  variant: Variant;
   title: string;
   balance: number;
   quantity: number;
   cost: number;
   unitPrice: number;
-  unit: ProductUnit;
   itemTotalCost: number;
   descount: number;
   commissionRate: number;
 }
 
 export function calcItemTotalCost(item: Partial<Item>) {
-  return divide(multiply(multiply(item.unitPrice, item.quantity),subtract(100, item.descount)), 100) 
+  return divide(multiply(item.unitPrice, item.quantity,subtract(100, item.descount)), 100) 
 }
 
 export type OrderStatus = "request" | "complete"
@@ -42,10 +43,11 @@ export interface Order {
     date: number;
     isDeleted: boolean;
   };
-  paymentType: {
-    name: string;
+  paymentMethod: {
+    label: string;
     id: string;
   }; // change for db table later
+  orderDate: number;
   dueDate: number;
   totalComission: number;
   status: OrderStatus;
@@ -106,60 +108,171 @@ export const getOrders = (searchParams: OrderSearchParams) => {
 
   constrains.push(where("deleted.isDeleted", "==", false))
 
-  const countQuery = query(orderCollection, ...constrains)
-
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(orderCollection, ...constrains);
-  return Promise.all([getDocs(q), getDocumentCount(orderCollection, constrains.slice(0, -1), searchParams.pageSize)])
+  return Promise.all([getDocs(q), getDocumentCount(orderCollection, constrains.slice(0, -1), searchParams.pageSize)]).then(([docs, count]) => {
+    return {
+      orders: docs.docs.map(d => convertOrderUnitsDisplay(d.data()) as Order),
+      count,
+    }
+  })
 }
 
 export const getOrder = (orderID: string) => {
-  return getDoc(doc(db, ORDER_COLLECTION, orderID));
+  return getDoc(doc(db, ORDER_COLLECTION, orderID)).then(r => convertOrderUnitsDisplay(r.data()) as Order);
 }
-
 
 export const createOrder = async (orderInfo: Partial<Order>) => {
   const orderID = uuidv4();
   const publicId = await generatePublicId(ORDER_COLLECTION);
   const newOrder = doc(db, ORDER_COLLECTION, orderID);
+  
+  const batch = writeBatch(db);
 
-  const newOrderDoc = setDoc(newOrder, {
+  // Create the order document
+  batch.set(newOrder, {
     id: orderID,
     publicId,
     createdAt: Date.now(),
     deleted: {
       isDeleted: false,
     },
-    ...orderInfo
+    ...convertOrderUnitsStore(orderInfo),
   });
+  const itemsByProduct = orderInfo.items.reduce((acc, item) => {
+    acc[item.productID] = [...(acc[item.productID] ?? []), item]
+    return acc
+  }, {} as Record<string, Item[]>)
 
-  orderInfo.items.map(o => {
-    updateProduct(o.productID, { inventory: o.balance })
-  })
+  // Update product inventory for each item
+  for (const productItems of Object.values(itemsByProduct)) {
+    const productID = productItems[0].productID;
+    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
 
-  return newOrderDoc
+    const quantityInBaseUnit = productItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
+
+    batch.update(productRef, { inventory: increment(-quantityInBaseUnit) });
+  }
+
+  return batch.commit();
 }
+
 export const deleteOrder = async (orderID: string) => {
   const orderDoc = doc(db, ORDER_COLLECTION, orderID);
-  updateDoc(orderDoc, {
+  const order = await getDoc(orderDoc);
+  const orderData = order.data() as Order;
+  const batch = writeBatch(db);
+  
+  // Mark the order as deleted
+  batch.update(orderDoc, {
     deleted: {
       isDeleted: true,
       date: Date.now(),
     }
-  })
+  });
 
-  getDoc(orderDoc).then(r => r.data() as Order).then(o => o.items.map(async i => {
-    updateProduct(i.productID, { inventory: p.inventory + i.quantity })
-  }))
+  const itemsByProduct = orderData.items.reduce((acc, item) => {
+    acc[item.productID] = [...(acc[item.productID] ?? []), item]
+    return acc
+  }, {} as Record<string, Item[]>)
+
+  for (const productItems of Object.values(itemsByProduct)) {
+    const productID = productItems[0].productID;
+    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
+    const quantityInBaseUnit = productItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
+    batch.update(productRef, { inventory: increment(quantityInBaseUnit) });
+  }
+
+  return batch.commit();
 }
 
 
-export const updateOrder = (orderID: string, orderInfo: Partial<Order>) => {
+export const updateOrder = async (orderID: string, orderInfo: Partial<Order>) => {
   const orderDoc = doc(db, ORDER_COLLECTION, orderID);
+  const order = await getDoc(orderDoc);
+  const orderData = order.data() as Order;
+  const batch = writeBatch(db);
 
-  return updateDoc(orderDoc, {
-    ...orderInfo,
+  const prevOrderItemsByProduct = orderData.items.reduce((acc, item) => {
+    acc[item.productID] = [...(acc[item.productID] ?? []), item]
+    return acc
+  }, {} as Record<string, Item[]>)
+
+  const currentOrderItemsByProduct = orderInfo.items.reduce((acc, item) => {
+    acc[item.productID] = [...(acc[item.productID] ?? []), item]
+    return acc
+  }, {} as Record<string, Item[]>)
+
+  batch.update(orderDoc, {
+    ...convertOrderUnitsStore(orderInfo),
     updatedAt: Date.now(),
   })
+
+  // Restore inventory for all products from previous order
+  for (const productID of Object.keys(prevOrderItemsByProduct)) {
+    const prevProductItems = prevOrderItemsByProduct[productID]
+    const quantityInBaseUnit = prevProductItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
+    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
+    batch.update(productRef, { inventory: increment(quantityInBaseUnit) });
+  }
+
+  // Reduce inventory for all products from current order
+  for (const productID of Object.keys(currentOrderItemsByProduct)) {
+    const currentProductItems = currentOrderItemsByProduct[productID]
+    const quantityInBaseUnit = currentProductItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
+    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
+    batch.update(productRef, { inventory: increment(-quantityInBaseUnit) });
+  }
+  return batch.commit();
+}
+
+const convertOrderUnitsStore = (orderInfo: Partial<Order>) => {
+  return {
+    ...orderInfo,
+    totalCost: multiply(orderInfo.totalCost ?? 0, 100),
+    totalComission: multiply(orderInfo.totalComission ?? 0, 100),
+    items: orderInfo.items.map(i => ({
+      ...i,
+      cost: multiply(i.cost ?? 0, 100),
+      itemTotalCost: multiply(i.itemTotalCost ?? 0, 100),
+      unitPrice: multiply(i.unitPrice ?? 0, 100),
+      commissionRate: multiply(i.commissionRate ?? 0, 100),
+      descount: multiply(i.descount ?? 0, 100),
+      variant: {
+        ...i.variant,
+        prices: i.variant.prices.map(p => ({
+          ...p,
+          value: multiply(p.value ?? 0, 100),
+          profit: multiply(p.profit ?? 0, 100),
+        })),
+        unitCost: multiply(i.variant.unitCost ?? 0, 100),
+      },
+    })),
+  }
+}
+
+const convertOrderUnitsDisplay = (orderInfo: Partial<Order>) => {
+  return {
+    ...orderInfo,
+    totalCost: divide(orderInfo.totalCost ?? 0, 100),
+    totalComission: divide(orderInfo.totalComission ?? 0, 100),
+    items: orderInfo.items.map(i => ({
+      ...i,
+      cost: divide(i.cost ?? 0, 100),
+      itemTotalCost: divide(i.itemTotalCost ?? 0, 100),
+      unitPrice: divide(i.unitPrice ?? 0, 100),
+      commissionRate: divide(i.commissionRate ?? 0, 100),
+      descount: divide(i.descount ?? 0, 100),
+      variant: {
+        ...i.variant,
+        prices: i.variant.prices.map(p => ({
+          ...p,
+          value: divide(p.value ?? 0, 100),
+          profit: divide(p.profit ?? 0, 100),
+        })),
+        unitCost: divide(i.variant.unitCost ?? 0, 100),
+      },
+    })),
+  }
 }

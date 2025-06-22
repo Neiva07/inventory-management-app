@@ -1,4 +1,4 @@
-import { DocumentData, collection, getDocs, where, query, setDoc, doc, QueryConstraint, limit, startAt, orderBy, startAfter, getCountFromServer, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { DocumentData, collection, getDocs, where, query, setDoc, doc, QueryConstraint, limit, startAt, orderBy, startAfter, getCountFromServer, getDoc, updateDoc, deleteDoc, Transaction } from "firebase/firestore";
 import { db } from "../firebase";
 import { v4 as uuidv4 } from "uuid";
 import { ProductCategory } from "./productCategories";
@@ -6,11 +6,11 @@ import { getDocumentCount } from "../lib/count";
 import { generatePublicId } from "../lib/publicId";
 import { COLLECTION_NAMES } from "./index";
 import { divide, multiply } from "lib/math";
+import { PaymentMethod } from "./paymentMethods";
 
-export interface SellingOption extends DocumentData {
+export interface Variant extends DocumentData {
   unit: ProductUnit;
   conversionRate: number;
-  inventory: number;
   unitCost: number;
   prices: Array<Price>;
 }
@@ -18,7 +18,7 @@ export interface SellingOption extends DocumentData {
 export interface Price {
   profit: number;
   value: number;
-  title: string;
+  paymentMethod: PaymentMethod;
 }
 
 //temporary, probably will be separated entity -> should extends Partial Unit
@@ -47,14 +47,14 @@ export interface Product extends DocumentData {
     isDeleted: boolean;
   };
   status: string;
-  sellingOptions: Array<SellingOption>;
+  inventory: number; // Inventory in base units
+  baseUnit: ProductUnit; // The base unit for inventory tracking
+  variants: Array<Variant>; // Renamed from sellingOptions
   weight: number;
-  inventory: number;
   minInventory?: number;
-  buyUnit: ProductUnit;
+  cost: number; // Cost per base unit
   sailsmanComission?: number;
   suppliers: Array<ProductSupplier>;
-  cost: number;
   productCategory: Partial<ProductCategory>;
 }
 
@@ -166,7 +166,7 @@ const convertProductUnitsStore = (productInfo: Partial<Product>): Partial<Produc
     ...productInfo,
     cost: multiply(productInfo.cost ?? 0, 100),
     sailsmanComission: multiply(productInfo.sailsmanComission ?? 0, 100),
-    sellingOptions: productInfo.sellingOptions.map(so => ({
+    variants: productInfo.variants.map(so => ({
       ...so,
       unitCost: multiply(so.unitCost ?? 0, 100),
       prices: so.prices.map(p => ({
@@ -183,7 +183,7 @@ const convertProductUnitsDisplay = (productInfo: Partial<Product>): Partial<Prod
     ...productInfo,
     cost: divide(productInfo.cost ?? 0, 100),
     sailsmanComission: divide(productInfo.sailsmanComission ?? 0, 100),
-    sellingOptions: productInfo.sellingOptions.map(so => ({
+    variants: productInfo.variants.map(so => ({
       ...so,
       unitCost: divide(so.unitCost ?? 0, 100),
       prices: so.prices.map(p => ({

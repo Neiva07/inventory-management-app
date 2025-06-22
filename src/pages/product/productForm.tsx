@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { Controller, FormProvider } from "react-hook-form";
 import { SelectField, useProductCreateForm } from "./useProductCreateForm";
-import { SellingOptions } from "./sellingOptions";
+import { Variants } from "./Variants";
 import { getProductCategories, ProductCategory } from "../../model/productCategories";
 import { Supplier, getSuppliers } from "model/suppliers";
 import { getUnits, Unit } from "model/units";
@@ -264,14 +264,14 @@ export const ProductForm = () => {
         </Grid>
         <Divider style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }} />
         <Typography variant="h6" gutterBottom>
-          Unidade de compra
+          Unidade base
         </Typography>
         <Grid container spacing={2}>
           <Grid item xs={4}>
             <FormControl fullWidth>
               <Controller
                 control={formMethods.control}
-                render={({ field: { value: buyUnit, ...props } }) => {
+                render={({ field: { value: baseUnit, ...props } }) => {
                   const handleChange = (
                     _: React.SyntheticEvent<Element, Event>,
                     value: SelectField
@@ -283,7 +283,7 @@ export const ProductForm = () => {
                       <Autocomplete
                         {...props}
                         id="tags-standard"
-                        value={buyUnit}
+                        value={baseUnit}
                         options={units.map((c) => {
                           return {
                             label: c.name,
@@ -294,9 +294,9 @@ export const ProductForm = () => {
                           <TextField
                             {...params}
                             variant="outlined"
-                            label="Unidade"
-                            error={!!formMethods.formState.errors.buyUnit}
-                            helperText={formMethods.formState.errors.buyUnit?.label?.message}
+                            label="Unidade base"
+                            error={!!formMethods.formState.errors.baseUnit}
+                            helperText={formMethods.formState.errors.baseUnit?.label?.message}
                           />
                         )}
                         isOptionEqualToValue={(option, value) =>
@@ -307,7 +307,7 @@ export const ProductForm = () => {
                     </>
                   );
                 }}
-                name="buyUnit"
+                name="baseUnit"
               />
             </FormControl>
           </Grid>
@@ -319,10 +319,8 @@ export const ProductForm = () => {
                   return (
                     <TextField {...field}
                       variant="outlined"
-                      label="Estoque"
-
+                      label="Estoque (unidades base)"
                       onFocus={(e) => e.target.select()}
-
                     />
                   );
                 }}
@@ -340,7 +338,6 @@ export const ProductForm = () => {
                       variant="outlined"
                       label="Estoque Mínimo"
                       {...props}
-
                       onFocus={(e) => e.target.select()}
                     />
                   );
@@ -387,7 +384,7 @@ export const ProductForm = () => {
           </Grid>
         </Grid>
         <Divider style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }} />
-        <SellingOptions {...formMethods} />
+        <Variants {...formMethods} />
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, marginTop: "12px" }}>
           {productID ? (
             <Button onClick={handleSubmit} variant="contained">

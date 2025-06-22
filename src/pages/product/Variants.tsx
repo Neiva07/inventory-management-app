@@ -12,26 +12,28 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import React from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
 import {
+  FormPrice,
   DEFAULT_PRICE,
-  DEFAULT_SELLING_OPTION_VALUE,
+  DEFAULT_VARIANT_VALUE,
   ProductFormDataInterface,
   SelectField,
-  FormSellingOption,
+  FormVariant,
 } from "./useProductCreateForm";
-import { Price } from "../../model/products";
+import { Variant } from "../../model/products";
+import { PaymentMethod, paymentMethods } from "../../model/paymentMethods";
 import { getUnits, Unit } from "model/units";
 import { useAuth } from "context/auth";
 import { add, divide, multiply, subtract } from "lib/math";
 
 
-type SellingOptionProps = {
-  sellingOption: FormSellingOption;
+type VariantProps = {
+  variant: FormVariant;
   formMethods: UseFormReturn<ProductFormDataInterface>;
   index: number;
 };
 
 type PriceProps = {
-  price: Price;
+  price: FormPrice;
   formMethods: UseFormReturn<ProductFormDataInterface>;
   index: number;
   parentIndex: number;
@@ -39,26 +41,44 @@ type PriceProps = {
 
 const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
   const handleRemovePrice = () => {
-    const currentPrices = formMethods.getValues(`sellingOptions.${parentIndex}.prices`);
+    const currentPrices = formMethods.getValues(`variants.${parentIndex}.prices`);
     const newPrices = currentPrices.filter((_, i) => i !== index);
-    formMethods.setValue(`sellingOptions.${parentIndex}.prices`, newPrices);
+    formMethods.setValue(`variants.${parentIndex}.prices`, newPrices);
   };
+  const [availablePaymentMethods, setAvailablePaymentMethods] = React.useState<SelectField[]>([]);
 
   // Watch for unit cost changes to recalculate profit percentages
-  const unitCost = formMethods.watch(`sellingOptions.${parentIndex}.unitCost`) || 0;
+  const unitCost = formMethods.watch(`variants.${parentIndex}.unitCost`) ?? 0;
+  
+  // Watch all prices in the current variant to filter payment methods
+  const currentPrices = formMethods.watch(`variants.${parentIndex}.prices`) ?? [];
   
   React.useEffect(() => {
+    const usedPaymentMethodsIDs = currentPrices.map(price => price.paymentMethod?.value).filter(id => id !== undefined && id !== null);
+  
+    const currentAvailablePaymentMethods = paymentMethods
+      .filter(pm => !usedPaymentMethodsIDs.includes(pm.id))
+      .map(pm => ({
+        label: pm.label,
+        value: pm.id,
+      } as SelectField));
+
+    setAvailablePaymentMethods(currentAvailablePaymentMethods);
+  }, [currentPrices]);
+
+  React.useEffect(() => {
     if (unitCost > 0) {
-      const currentPrices = formMethods.getValues(`sellingOptions.${parentIndex}.prices`);
+      const currentPrices = formMethods.getValues(`variants.${parentIndex}.prices`);
       const updatedPrices = currentPrices.map((price, i) => {
         if (i === index && price.profit !== undefined) {
+          const profit = !isNaN(Number(price.profit)) ? Number(price.profit) : 0;
           // Recalculate the price value based on the new unit cost and existing profit percentage
-          const newValue = unitCost * ((price.profit / 100) + 1);
+          const newValue = divide(multiply(unitCost, add(profit, 100)), 100);
           return { ...price, value: newValue };
         }
         return price;
       });
-      formMethods.setValue(`sellingOptions.${parentIndex}.prices`, updatedPrices);
+      formMethods.setValue(`variants.${parentIndex}.prices`, updatedPrices);
     }
   }, [unitCost, parentIndex, index, formMethods]);
 
@@ -71,37 +91,56 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
         marginBottom: "8px",
       }}
     >
-    
       <Grid item xs={3}>
         <FormControl fullWidth>
-          <Controller
-            control={formMethods.control}
-            render={({ field: { value: title, ...props } }) => {
-              return (
-                <TextField
-                  {...props}
-                  variant="standard"
-                  label="Titulo do preço"
-                  value={title}
-                />
-              );
-            }}
-            name={`sellingOptions.${parentIndex}.prices.${index}.title`}
-          />
-        </FormControl>
+            <Controller
+              control={formMethods.control}
+              render={({ field: { value: paymentMethod, ...props } }) => {
+                const handleChange = (
+                  _: React.SyntheticEvent<Element, Event>,
+                  value: SelectField
+                ) => {
+                  props.onChange(value);
+                  console.log(value);
+                };
+                return (
+                  <>
+                    <Autocomplete
+                      {...props}
+                      id={`variants.${parentIndex}.prices.${index}.paymentMethod`}
+                      options={availablePaymentMethods}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          variant="outlined"
+                          label="Método de Pagamento"
+                        />
+                      )}
+                      isOptionEqualToValue={(option, value) =>
+                        option.value === value.value
+                      }
+                      onChange={handleChange}
+                      value={paymentMethod}
+                    />
+                  </>
+                );
+              }}
+              name={`variants.${parentIndex}.prices.${index}.paymentMethod`}
+            />
+          </FormControl>
       </Grid>
       <Grid item xs={4}>
         <FormControl fullWidth>
           <Controller
             control={formMethods.control}
             render={({ field: { value: profit, ...props } }) => {
-              const currentCost = formMethods.watch(`sellingOptions.${parentIndex}.unitCost`) ?? 0
+              const currentCost = formMethods.watch(`variants.${parentIndex}.unitCost`) ?? 0
               const onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
                 props.onChange(event)
 
                 const value = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0
                 const finalValue = divide(multiply(currentCost, add(value, 100)), 100)
-                formMethods.setValue(`sellingOptions.${parentIndex}.prices.${index}.value`, finalValue)
+                formMethods.setValue(`variants.${parentIndex}.prices.${index}.value`, finalValue)
               }
               return (
                 <TextField
@@ -114,7 +153,7 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
                 />
               );
             }}
-            name={`sellingOptions.${parentIndex}.prices.${index}.profit`}
+            name={`variants.${parentIndex}.prices.${index}.profit`}
           />
         </FormControl>
       </Grid>
@@ -124,13 +163,13 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
           <Controller
             control={formMethods.control}
             render={({ field: props }) => {
-              const currentCost = formMethods.watch(`sellingOptions.${parentIndex}.unitCost`) || 0
+              const currentCost = formMethods.watch(`variants.${parentIndex}.unitCost`) || 0
               const onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
                 props.onChange(event)
 
                 const value = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0
                 const finalValue = divide(multiply(subtract(value, currentCost), 100),  currentCost)
-                formMethods.setValue(`sellingOptions.${parentIndex}.prices.${index}.profit`, finalValue)
+                formMethods.setValue(`variants.${parentIndex}.prices.${index}.profit`, finalValue)
               }
 
               return (
@@ -143,7 +182,7 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
                 />
               );
             }}
-            name={`sellingOptions.${parentIndex}.prices.${index}.value`}
+            name={`variants.${parentIndex}.prices.${index}.value`}
           />
         </FormControl>
       </Grid>
@@ -161,18 +200,18 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
   );
 };
 
-const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
+const VariantItem = ({ formMethods, index }: VariantProps) => {
   const handleAddPrice = () => {
-    formMethods.setValue(`sellingOptions.${index}.prices`, [
-      ...formMethods.getValues(`sellingOptions.${index}.prices`),
+    formMethods.setValue(`variants.${index}.prices`, [
+      ...formMethods.getValues(`variants.${index}.prices`),
       DEFAULT_PRICE,
     ]);
   };
 
-  const handleRemoveSellingOption = () => {
-    const currentOptions = formMethods.getValues('sellingOptions');
+  const handleRemoveVariant = () => {
+    const currentOptions = formMethods.getValues('variants');
     const newOptions = currentOptions.filter((_, i) => i !== index);
-    formMethods.setValue('sellingOptions', newOptions);
+    formMethods.setValue('variants', newOptions);
   };
 
   const [units, setUnits] = React.useState<Array<Unit>>([]);
@@ -182,48 +221,43 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
     getUnits(user.id).then(qr => setUnits(qr.docs.map(d => d.data() as Unit)));
   }, [])
 
-  // Watch the main inventory and cost values
-  const mainInventory = formMethods.watch('inventory') ?? 0;
+  // Watch the main cost value
   const mainCost = formMethods.watch('cost') ?? 0;
-  const buyUnit = formMethods.watch('buyUnit');
-  const currentUnit = formMethods.watch(`sellingOptions.${index}.unit`);
+  const baseUnit = formMethods.watch('baseUnit');
+  const currentUnit = formMethods.watch(`variants.${index}.unit`);
 
-  // Auto-set conversion rate to 1 when unit matches buy unit
+  // Auto-set conversion rate to 1 when unit matches base unit
   React.useEffect(() => {
-    if (currentUnit?.value && buyUnit?.value && currentUnit.value === buyUnit.value) {
-      formMethods.setValue(`sellingOptions.${index}.conversionRate`, 1);
+    if (currentUnit?.value && baseUnit?.value && currentUnit.value === baseUnit.value) {
+      formMethods.setValue(`variants.${index}.conversionRate`, 1);
     }
-  }, [currentUnit?.value, buyUnit?.value, index, formMethods]);
+  }, [currentUnit?.value, baseUnit?.value, index, formMethods]);
 
-  // Recalculate inventory and unit cost when main inventory or cost changes
+  // Recalculate unit cost when main cost changes
   React.useEffect(() => {
-    const conversionRate = formMethods.getValues(`sellingOptions.${index}.conversionRate`) ?? 0;
+    const conversionRate = formMethods.getValues(`variants.${index}.conversionRate`) ?? 0;
     if (conversionRate > 0) {
-      const newInventory = multiply(mainInventory, conversionRate);
-      const newUnitCost = divide(mainCost, conversionRate);
-      formMethods.setValue(`sellingOptions.${index}.inventory`, newInventory);
-      formMethods.setValue(`sellingOptions.${index}.unitCost`, newUnitCost);
+      const newUnitCost = multiply(mainCost, conversionRate);
+      formMethods.setValue(`variants.${index}.unitCost`, newUnitCost);
     }
-  }, [mainInventory, mainCost, index, formMethods]);
+  }, [mainCost, index, formMethods]);
 
-  // Calculate inventory and unit cost when conversion rate changes
+  // Calculate unit cost when conversion rate changes
   const handleConversionRateChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const conversionRate = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0;
     
-    // Calculate new inventory and unit cost
-    const newInventory = multiply(mainInventory, conversionRate);
-    const newUnitCost = conversionRate > 0 ? divide(mainCost, conversionRate) : 0;
+    // Calculate new unit cost using multiplication (since we're selling larger units)
+    const newUnitCost = multiply(mainCost, conversionRate);
     
     // Update the form values
-    formMethods.setValue(`sellingOptions.${index}.inventory`, newInventory);
-    formMethods.setValue(`sellingOptions.${index}.unitCost`, newUnitCost);
+    formMethods.setValue(`variants.${index}.unitCost`, newUnitCost);
   };
 
   return (
     <Box>
       <Grid container spacing={2}>
        
-        <Grid item xs={2}>
+        <Grid item xs={3}>
           <FormControl fullWidth>
             <Controller
               control={formMethods.control}
@@ -235,15 +269,15 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
                   props.onChange(value);
                   
                   // Auto-set conversion rate to 1 if unit matches buy unit
-                  if (value?.value && buyUnit?.value && value.value === buyUnit.value) {
-                    formMethods.setValue(`sellingOptions.${index}.conversionRate`, 1);
+                  if (value?.value && baseUnit?.value && value.value === baseUnit.value) {
+                    formMethods.setValue(`variants.${index}.conversionRate`, 1);
                   }
                 };
                 return (
                   <>
                     <Autocomplete
                       {...props}
-                      id={`sellingOptions.${index}.unit`}
+                      id={`variants.${index}.unit`}
                       options={units.map((c) => {
                         return {
                           label: c.name,
@@ -266,7 +300,7 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
                   </>
                 );
               }}
-              name={`sellingOptions.${index}.unit`}
+              name={`variants.${index}.unit`}
             />
           </FormControl>
         </Grid>
@@ -288,34 +322,11 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
                   />
                 );
               }}
-              name={`sellingOptions.${index}.conversionRate`}
+              name={`variants.${index}.conversionRate`}
             />
           </FormControl>
         </Grid>
-        <Grid item xs={3}>
-          <FormControl fullWidth>
-            <Controller
-              control={formMethods.control}
-              render={({ field: { value: inventory, ...props } }) => {
-                return (
-                  <TextField
-                    {...props}
-                    variant="outlined"
-                    label="Estoque"
-                    value={inventory}
-                    onFocus={(e) => e.target.select()}
-                    InputProps={{
-                      readOnly: true,
-                    }}
-                  />
-                );
-              }}
-              name={`sellingOptions.${index}.inventory`}
-            />
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={3}>
+        <Grid item xs={5}>
           <FormControl fullWidth>
             <Controller
               control={formMethods.control}
@@ -332,14 +343,14 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
                   />
                 );
               }}
-              name={`sellingOptions.${index}.unitCost`}
+              name={`variants.${index}.unitCost`}
             />
           </FormControl>
         </Grid>
         <Grid item xs={1}>
           <IconButton 
             color="error" 
-            onClick={handleRemoveSellingOption}
+            onClick={handleRemoveVariant}
             size="medium"
             style={{ marginTop: '8px' }}
           >
@@ -349,7 +360,7 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
         <Grid item xs={12}>
           <Controller
             control={formMethods.control}
-            name={`sellingOptions.${index}.prices`}
+            name={`variants.${index}.prices`}
             render={(formControlProps) => {
               return (
                 <div
@@ -385,13 +396,13 @@ const SellingOption = ({ formMethods, index }: SellingOptionProps) => {
   );
 };
 
-export const SellingOptions = (
+export const Variants = (
   formMethods: UseFormReturn<ProductFormDataInterface>
 ) => {
-  const handleAddNewSellingOption = () => {
-    formMethods.setValue("sellingOptions", [
-      ...formMethods.getValues("sellingOptions"),
-      DEFAULT_SELLING_OPTION_VALUE,
+  const handleAddNewVariant = () => {
+    formMethods.setValue("variants", [
+      ...formMethods.getValues("variants"),
+      DEFAULT_VARIANT_VALUE,
     ]);
   };
 
@@ -399,20 +410,20 @@ export const SellingOptions = (
     <>
       <Box>
         <Typography variant="h6" gutterBottom>
-          Unidade de Venda
+          Variantes
         </Typography>
         <Controller
           control={formMethods.control}
-          name="sellingOptions"
+          name="variants"
           render={(formControlProps) => {
             return (
               <>
-                {formControlProps.field.value?.map((so, index) => {
+                {formControlProps.field.value?.map((v, index) => {
                   return (
-                    <SellingOption
+                    <VariantItem
                       key={index}
                       index={index}
-                      sellingOption={so}
+                      variant={v}
                       formMethods={formMethods}
                     />
                   );
@@ -421,7 +432,7 @@ export const SellingOptions = (
             );
           }}
         />
-        <Button onClick={handleAddNewSellingOption}>+ unidade de venda</Button>
+        <Button onClick={handleAddNewVariant}>+ variante</Button>
       </Box>
     </>
   );

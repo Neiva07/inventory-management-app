@@ -10,10 +10,11 @@ const useProductFormValidationSchema = () : yup.ObjectSchema<ProductFormDataInte
           value: yup.string().required('A categoria é obrigatória'),
         }),
         title: yup.string().required('O nome do produto é obrigatório'),
-        buyUnit: yup.object().shape({
-            label: yup.string().required('A unidade de compra é obrigatória'),
-            value: yup.string().required('A unidade de compra é obrigatória'),
+        baseUnit: yup.object().shape({
+            label: yup.string().required('A unidade base é obrigatória'),
+            value: yup.string().required('A unidade base é obrigatória'),
           }),
+        inventory: yup.number().min(0, 'O estoque deve ser maior ou igual a 0').required('O estoque é obrigatório'),
       }) as yup.ObjectSchema<ProductFormDataInterface>;
     }, []);
   };

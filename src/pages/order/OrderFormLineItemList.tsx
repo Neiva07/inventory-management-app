@@ -4,15 +4,17 @@ import { DataGrid, GridCellParams, GridColDef, GridDeleteIcon, GridRowIdGetter }
 import { useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm"
+import { add, divide, integerDivide, multiply, subtract } from "lib/math"
+import { Product } from "model/products"
 
-export const OrderFormLineItemList = () => {
+export const OrderFormLineItemList = ({ calculateBaseUnitInventory }: { calculateBaseUnitInventory: (product: Product) => number }) => {
   const formMethods = useFormContext<OrderFormDataInterface>();
 
   const [pageSize, setPageSize] = useState<number>(10);
   const items = formMethods.watch("items");
 
   const handleGetRowID: GridRowIdGetter<ItemDataInterface> = (row) => {
-    return row.productID;
+    return `${row.productID}-${row.variant.unit.id}`;
   }
   const columns: GridColDef[] = [
     {
@@ -38,7 +40,7 @@ export const OrderFormLineItemList = () => {
       type: 'number',
       flex: 1,
       valueGetter: (params: GridCellParams<ItemDataInterface>) => {
-        return params.row.unit.name
+        return params.row.variant.unit.name
       },
       sortable: false,
     },
@@ -82,11 +84,21 @@ export const OrderFormLineItemList = () => {
       flex: 1,
       renderCell: (cell: GridCellParams<ItemDataInterface>) => {
         return <Button onClick={() => {
-          formMethods.setValue('items', items.filter(i => i.productID !== cell.row.productID))
+          const filteredItems = items.filter(i => !(i.productID === cell.row.productID && i.variant.unit.id === cell.row.variant.unit.id))
+          const balanceToAdd = multiply(cell.row.variant.conversionRate, cell.row.quantity)
+          formMethods.setValue('items', filteredItems.map(item => {
+            if(item.productID === cell.row.productID) {
+            return {
+              ...item,
+              balance: add(item.balance, integerDivide(balanceToAdd, item.variant.conversionRate))
+            }
+          }
+          return item
+          }))
           const prevTotalCost = formMethods.getValues('totalCost')
           const prevTotalCommission = formMethods.getValues('totalComission')
-          formMethods.setValue('totalCost', prevTotalCost - cell.row.itemTotalCost)
-          formMethods.setValue('totalComission', prevTotalCommission - (cell.row.commissionRate * cell.row.itemTotalCost) / 100)
+          formMethods.setValue('totalCost', subtract(prevTotalCost, cell.row.itemTotalCost))
+          formMethods.setValue('totalComission', subtract(prevTotalCommission, divide(multiply(cell.row.commissionRate, cell.row.itemTotalCost), 100)))
         }}> <GridDeleteIcon /> </Button>;
       },
     }

@@ -1,9 +1,10 @@
-import { useForm, UseFormReturn, SubmitHandler, Resolver } from "react-hook-form";
+import { useForm, SubmitHandler, Resolver } from "react-hook-form";
 import useProductFormValidationSchema from "./useProductFormValidationSchema";
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback } from "react";
-import { Product, Price, ProductSupplier, ProductUnit, SellingOption, createProduct, getProduct, updateProduct, deleteProduct, deactiveProduct, activeProduct } from "../../model/products";
+import { Product, ProductSupplier, ProductUnit, Variant, createProduct, getProduct, updateProduct, deleteProduct, deactiveProduct, activeProduct } from "../../model/products";
 import { ProductCategory } from "../../model/productCategories";
+import { PaymentMethod, paymentMethods } from "../../model/paymentMethods";
 import { toast } from "react-toastify";
 import { useAuth } from "context/auth";
 
@@ -12,20 +13,25 @@ export interface SelectField<T = string> {
   value: T;
 }
 
-export interface FormSellingOption {
+export interface FormPrice {
+  profit: number;
+  value: number;
+  paymentMethod: SelectField;
+}
+
+export interface FormVariant {
   unit: SelectField;
   conversionRate: number;
-  inventory: number;
   unitCost: number;
-  prices: Array<Price>;
+  prices: Array<FormPrice>;
 }
 
 export interface ProductFormDataInterface {
-  sellingOptions: Array<FormSellingOption>;
+  variants: Array<FormVariant>;
   weight: number;
-  inventory: number;
-  buyUnit: SelectField;
-  cost: number;
+  inventory: number; // Inventory in base units
+  baseUnit: SelectField; // The base unit for inventory tracking
+  cost: number; // Cost per base unit
   minInventory: number;
   title: string;
   description: string;
@@ -34,34 +40,35 @@ export interface ProductFormDataInterface {
   suppliers: Array<SelectField>;
 }
 
-export const DEFAULT_PRICE: Price = {
+export const DEFAULT_PRICE: FormPrice = {
   profit: 0,
   value: 0,
-  title: "",
+  paymentMethod: {
+    label: "",
+    value: "",
+  },
 }
 
-export const DEFAULT_SELLING_OPTION_VALUE: FormSellingOption = {
+export const DEFAULT_VARIANT_VALUE: FormVariant = {
   unit: {
     label: "",
     value: "",
   },
-  inventory: 0,
   conversionRate: 0,
   unitCost: 0,
   prices: [DEFAULT_PRICE],
-
 }
 
 const INITIAL_PRODUCT_FORM_STATE = {
   title: "",
   description: "",
-  sellingOptions: [DEFAULT_SELLING_OPTION_VALUE],
+  variants: [DEFAULT_VARIANT_VALUE],
   cost: 0,
   productCategory: {
     label: "",
     value: "",
   },
-  buyUnit: {
+  baseUnit: {
     label: "",
     value: "",
   },
@@ -97,21 +104,29 @@ export const useProductCreateForm = (productID?: string) => {
         label: queriedProduct.productCategory?.name,
         value: queriedProduct.productCategory?.id,
       },
-      buyUnit: {
-        label: queriedProduct.buyUnit?.name,
-        value: queriedProduct.buyUnit?.id,
+      baseUnit: {
+        label: queriedProduct.baseUnit?.name,
+        value: queriedProduct.baseUnit?.id,
       },
-      sellingOptions: queriedProduct.sellingOptions.map(so => {
+      inventory: queriedProduct.inventory ?? 0,
+      variants: queriedProduct.variants.map(so => {
         return ({
           ...so,
           unit: {
             ...so.unit,
             label: so.unit.name,
             value: so.unit.id,
-          }
-
+          },
+          prices: so.prices.map(price => {
+            return {
+              ...price,
+              paymentMethod: {
+                label: price.paymentMethod?.label,
+                value: price.paymentMethod?.id,
+              },
+            };
+          })
         })
-
       }),
       suppliers: queriedProduct.suppliers.map(s => ({ value: s.supplierID, label: s.name }))
 
@@ -135,33 +150,43 @@ export const useProductCreateForm = (productID?: string) => {
 
   const onSubmit: SubmitHandler<ProductFormDataInterface> = useCallback((data) => {
 
+    const smallestUnit = data.variants.reduce((highest, current) => {
+      return (current.conversionRate > highest.conversionRate) ? current : highest;
+    }, data.variants[0]);
     try {
       createProduct({
         productCategory: {
           name: data.productCategory.label,
           id: data.productCategory.value,
         } as ProductCategory,
-        cost: data.cost,
+        cost: Number(data.cost) ?? 0,
         description: data.description,
         inventory: Number(data.inventory) ?? 0,
         title: data.title,
-        sailsmanComission: data.sailsmanComission,
-        buyUnit: {
-          id: data.buyUnit.value,
-          name: data.buyUnit.label,
+        sailsmanComission: Number(data.sailsmanComission) ?? 0,
+        baseUnit: {
+          id: data.baseUnit.value,
+          name: data.baseUnit.label,
         } as ProductUnit,
         status: "active",
         userID: user.id,
-        sellingOptions: data.sellingOptions.map(so => {
-          const { unit, inventory, ...rest } = so;
+        variants: data.variants.map(so => {
+          const { unit, ...rest } = so;
           return {
             unit: {
               id: unit.value,
               name: unit.label,
             } as ProductUnit,
             ...rest,
-            inventory: Number(inventory) ?? 0,
-          } as SellingOption
+            prices: rest.prices.map(price => ({
+              profit: price.profit,
+              value: price.value,
+              paymentMethod: {
+                label: price.paymentMethod.label,
+                id: price.paymentMethod.value,
+              } as PaymentMethod,
+            })),
+          } as Variant
         }),
         weight: Number(data.weight) ?? 0,
         minInventory: Number(data.minInventory) ?? 0,
@@ -195,21 +220,28 @@ export const useProductCreateForm = (productID?: string) => {
         inventory: Number(data.inventory) ?? 0,
         title: data.title,
         sailsmanComission: data.sailsmanComission,
-        buyUnit: {
-          id: data.buyUnit.value,
-          name: data.buyUnit.label,
+        baseUnit: {
+          id: data.baseUnit.value,
+          name: data.baseUnit.label,
         } as ProductUnit,
         status: "active",
-        sellingOptions: data.sellingOptions.map(so => {
-          const { unit, inventory, ...rest } = so;
+        variants: data.variants.map(so => {
+          const { unit, ...rest } = so;
           return {
             unit: {
               id: unit.value,
               name: unit.label,
             } as ProductUnit,
             ...rest,
-            inventory: Number(inventory) ?? 0,
-          } as SellingOption
+            prices: rest.prices.map(price => ({
+              profit: price.profit,
+              value: price.value,
+              paymentMethod: {
+                label: price.paymentMethod.label,
+                id: price.paymentMethod.value,
+              },
+            })),
+          } as Variant
         }),
         weight: Number(data.weight) ?? 0,
         minInventory: Number(data.minInventory) ?? 0,
