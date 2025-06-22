@@ -127,6 +127,7 @@ export const CustomerList = () => {
             fullWidth
             onChange={handleSearchName}
             placeholder={"Busque pelo nome do cliente..."}
+            autoFocus
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -187,6 +188,7 @@ export const CustomerList = () => {
               pagination
               onRowSelectionModelChange={handleRowSelection}
               onPaginationModelChange={handlePaginationModelChange}
+              onRowDoubleClick={(params) => navigate(`/customers/${params.row.id}`)}
               hideFooterSelectedRowCount
               rowCount={count || 0}
               rowSelectionModel={[selectedRowID]}

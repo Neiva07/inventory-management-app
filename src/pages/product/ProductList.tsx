@@ -177,6 +177,7 @@ export const ProductList = () => {
             fullWidth
             onChange={handleSearchTitle}
             placeholder={"Busque pelo nome do produto..."}
+            autoFocus
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -258,6 +259,7 @@ export const ProductList = () => {
             pagination
             onRowSelectionModelChange={handleRowSelection}
             onPaginationModelChange={handlePaginationModelChange}
+            onRowDoubleClick={(params) => navigate(`/products/${params.row.id}`)}
             hideFooterSelectedRowCount
             rowCount={count || 0}
             rowSelectionModel={[selectedRowID]}

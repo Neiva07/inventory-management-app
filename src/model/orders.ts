@@ -188,26 +188,28 @@ export const deleteOrder = async (orderID: string) => {
 }
 
 
-export const updateOrder = async (orderID: string, orderInfo: Partial<Order>) => {
+export const updateOrder = async (orderID: string, currentOrder: Partial<Order>) => {
   const orderDoc = doc(db, ORDER_COLLECTION, orderID);
   const order = await getDoc(orderDoc);
-  const orderData = order.data() as Order;
+  const prevOrder = order.data() as Order;
   const batch = writeBatch(db);
 
-  const prevOrderItemsByProduct = orderData.items.reduce((acc, item) => {
+  const prevOrderItemsByProduct = prevOrder.items.reduce((acc, item) => {
     acc[item.productID] = [...(acc[item.productID] ?? []), item]
     return acc
   }, {} as Record<string, Item[]>)
 
-  const currentOrderItemsByProduct = orderInfo.items.reduce((acc, item) => {
+  const currentOrderItemsByProduct = currentOrder.items.reduce((acc, item) => {
     acc[item.productID] = [...(acc[item.productID] ?? []), item]
     return acc
   }, {} as Record<string, Item[]>)
 
   batch.update(orderDoc, {
-    ...convertOrderUnitsStore(orderInfo),
+    ...convertOrderUnitsStore(currentOrder),
     updatedAt: Date.now(),
   })
+
+  if(currentOrder.status === "complete" && prevOrder.status === "complete") {
 
   // Restore inventory for all products from previous order
   for (const productID of Object.keys(prevOrderItemsByProduct)) {
@@ -224,6 +226,26 @@ export const updateOrder = async (orderID: string, orderInfo: Partial<Order>) =>
     const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
     batch.update(productRef, { inventory: increment(-quantityInBaseUnit) });
   }
+}
+
+if(currentOrder.status === "complete" && prevOrder.status === "request") {
+  for (const productID of Object.keys(currentOrderItemsByProduct)) {
+    const currentProductItems = currentOrderItemsByProduct[productID]
+    const quantityInBaseUnit = currentProductItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
+    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
+    batch.update(productRef, { inventory: increment(-quantityInBaseUnit) });
+  }
+}
+
+if(currentOrder.status === "request" && prevOrder.status === "complete") {
+  for (const productID of Object.keys(prevOrderItemsByProduct)) {
+    const prevProductItems = prevOrderItemsByProduct[productID]
+    const quantityInBaseUnit = prevProductItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
+    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
+    batch.update(productRef, { inventory: increment(quantityInBaseUnit) });
+  }
+}
+
   return batch.commit();
 }
 

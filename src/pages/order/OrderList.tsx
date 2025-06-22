@@ -145,6 +145,7 @@ export const OrderList = () => {
                 fullWidth
                 variant="outlined"
                 label="Cliente"
+                autoFocus
               />
             )}
             isOptionEqualToValue={(option, value) =>
@@ -207,6 +208,7 @@ export const OrderList = () => {
               pagination
               onRowSelectionModelChange={handleRowSelection}
               onPaginationModelChange={handlePaginationModelChange}
+              onRowDoubleClick={(params) => navigate(`/orders/${params.row.id}`)}
               hideFooterSelectedRowCount
               rowCount={count || 0}
               rowSelectionModel={[selectedRowID]}

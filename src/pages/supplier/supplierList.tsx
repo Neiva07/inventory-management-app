@@ -138,6 +138,7 @@ export const SupplierList = () => {
             fullWidth
             onChange={handleSearchTitle}
             placeholder={"Busque pelo nome do fornecedor..."}
+            autoFocus
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -220,6 +221,7 @@ export const SupplierList = () => {
               pagination
               onRowSelectionModelChange={handleRowSelection}
               onPaginationModelChange={handlePaginationModelChange}
+              onRowDoubleClick={(params) => navigate(`/suppliers/${params.row.id}`)}
               hideFooterSelectedRowCount
               rowCount={count || 0}
               rowSelectionModel={[selectedRowID]}

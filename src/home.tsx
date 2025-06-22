@@ -12,6 +12,7 @@ type GuideProps = {
   description: string;
   link1: string;
   link2?: string;
+  createButtonText?: string;
 }
 
 const GuideCard = (props: GuideProps) => {
@@ -91,7 +92,7 @@ const GuideCard = (props: GuideProps) => {
               }
             }}
           >
-            Cadastrar
+            {props.createButtonText ?? 'Cadastrar'}
           </Button>
         )}
       </CardActions>
