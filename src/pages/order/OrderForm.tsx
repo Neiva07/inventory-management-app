@@ -1,4 +1,4 @@
-import { Button } from "@mui/material";
+import { Button, Tooltip } from "@mui/material";
 import { Box } from "@mui/system";
 import { FormProvider } from "react-hook-form"
 import { useParams, useNavigate } from "react-router-dom";
@@ -19,6 +19,10 @@ export const OrderForm = () => {
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { register, onFormSubmit, onDelete, order, reset, ...formMethods } = useOrderForm(orderID);
+
+  // Watch the items to check if there are any line items
+  const items = formMethods.watch('items');
+  const hasItems = items && items.length > 0;
 
   const handleSubmit = async () => {
     onFormSubmit();
@@ -59,7 +63,7 @@ export const OrderForm = () => {
         </Box>
         
           {orderID ? (
-            <Button onClick={handleSubmit} variant="outlined" style={{ marginTop: 20}}>
+            <Button onClick={handleSubmit} variant="outlined" size="large" style={{ marginTop: 20}}>
               Editar Nota
             </Button>
           ) : (
@@ -73,9 +77,23 @@ export const OrderForm = () => {
               />
             </Box>
 
-              <Button onClick={handleSubmit} variant="outlined" style={{ marginTop: 20}}>
-                Fechar Nota
-              </Button>
+              <Tooltip 
+                title={!hasItems ? "Você precisa adicionar ao menos 1 item para fechar a nota" : ""}
+                arrow
+              >
+                <Button 
+                  onClick={hasItems ? handleSubmit : undefined} 
+                  variant="outlined" 
+                  size="large"
+                  style={{ 
+                    marginTop: 20,
+                    opacity: hasItems ? 1 : 0.6,
+                    cursor: hasItems ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  Fechar Nota
+                </Button>
+              </Tooltip>
               </>
           )}
         

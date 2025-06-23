@@ -6,16 +6,53 @@ import { useFormContext } from "react-hook-form"
 import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm"
 import { add, divide, integerDivide, multiply, subtract } from "lib/math"
 import { Product } from "model/products"
+import { DeleteConfirmationDialog } from "components/DeleteConfirmationDialog"
 
 export const OrderFormLineItemList = ({ calculateBaseUnitInventory }: { calculateBaseUnitInventory: (product: Product) => number }) => {
   const formMethods = useFormContext<OrderFormDataInterface>();
 
   const [pageSize, setPageSize] = useState<number>(10);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<ItemDataInterface | null>(null);
   const items = formMethods.watch("items");
 
   const handleGetRowID: GridRowIdGetter<ItemDataInterface> = (row) => {
     return `${row.productID}-${row.variant.unit.id}`;
   }
+
+  const handleDeleteItem = (item: ItemDataInterface) => {
+    setItemToDelete(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!itemToDelete) return;
+    
+    const filteredItems = items.filter(i => !(i.productID === itemToDelete.productID && i.variant.unit.id === itemToDelete.variant.unit.id))
+    const balanceToAdd = multiply(itemToDelete.variant.conversionRate, itemToDelete.quantity)
+    formMethods.setValue('items', filteredItems.map(item => {
+      if(item.productID === itemToDelete.productID) {
+      return {
+        ...item,
+        balance: add(item.balance, integerDivide(balanceToAdd, item.variant.conversionRate))
+      }
+    }
+    return item
+    }))
+    const prevTotalCost = formMethods.getValues('totalCost')
+    const prevTotalCommission = formMethods.getValues('totalComission')
+    formMethods.setValue('totalCost', subtract(prevTotalCost, itemToDelete.itemTotalCost))
+    formMethods.setValue('totalComission', subtract(prevTotalCommission, divide(multiply(itemToDelete.commissionRate, itemToDelete.itemTotalCost), 100)))
+    
+    setDeleteDialogOpen(false);
+    setItemToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setItemToDelete(null);
+  };
+
   const columns: GridColDef[] = [
     {
       field: 'title', headerName: 'Produto', flex: 1, sortable: false,
@@ -83,23 +120,7 @@ export const OrderFormLineItemList = ({ calculateBaseUnitInventory }: { calculat
       field: 'delete',
       flex: 1,
       renderCell: (cell: GridCellParams<ItemDataInterface>) => {
-        return <Button onClick={() => {
-          const filteredItems = items.filter(i => !(i.productID === cell.row.productID && i.variant.unit.id === cell.row.variant.unit.id))
-          const balanceToAdd = multiply(cell.row.variant.conversionRate, cell.row.quantity)
-          formMethods.setValue('items', filteredItems.map(item => {
-            if(item.productID === cell.row.productID) {
-            return {
-              ...item,
-              balance: add(item.balance, integerDivide(balanceToAdd, item.variant.conversionRate))
-            }
-          }
-          return item
-          }))
-          const prevTotalCost = formMethods.getValues('totalCost')
-          const prevTotalCommission = formMethods.getValues('totalComission')
-          formMethods.setValue('totalCost', subtract(prevTotalCost, cell.row.itemTotalCost))
-          formMethods.setValue('totalComission', subtract(prevTotalCommission, divide(multiply(cell.row.commissionRate, cell.row.itemTotalCost), 100)))
-        }}> <GridDeleteIcon /> </Button>;
+        return <Button onClick={() => handleDeleteItem(cell.row)}> <GridDeleteIcon /> </Button>;
       },
     }
   ];
@@ -125,5 +146,12 @@ export const OrderFormLineItemList = ({ calculateBaseUnitInventory }: { calculat
         />
       </Grid>
     </Grid>
+    
+    <DeleteConfirmationDialog
+      open={deleteDialogOpen}
+      onClose={cancelDelete}
+      onConfirm={confirmDelete}
+      resourceName={`item "${itemToDelete?.title}"`}
+    />
   </Box>
 }
