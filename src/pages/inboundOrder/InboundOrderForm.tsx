@@ -2,23 +2,22 @@ import { Button, Tooltip } from "@mui/material";
 import { Box } from "@mui/system";
 import { FormProvider } from "react-hook-form"
 import { useParams, useNavigate } from "react-router-dom";
-import { OrderFormHeader } from "./OrderFormHeader";
-import { OrderFormLineItemForm } from "./OrderFormLineItemForm";
-import { OrderFormLineItemList } from "./OrderFormLineItemList";
-import { ItemDataInterface, useOrderForm } from "./useOrderForm";
+import { InboundOrderFormHeader } from "./InboundOrderFormHeader";
+import { InboundOrderFormLineItemForm } from "./InboundOrderFormLineItemForm";
+import { InboundOrderFormLineItemList } from "./InboundOrderFormLineItemList";
+import { InboundOrderItemDataInterface, useInboundOrderForm } from "./useInboundOrderForm";
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import { useState } from 'react';
-import { add, integerDivide, multiply } from "lib/math";
+import { add, integerDivide, multiply, subtract } from "lib/math";
 import { Product, Variant } from "model/products";
-import { subtract } from "lib/math";
 
-export const OrderForm = () => {
-  const { orderID } = useParams();
+export const InboundOrderForm = () => {
+  const { inboundOrderID } = useParams();
   const navigate = useNavigate();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { register, onFormSubmit, onDelete, order, reset, ...formMethods } = useOrderForm(orderID);
+  const { register, onFormSubmit, onDelete, inboundOrder, reset, ...formMethods } = useInboundOrderForm(inboundOrderID);
 
   // Watch the items to check if there are any line items
   const items = formMethods.watch('items');
@@ -26,8 +25,8 @@ export const OrderForm = () => {
 
   const handleSubmit = async () => {
     onFormSubmit();
-    if (orderID || !isCreateMode) {
-      navigate('/orders');
+    if (inboundOrderID || !isCreateMode) {
+      navigate('/inbound-orders');
     } else {
         reset();
     }
@@ -38,7 +37,7 @@ export const OrderForm = () => {
   }
 
   const handleConfirmDelete = () => {
-    onDelete(() => navigate('/orders'));
+    onDelete(() => navigate('/inbound-orders'));
     setDeleteDialogOpen(false);
   }
 
@@ -46,13 +45,18 @@ export const OrderForm = () => {
     setDeleteDialogOpen(false);
   }
 
+  console.log(inboundOrder);
+
   const calculateBaseUnitInventory = (product: Product) => {
-    const inventoryWithoutSubmmitedOrder = order ? order.items.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), product.inventory) : product.inventory;
+    const inventoryWithoutSubmmitedInboundOrder = inboundOrder ? inboundOrder.items.reduce((acc, item) => subtract(acc, multiply(item.quantity, item.variant.conversionRate)), product.inventory) : product.inventory;
+    console.log(inventoryWithoutSubmmitedInboundOrder)
+
     const items = formMethods.getValues('items')
-    return items.filter(item => item.productID === product.id).reduce((acc, item) => subtract(acc, multiply(item.quantity, item.variant.conversionRate)), inventoryWithoutSubmmitedOrder)
+    return items.filter(item => item.productID === product.id).reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), inventoryWithoutSubmmitedInboundOrder)
   }
 
-  const deleteLineItemFromForm = (itemToDelete: ItemDataInterface) => {
+  const deleteLineItemFromForm = (itemToDelete: InboundOrderItemDataInterface) => {
+
     const filteredItems = items.filter(i => !(i.productID === itemToDelete.productID && i.variant.unit.id === itemToDelete.variant.unit.id))
     const balanceToSubtract = multiply(itemToDelete.variant.conversionRate, itemToDelete.quantity)
     formMethods.setValue('items', filteredItems.map(item => {
@@ -70,16 +74,16 @@ export const OrderForm = () => {
 
   return (
     <FormProvider register={register} reset={reset} {...formMethods}>
-        <OrderFormHeader onDelete={handleDelete} order={order} />
+        <InboundOrderFormHeader onDelete={handleDelete} inboundOrder={inboundOrder} />
         <Box style={{ marginTop: 40 }}>
-          <OrderFormLineItemForm calculateBaseUnitInventory={calculateBaseUnitInventory} deleteLineItemFromForm={deleteLineItemFromForm} />
+          <InboundOrderFormLineItemForm calculateBaseUnitInventory={calculateBaseUnitInventory} deleteLineItemFromForm={deleteLineItemFromForm} />
         </Box>
 
         <Box style={{ marginTop: 40 }}>
-          <OrderFormLineItemList deleteLineItemFromForm={deleteLineItemFromForm} />
+          <InboundOrderFormLineItemList deleteLineItemFromForm={deleteLineItemFromForm} />
         </Box>
         
-          {orderID ? (
+          {inboundOrderID ? (
             <Button onClick={handleSubmit} variant="outlined" size="large" style={{ marginTop: 20}}>
               Editar Nota
             </Button>
@@ -89,8 +93,8 @@ export const OrderForm = () => {
               <CreateModeToggle
                 isCreateMode={isCreateMode}
                 onToggle={setIsCreateMode}
-                listingText="Redirecionar para listagem de vendas"
-                createText="Criar mais vendas"
+                listingText="Redirecionar para listagem de compras"
+                createText="Criar mais compras"
               />
             </Box>
 
@@ -118,8 +122,8 @@ export const OrderForm = () => {
           open={deleteDialogOpen}
           onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
-          resourceName="venda"
+          resourceName="compra"
         />
     </FormProvider>
   )
-}
+} 

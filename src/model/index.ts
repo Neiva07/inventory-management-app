@@ -5,6 +5,7 @@ export type CollectionName =
   | 'customers'
   | 'suppliers'
   | 'orders'
+  | 'inbound_orders'
   | 'units';
 
 // Export collection names as constants for consistency
@@ -14,6 +15,7 @@ export const COLLECTION_NAMES = {
   CUSTOMERS: 'customers',
   SUPPLIERS: 'suppliers',
   ORDERS: 'orders',
+  INBOUND_ORDERS: 'inbound_orders',
   UNITS: 'units'
 } as const;
 

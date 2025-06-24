@@ -32,6 +32,8 @@ import { Settings } from "pages/routes/settings";
 import { UIContextProvider, useUI } from './context/ui';
 import { Sidebar } from './pages/routes/Sidebar';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { InboundOrderForm } from "pages/inboundOrder/InboundOrderForm";
+import { InboundOrderList } from "pages/inboundOrder/InboundOrderList";
 
 declare module '@mui/material/styles' {
   interface Components {
@@ -356,6 +358,10 @@ const AppRouter = () => {
             <Route path="orders/create" element={<OrderForm />} />
             <Route path="orders/:orderID" element={<OrderForm />} />
             <Route path="products/create" element={<ProductForm />} />
+
+            <Route path="inbound-orders/:inboundOrderID" element={<InboundOrderForm />} />
+            <Route path="inbound-orders/create" element={<InboundOrderForm />} />
+            <Route path="inbound-orders" element={<InboundOrderList />} />
 
             <Route path="suppliers/:supplierID" element={<SupplierForm />} />
             <Route path="suppliers/create" element={<SupplierForm />} />

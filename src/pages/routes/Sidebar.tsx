@@ -37,7 +37,7 @@ const cadastros = [
 
 const movimentos = [
   { text: 'Lista de Compras', icon: <AssignmentIcon />, path: '/purchase-list' }, // Placeholder
-  { text: 'Compras de Mercadorias', icon: <ShoppingCartIcon />, path: '/purchases' }, // Placeholder
+  { text: 'Compras de Mercadorias', icon: <ShoppingCartIcon />, path: '/inbound-orders' },
   { text: 'Requisição de Clientes', icon: <AssignmentIcon />, path: '/customer-requests' }, // Placeholder
   { text: 'Vendas de Mercadorias', icon: <ShoppingCartIcon />, path: '/orders' },
   { text: 'Emissão de Recibos', icon: <ReceiptIcon />, path: '/receipts' }, // Placeholder

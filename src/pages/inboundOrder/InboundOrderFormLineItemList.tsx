@@ -3,32 +3,35 @@ import { Box } from "@mui/system"
 import { DataGrid, GridCellParams, GridColDef, GridDeleteIcon, GridRowIdGetter } from "@mui/x-data-grid"
 import { useState } from "react"
 import { useFormContext } from "react-hook-form"
-import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm"
+import { InboundOrderItemDataInterface, InboundOrderFormDataInterface } from "./useInboundOrderForm"
 import { add, divide, integerDivide, multiply, subtract } from "lib/math"
 import { Product } from "model/products"
 import { DeleteConfirmationDialog } from "components/DeleteConfirmationDialog"
 
-export const OrderFormLineItemList = ({ deleteLineItemFromForm }: { deleteLineItemFromForm: (item: ItemDataInterface) => void }) => {
-  const formMethods = useFormContext<OrderFormDataInterface>();
+export const InboundOrderFormLineItemList = ({ deleteLineItemFromForm }: { deleteLineItemFromForm: (item: InboundOrderItemDataInterface) => void  }) => {
+  const formMethods = useFormContext<InboundOrderFormDataInterface>();
 
   const [pageSize, setPageSize] = useState<number>(10);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<ItemDataInterface | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<InboundOrderItemDataInterface | null>(null);
   const items = formMethods.watch("items");
 
-  const handleGetRowID: GridRowIdGetter<ItemDataInterface> = (row) => {
+  const handleGetRowID: GridRowIdGetter<InboundOrderItemDataInterface> = (row) => {
     return `${row.productID}-${row.variant.unit.id}`;
   }
 
-  const handleDeleteItem = (item: ItemDataInterface) => {
+  const handleDeleteItem = (item: InboundOrderItemDataInterface) => {
     setItemToDelete(item);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = () => {
     if (!itemToDelete) return;
-    
+
     deleteLineItemFromForm(itemToDelete);
+    
+  
+    
     setDeleteDialogOpen(false);
     setItemToDelete(null);
   };
@@ -61,41 +64,21 @@ export const OrderFormLineItemList = ({ deleteLineItemFromForm }: { deleteLineIt
       headerName: 'Unidade',
       type: 'number',
       flex: 1,
-      valueGetter: (params: GridCellParams<ItemDataInterface>) => {
+      valueGetter: (params: GridCellParams<InboundOrderItemDataInterface>) => {
         return params.row.variant.unit.name
       },
       sortable: false,
     },
     {
-      field: 'cost',
+      field: 'unitCost',
       headerName: 'Custo Compra',
       type: 'number',
       sortable: false,
       flex: 1,
     },
     {
-      field: 'unitPrice',
-      headerName: 'Preço Venda',
-      sortable: false,
-      flex: 1,
-    },
-    {
-      field: 'descount',
-      headerName: 'Desconto (%)',
-      type: 'string',
-      flex: 1,
-      sortable: false,
-    },
-    {
-      field: 'commissionRate',
-      headerName: 'Comissão (%)',
-      type: 'number',
-      flex: 1,
-      sortable: false,
-    },
-    {
       field: 'itemTotalCost',
-      headerName: 'Total do Produto',
+      headerName: 'Total do Item',
       type: 'number',
       flex: 1,
       sortable: false,
@@ -104,7 +87,7 @@ export const OrderFormLineItemList = ({ deleteLineItemFromForm }: { deleteLineIt
       headerName: 'Remover',
       field: 'delete',
       flex: 1,
-      renderCell: (cell: GridCellParams<ItemDataInterface>) => {
+      renderCell: (cell: GridCellParams<InboundOrderItemDataInterface>) => {
         return <Button onClick={() => handleDeleteItem(cell.row)}> <GridDeleteIcon /> </Button>;
       },
     }
@@ -139,4 +122,4 @@ export const OrderFormLineItemList = ({ deleteLineItemFromForm }: { deleteLineIt
       resourceName={`item "${itemToDelete?.title}"`}
     />
   </Box>
-}
+} 

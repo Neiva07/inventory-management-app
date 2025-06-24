@@ -51,6 +51,7 @@ export const Navbar = () => {
     { text: 'Produtos', path: 'products', icon: <InventoryIcon /> },
     { text: 'Fornecedores', path: 'suppliers', icon: <PeopleIcon /> },
     { text: 'Vendas', path: 'orders', icon: <ShoppingCartIcon /> },
+    { text: 'Compras', path: 'inbound-orders', icon: <ShoppingCartIcon /> },
     { text: 'Clientes', path: 'customers', icon: <PeopleIcon /> },
     { text: 'Categoria de Produtos', path: 'productCategories', icon: <CategoryIcon /> },
     { text: 'Unidades', path: 'units', icon: <ScaleIcon /> },
