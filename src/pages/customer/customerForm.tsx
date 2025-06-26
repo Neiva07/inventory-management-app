@@ -61,6 +61,7 @@ export const CustomerForm = () => {
           onDelete={handleDelete}
           onInactivate={onDeactivate}
           onActivate={onActivate}
+          absolute
         />
         <Grid container spacing={2}>
           <Grid item xs={12}>

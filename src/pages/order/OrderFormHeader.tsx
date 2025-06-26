@@ -1,4 +1,4 @@
-import { Autocomplete, FormControl, Grid, TextField } from "@mui/material"
+import { Autocomplete, FormControl, Grid, TextField, Box } from "@mui/material"
 import { Customer, getCustomers } from "model/customer";
 import { SelectField } from "pages/product/useProductCreateForm";
 import { useEffect, useState } from "react";
@@ -9,13 +9,12 @@ import { useAuth } from "context/auth";
 import { PageTitle } from 'components/PageTitle';
 import { useParams } from 'react-router-dom';
 import { FormActions } from 'components/FormActions';
-import { Box } from '@mui/material';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { Order } from 'model/orders';
 import { statuses } from './useOrderForm';
 import { paymentMethods } from "model";
-
-
+import { TotalCostDisplay } from 'components/TotalCostDisplay';
+import { TotalComissionDisplay } from 'components/TotalComissionDisplay';
 
 export const paymentOptions = [
   {
@@ -42,25 +41,41 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
   const [customers, setCustomers] = useState<Array<Customer>>([]);
 
   const formMethods = useFormContext<OrderFormDataInterface>()
+  const totalCost = formMethods.watch('totalCost');
+  const totalComission = formMethods.watch('totalComission');
   useEffect(() => {
     getCustomers({ pageSize: 1000, userID: user.id }).then(results => setCustomers(results[0].docs.map(qr => qr.data() as Customer)))
   }, []);
 
   return (
-    <Box sx={{ position: 'relative', pt: 8 }}>
-      <FormActions
-        showDelete={!!orderID}
-        onDelete={onDelete}
-      />
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <PageTitle>
-          {orderID ? "Editar Nota Fiscal" : "Cadastro de Nota Fiscal"}
-        </PageTitle>
-        {order?.publicId && (
-          <PublicIdDisplay 
-            publicId={order.publicId} 
+    <Box sx={{ pt: 8 }}>
+      {/* Header Row: Title, PublicId, TotalCost, Delete */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 4, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+          <PageTitle>
+            {orderID ? "Editar Nota Fiscal" : "Cadastro de Nota Fiscal"}
+          </PageTitle>
+          {order?.publicId && (
+            <PublicIdDisplay publicId={order.publicId} />
+          )}
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0, gap: 2 }}>
+          <TotalComissionDisplay
+            value={totalComission || 0}
+            label="Comissão Total"
+            size="small"
           />
-        )}
+          <TotalCostDisplay
+            value={totalCost || 0}
+            label="Total da Nota"
+            size="large"
+            sx={{ ml: -1, pl: -2 }}
+          />
+          <FormActions
+            showDelete={!!orderID}
+            onDelete={onDelete}
+          />
+        </Box>
       </Box>
       <Grid container spacing={2}>
         <Grid item xs={4}>
@@ -251,26 +266,6 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
                     label="Comissão Total (R$)" 
                     error={!!formMethods.formState.errors.totalComission}
                     helperText={formMethods.formState.errors.totalComission?.message}
-                  />
-                );
-              }}
-            />
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={3}>
-          <FormControl fullWidth>
-            <Controller
-              name="totalCost"
-              control={formMethods.control}
-              render={({ field }) => {
-                return (
-                  <TextField 
-                    {...field} 
-                    disabled 
-                    label="Valor Total da nota" 
-                    error={!!formMethods.formState.errors.totalCost}
-                    helperText={formMethods.formState.errors.totalCost?.message}
                   />
                 );
               }}

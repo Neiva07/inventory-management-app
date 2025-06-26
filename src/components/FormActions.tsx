@@ -11,6 +11,7 @@ interface FormActionsProps {
   showDelete?: boolean;
   showInactivate?: boolean;
   showActivate?: boolean;
+  absolute?: boolean;
 }
 
 export const FormActions: React.FC<FormActionsProps> = ({
@@ -20,10 +21,11 @@ export const FormActions: React.FC<FormActionsProps> = ({
   showDelete,
   showInactivate,
   showActivate,
+  absolute = false,
 }) => {
   if (!showDelete && !showInactivate && !showActivate) return null;
   return (
-    <Box sx={{ position: 'absolute', top: 24, right: 24, zIndex: 10 }}>
+    <Box sx={absolute ? { position: 'absolute', top: 24, right: 24, zIndex: 10 } : { display: 'flex', alignItems: 'center' }}>
       <Stack direction="row" spacing={2}>
         {showDelete && (
           <Button

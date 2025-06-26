@@ -18,7 +18,8 @@ export async function generatePublicId(collectionName: CollectionName): Promise<
     'customers': 'cust',
     'suppliers': 'supp',
     'orders': 'ordr',
-    'units': 'unit'
+    'units': 'unit',
+    'inbound_orders': 'iord',
   };
   
   const resourceType = resourceTypeMap[collectionName] ?? collectionName.slice(0, 4).padEnd(4, ' ');

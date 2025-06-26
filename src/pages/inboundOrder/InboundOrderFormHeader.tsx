@@ -1,4 +1,4 @@
-import { Autocomplete, FormControl, Grid, TextField } from "@mui/material"
+import { Autocomplete, FormControl, Grid, TextField, Box, IconButton } from "@mui/material"
 import { Supplier, getSuppliers } from "model/suppliers";
 import { SelectField } from "pages/product/useProductCreateForm";
 import { useEffect, useState } from "react";
@@ -9,10 +9,10 @@ import { useAuth } from "context/auth";
 import { PageTitle } from 'components/PageTitle';
 import { useParams } from 'react-router-dom';
 import { FormActions } from 'components/FormActions';
-import { Box } from '@mui/material';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { InboundOrder } from 'model/inboundOrder';
 import { statuses } from './useInboundOrderForm';
+import { TotalCostDisplay } from 'components/TotalCostDisplay';
 
 export const InboundOrderFormHeader = ({ onDelete, inboundOrder }: { onDelete?: () => void; inboundOrder?: InboundOrder }) => {
   const { user } = useAuth();
@@ -20,6 +20,8 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder }: { onDelete?: 
   const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
 
   const formMethods = useFormContext<InboundOrderFormDataInterface>()
+  const totalCost = formMethods.watch('totalCost');
+  
   useEffect(() => {
     getSuppliers({ pageSize: 1000, userID: user.id }).then(results => {
       const queriedSuppliers = results[0].docs.map(qr => qr.data() as Supplier)
@@ -34,20 +36,28 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder }: { onDelete?: 
   }, [formMethods]);
 
   return (
-    <Box sx={{ position: 'relative', pt: 8 }}>
-      <FormActions
-        showDelete={!!inboundOrderID}
-        onDelete={onDelete}
-      />
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <PageTitle>
-          {inboundOrderID ? "Editar Nota de Compra" : "Cadastro de Compra"}
-        </PageTitle>
-        {inboundOrder?.publicId && (
-          <PublicIdDisplay 
-            publicId={inboundOrder.publicId} 
+    <Box sx={{ pt: 8 }}>
+      {/* Header Row: Title, PublicId, TotalCost, Delete */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 4, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+          <PageTitle>
+            {inboundOrderID ? "Editar Nota de Compra" : "Cadastro de Compra"}
+          </PageTitle>
+          {inboundOrder?.publicId && (
+            <PublicIdDisplay publicId={inboundOrder.publicId} />
+          )}
+        </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+          <TotalCostDisplay
+            value={totalCost || 0}
+            label="Total da Nota"
+            size="large"
           />
-        )}
+          <FormActions
+            showDelete={!!inboundOrderID}
+            onDelete={onDelete}
+          />
+        </Box>
       </Box>
       <Grid container spacing={2}>
         <Grid item xs={4}>
@@ -159,7 +169,7 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder }: { onDelete?: 
             />
           </FormControl>
         </Grid>
-        <Grid item xs={3}>
+        <Grid item xs={6}>
           <FormControl fullWidth>
             <Controller
               name="dueDate"
@@ -175,25 +185,6 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder }: { onDelete?: 
                         helperText: formMethods.formState.errors.dueDate?.message
                       }
                     }}
-                  />
-                );
-              }}
-            />
-          </FormControl>
-        </Grid>
-        <Grid item xs={3}>
-          <FormControl fullWidth>
-            <Controller
-              name="totalCost"
-              control={formMethods.control}
-              render={({ field }) => {
-                return (
-                  <TextField 
-                    {...field} 
-                    disabled 
-                    label="Valor Total da nota" 
-                    error={!!formMethods.formState.errors.totalCost}
-                    helperText={formMethods.formState.errors.totalCost?.message}
                   />
                 );
               }}

@@ -24,13 +24,22 @@ import { CreateModeToggle } from 'components/CreateModeToggle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 
-export const ProductForm = () => {
+interface ProductFormProps {
+  productID?: string;
+  onProductUpdated?: () => void;
+  isModal?: boolean;
+}
+
+export const ProductForm = ({ productID: propProductID, onProductUpdated, isModal = false }: ProductFormProps = {}) => {
   const { user } = useAuth();
 
-  const { productID } = useParams();
+  const { productID: paramProductID } = useParams();
   const navigate = useNavigate();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  
+  // Use prop productID if provided (for modal), otherwise use param (for page)
+  const productID = propProductID ?? paramProductID;
   
   const formMethods = useProductCreateForm(productID);
   const { register, product, onFormSubmit, onFormUpdate, onDeactiveProduct, onActivateProduct, onDelete } = formMethods; 
@@ -52,13 +61,19 @@ export const ProductForm = () => {
 
   const handleSubmit = async () => {
     if (productID) {
-      // Edit mode - always redirect to listing
+      // Edit mode
       await onFormUpdate();
-      navigate('/products');
+      if (isModal) {
+        onProductUpdated?.();
+      } else {
+        navigate('/products');
+      }
     } else {
       // Create mode
       await onFormSubmit();
-      if (isCreateMode) {
+      if (isModal) {
+        onProductUpdated?.();
+      } else if (isCreateMode) {
         // Reset form for new record
         formMethods.reset();
       } else {
@@ -73,7 +88,13 @@ export const ProductForm = () => {
   }
 
   const handleConfirmDelete = () => {
-    onDelete(() => navigate('/products'));
+    onDelete(() => {
+      if (isModal) {
+        onProductUpdated?.();
+      } else {
+        navigate('/products');
+      }
+    });
     setDeleteDialogOpen(false);
   }
 
@@ -91,6 +112,7 @@ export const ProductForm = () => {
           onDelete={handleDelete}
           onInactivate={onDeactiveProduct}
           onActivate={onActivateProduct}
+          absolute
         />
         <Grid container spacing={2}>
           <Grid item xs={12}>
