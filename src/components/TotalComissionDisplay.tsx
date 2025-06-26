@@ -13,6 +13,18 @@ export const TotalComissionDisplay: React.FC<TotalComissionDisplayProps> = ({
   label = 'Comissão Total',
   size = 'small',
 }) => {
+  const [animate, setAnimate] = React.useState(false);
+  const prevValue = React.useRef(value);
+
+  React.useEffect(() => {
+    if (prevValue.current !== value) {
+      setAnimate(true);
+      prevValue.current = value;
+      const timeout = setTimeout(() => setAnimate(false), 400);
+      return () => clearTimeout(timeout);
+    }
+  }, [value]);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -77,9 +89,11 @@ export const TotalComissionDisplay: React.FC<TotalComissionDisplayProps> = ({
           variant={sizeStyles.valueVariant}
           sx={{
             fontWeight: 700,
-            color: 'warning.main',
             lineHeight: 1.1,
             letterSpacing: 0,
+            transition: 'transform 0.3s cubic-bezier(.4,1.3,.5,1), color 0.3s',
+            transform: animate ? 'scale(1.15)' : 'scale(1)',
+            color: animate ? 'primary.main' : 'warning.main',
           }}
         >
           {formatCurrency(value)}

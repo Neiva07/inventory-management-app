@@ -253,25 +253,6 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
             />
           </FormControl>
         </Grid>
-        <Grid item xs={3}>
-          <FormControl fullWidth>
-            <Controller
-              name="totalComission"
-              control={formMethods.control}
-              render={({ field }) => {
-                return (
-                  <TextField 
-                    {...field} 
-                    disabled 
-                    label="Comissão Total (R$)" 
-                    error={!!formMethods.formState.errors.totalComission}
-                    helperText={formMethods.formState.errors.totalComission?.message}
-                  />
-                );
-              }}
-            />
-          </FormControl>
-        </Grid>
       </Grid>
     </Box>
   )
