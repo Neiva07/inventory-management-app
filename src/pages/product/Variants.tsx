@@ -84,7 +84,7 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
 
   return (
     <Grid
-      spacing={2}
+      spacing={1}
       container
       style={{
         marginTop: "8px",
@@ -255,7 +255,7 @@ const VariantItem = ({ formMethods, index }: VariantProps) => {
 
   return (
     <Box>
-      <Grid container spacing={2}>
+      <Grid container spacing={1}>
        
         <Grid item xs={3}>
           <FormControl fullWidth>

@@ -1,14 +1,14 @@
 import { Autocomplete, Box, Button, Grid, TextField } from "@mui/material";
 import { useAuth } from "context/auth";
 import { calcInboundOrderItemTotalCost } from "model/inboundOrder";
-import { getProducts, Product, Variant } from "model/products";
+import { getProducts, Product, Variant, updateProduct } from "model/products";
 import React, { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { InboundOrderItemDataInterface, InboundOrderFormDataInterface } from "./useInboundOrderForm";
 import { add, integerDivide, multiply } from "lib/math";
 import { DuplicateItemDialog } from "components/DuplicateItemDialog";
 import { ProductUpdateToggle } from "components/ProductUpdateToggle";
-import { ProductFormModal } from "components/ProductFormModal";
+import { ProductUpdateModal } from "components/ProductUpdateModal";
 
 export const InboundOrderFormLineItemForm = ({ calculateBaseUnitInventory, deleteLineItemFromForm }: { calculateBaseUnitInventory: (product: Product) => number, deleteLineItemFromForm: (item: InboundOrderItemDataInterface) => void }) => {
   const { user } = useAuth();
@@ -31,11 +31,13 @@ export const InboundOrderFormLineItemForm = ({ calculateBaseUnitInventory, delet
   // Product update toggle state
   const [shouldUpdateProduct, setShouldUpdateProduct] = useState<boolean>(true);
   
-  // Product form modal state
-  const [showProductFormModal, setShowProductFormModal] = useState(false);
-  const [pendingProductUpdate, setPendingProductUpdate] = useState(false);
-
-  console.log(variant)
+  // Product update modal state
+  const [showProductUpdateModal, setShowProductUpdateModal] = useState(false);
+  const [pendingProductUpdate, setPendingProductUpdate] = useState<{
+    productID: string;
+    newUnitCost: number;
+    variantUnitID: string;
+  } | null>(null);
 
   useEffect(() => {
     if (selectedProduct && variant) {
@@ -106,11 +108,24 @@ export const InboundOrderFormLineItemForm = ({ calculateBaseUnitInventory, delet
     return add(prevBalance, multiply(submittedItemQuantity, itemVariant.conversionRate))
   } 
   
-  const addItemToForm = (overrideExisting: boolean = false) => {
+  const addItemToForm = (overrideExisting: boolean = false, skipCostCheck: boolean = false) => {
     const prevItems = formMethods.getValues("items")
     
     // Calculate the new balance in base units
     const baseUnitBalance = calculateBaseUnitBalance(selectedProduct, variant, quantity);
+
+    // Check if cost has changed and update toggle is enabled
+    const costHasChanged = unitCost !== variant.unitCost;
+    if (costHasChanged && shouldUpdateProduct && !skipCostCheck) {
+      // Set pending product update and show modal
+      setPendingProductUpdate({
+        productID: selectedProduct.id,
+        newUnitCost: unitCost,
+        variantUnitID: variant.unit.id,
+      });
+      setShowProductUpdateModal(true);
+      return; // Don't add item yet, wait for modal confirmation
+    }
 
     let updatedItems;
     if (overrideExisting) {
@@ -188,18 +203,6 @@ export const InboundOrderFormLineItemForm = ({ calculateBaseUnitInventory, delet
       return;
     }
 
-    // Check if we should update the product (cost has changed and toggle is enabled)
-    const originalUnitCost = variant.unitCost;
-    const costHasChanged = unitCost !== originalUnitCost;
-    
-    if (shouldUpdateProduct && costHasChanged) {
-      // Show product form modal for editing
-      setShowProductFormModal(true);
-      setPendingProductUpdate(true);
-      return;
-    }
-
-    // No duplicate and no product update needed, add normally
     addItemToForm();
   }
 
@@ -208,45 +211,39 @@ export const InboundOrderFormLineItemForm = ({ calculateBaseUnitInventory, delet
     deleteLineItemFromForm(itemToDelete);
     setShowDuplicateDialog(false);
     
-    // Check if we should update the product after override
-    const originalUnitCost = variant.unitCost;
-    const costHasChanged = unitCost !== originalUnitCost;
-    
-    if (shouldUpdateProduct && costHasChanged) {
-      setShowProductFormModal(true);
-      setPendingProductUpdate(true);
-    } else {
-      addItemToForm(true);
-    }
+    addItemToForm(true);
   }
 
   const handleDialogClose = () => {
     setShowDuplicateDialog(false);
   }
 
-  const handleProductFormModalClose = () => {
-    setShowProductFormModal(false);
-    setPendingProductUpdate(false);
+  const handleProductUpdateConfirm = async (updatedProduct: Product) => {
+    try {
+      // Update the product in the database
+      await updateProduct(updatedProduct.id, updatedProduct);
+      
+      // Update the local product state to reflect changes
+      setSelectedProduct(updatedProduct);
+      setVariant(updatedProduct.variants.find(v => v.unit.id === variant.unit.id) ?? updatedProduct.variants[0]);
+      
+      // Close modal and add item to form
+      setShowProductUpdateModal(false);
+      setPendingProductUpdate(null);
+      
+      // Add item to form with the updated cost
+      addItemToForm(false, true);
+    } catch (error) {
+      console.error('Error updating product:', error);
+      // You might want to show an error message to the user here
+    }
   }
 
-  const handleProductUpdated = () => {
-    // Refresh products to get updated data
-    queryProducts();
-    
-    if (pendingProductUpdate) {
-      // Check if there's still a duplicate after product update
-      const prevItems = formMethods.getValues("items");
-      const existingItem = prevItems.find(item => item.productID === selectedProduct.id && item.variant.unit.id === variant.unit.id);
-      
-      if (existingItem) {
-        // Show dialog for duplicate item after product update
-        setShowDuplicateDialog(true);
-      } else {
-        // No duplicate, add the item after product update
-        addItemToForm();
-        setPendingProductUpdate(false);
-      }
-    }
+  const handleProductUpdateCancel = () => {
+    setShowProductUpdateModal(false);
+    setPendingProductUpdate(null);
+    // Reset the unit cost to the original value
+    setUnitCost(variant?.unitCost || 0);
   }
 
   const isFormCompleted = useMemo(() => itemTotalCost > 0, [itemTotalCost])
@@ -355,11 +352,16 @@ export const InboundOrderFormLineItemForm = ({ calculateBaseUnitInventory, delet
       unitName={variant?.unit.name ?? ''}
     />
     
-    <ProductFormModal
-      open={showProductFormModal}
-      onClose={handleProductFormModalClose}
-      productID={selectedProduct?.id ?? ''}
-      onProductUpdated={handleProductUpdated}
-    />
+    {pendingProductUpdate && (
+      <ProductUpdateModal
+        open={showProductUpdateModal}
+        onClose={handleProductUpdateCancel}
+        onConfirm={handleProductUpdateConfirm}
+        productID={pendingProductUpdate.productID}
+        newUnitCost={pendingProductUpdate.newUnitCost}
+        variantUnitID={pendingProductUpdate.variantUnitID}
+      />
+    )}
+    
   </Box>
 } 

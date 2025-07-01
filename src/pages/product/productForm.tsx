@@ -114,7 +114,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
           onActivate={onActivateProduct}
           absolute
         />
-        <Grid container spacing={2}>
+        <Grid container spacing={1}>
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 3 }}>
               <PageTitle>
@@ -126,7 +126,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
             </Box>
           </Grid>
         </Grid>
-        <Grid container spacing={2}>
+        <Grid container spacing={1}>
           <Grid item xs={6}>
             <FormControl fullWidth>
               <Controller
@@ -288,7 +288,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
         <Typography variant="h6" gutterBottom>
           Unidade base
         </Typography>
-        <Grid container spacing={2}>
+        <Grid container spacing={1}>
           <Grid item xs={4}>
             <FormControl fullWidth>
               <Controller
