@@ -13,7 +13,6 @@ import {
   Alert,
 } from '@mui/material';
 import { getProduct, Product } from 'model/products';
-import { useAuth } from 'context/auth';
 import { add, divide, multiply, subtract } from 'lib/math';
 import { PaymentMethod } from 'model/paymentMethods';
 
@@ -51,7 +50,6 @@ export const ProductUpdateModal: React.FC<ProductUpdateModalProps> = ({
   newUnitCost,
   variantUnitID,
 }) => {
-  const { user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [editableVariants, setEditableVariants] = useState<EditableVariant[]>([]);
   const [loading, setLoading] = useState(false);

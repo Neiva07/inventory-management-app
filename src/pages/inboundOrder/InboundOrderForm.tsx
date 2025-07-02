@@ -11,12 +11,14 @@ import { CreateModeToggle } from 'components/CreateModeToggle';
 import { useState } from 'react';
 import { add, integerDivide, multiply, subtract } from "lib/math";
 import { Product, Variant } from "model/products";
+import { InstallmentPlanModal } from 'components/InstallmentPlanModal';
 
 export const InboundOrderForm = () => {
   const { inboundOrderID } = useParams();
   const navigate = useNavigate();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [installmentModalOpen, setInstallmentModalOpen] = useState(false);
   const { register, onFormSubmit, onDelete, inboundOrder, reset, ...formMethods } = useInboundOrderForm(inboundOrderID);
 
   // Watch the items to check if there are any line items
@@ -28,8 +30,15 @@ export const InboundOrderForm = () => {
     if (inboundOrderID || !isCreateMode) {
       navigate('/inbound-orders');
     } else {
-        reset();
+      reset();
     }
+  };
+
+  // New: handle modal submit
+  const handleInstallmentModalSubmit = (data: any) => {
+    setInstallmentModalOpen(false);
+    handleSubmit();
+    // Optionally, you can use 'data' to send installment info to backend
   };
 
   const handleDelete = () => {
@@ -103,7 +112,7 @@ export const InboundOrderForm = () => {
                 arrow
               >
                 <Button 
-                  onClick={hasItems ? handleSubmit : undefined} 
+                  onClick={hasItems ? () => setInstallmentModalOpen(true) : undefined} 
                   variant="outlined" 
                   size="large"
                   style={{ 
@@ -123,6 +132,20 @@ export const InboundOrderForm = () => {
           onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
           resourceName="compra"
+        />
+        {/* <InstallmentPaymentModal
+          open={installmentModalOpen}
+          onClose={() => setInstallmentModalOpen(false)}
+          onSubmit={handleInstallmentModalSubmit}
+          totalValue={formMethods.watch('totalCost') ?? 0}
+        /> */}
+        <InstallmentPlanModal
+          open={installmentModalOpen}
+          onClose={() => setInstallmentModalOpen(false)}
+          onSubmit={handleInstallmentModalSubmit}
+          totalValue={formMethods.watch('totalCost') ?? 0}
+          orderDate={formMethods.watch('orderDate') ?? new Date()}
+          
         />
     </FormProvider>
   )

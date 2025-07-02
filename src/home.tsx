@@ -157,6 +157,14 @@ export const Home = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
           <GuideCard
+            title='Compras'
+            description='Crie, consulte, edite e delete suas compras'
+            link1='inbound-orders'
+            link2='inbound-orders/create'
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <GuideCard
             title='Categoria de Produtos'
             description='Cadastre e consulte as categorias de produtos'
             link1='units'
