@@ -147,10 +147,17 @@ export const InstallmentPlanModal: React.FC<InstallmentPlanModalProps> = ({ open
       intervalUnit,
       startDate,
       initialCashInstallment,
-      plannedPayments: rows.map(({ locked, ...rest }) => ({
-        ...rest,
-        dueDate: rest.dueDate
-      })),
+      plannedPayments: rows.map(({ locked, ...rest }) => {
+        const paymentMethod = paymentMethods.find(m => m.id === rest.paymentMethod);
+        return {
+          ...rest,
+          dueDate: rest.dueDate,
+          paymentMethod: {
+            id: rest.paymentMethod,
+            label: paymentMethod?.label ?? rest.paymentMethod
+          }
+        };
+      }),
     });
   };
 

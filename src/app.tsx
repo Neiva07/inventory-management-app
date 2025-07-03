@@ -34,6 +34,9 @@ import { Sidebar } from './pages/routes/Sidebar';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { InboundOrderForm } from "pages/inboundOrder/InboundOrderForm";
 import { InboundOrderList } from "pages/inboundOrder/InboundOrderList";
+import { SupplierBillList } from "pages/supplierBill/SupplierBillList";
+import { SupplierBillDetail } from "pages/supplierBill/SupplierBillDetail";
+import { InstallmentPaymentList } from "pages/installmentPayment/InstallmentPaymentList";
 
 declare module '@mui/material/styles' {
   interface Components {
@@ -362,6 +365,11 @@ const AppRouter = () => {
             <Route path="inbound-orders/:inboundOrderID" element={<InboundOrderForm />} />
             <Route path="inbound-orders/create" element={<InboundOrderForm />} />
             <Route path="inbound-orders" element={<InboundOrderList />} />
+
+            <Route path="supplier-bills/:supplierBillID" element={<SupplierBillDetail />} />
+            <Route path="supplier-bills" element={<SupplierBillList />} />
+
+            <Route path="installment-payments" element={<InstallmentPaymentList />} />
 
             <Route path="suppliers/:supplierID" element={<SupplierForm />} />
             <Route path="suppliers/create" element={<SupplierForm />} />

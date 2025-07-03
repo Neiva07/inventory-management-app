@@ -20,6 +20,8 @@ export async function generatePublicId(collectionName: CollectionName): Promise<
     'orders': 'ordr',
     'units': 'unit',
     'inbound_orders': 'iord',
+    'supplier_bills': 'supb',
+    'installment_payments': 'inst',
   };
   
   const resourceType = resourceTypeMap[collectionName] ?? collectionName.slice(0, 4).padEnd(4, ' ');
@@ -66,4 +68,7 @@ export async function generatePublicId(collectionName: CollectionName): Promise<
  * generatePublicId('suppliers') // Returns: "supp-250619-m5n6o7p8"
  * generatePublicId('orders') // Returns: "ordr-250619-q9r0s1t2"
  * generatePublicId('units') // Returns: "unit-250619-u3v4w5x6"
+ * generatePublicId('inbound_orders') // Returns: "iord-250619-a1b2c3d4"
+ * generatePublicId('supplier_bills') // Returns: "supb-250619-e5f6g7h8"
+ * generatePublicId('installment_payments') // Returns: "inst-250619-i9j0k1l2"
  */

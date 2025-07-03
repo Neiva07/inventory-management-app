@@ -165,6 +165,15 @@ export const Home = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
           <GuideCard
+            title='Contas a Pagar'
+            description='Gerencie suas contas a pagar e parcelamentos'
+            link1='supplier-bills'
+            link2='installment-payments'
+            createButtonText='Parcelas'
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <GuideCard
             title='Categoria de Produtos'
             description='Cadastre e consulte as categorias de produtos'
             link1='units'

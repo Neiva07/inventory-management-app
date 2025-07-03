@@ -22,6 +22,8 @@ import ScaleIcon from '@mui/icons-material/Scale';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import SettingsIcon from '@mui/icons-material/Settings';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import PaymentIcon from '@mui/icons-material/Payment';
 import logo from '../../../assets/icons/logo.png';
 
 export const Navbar = () => {
@@ -52,6 +54,8 @@ export const Navbar = () => {
     { text: 'Fornecedores', path: 'suppliers', icon: <PeopleIcon /> },
     { text: 'Vendas', path: 'orders', icon: <ShoppingCartIcon /> },
     { text: 'Compras', path: 'inbound-orders', icon: <ShoppingCartIcon /> },
+    { text: 'Contas a Pagar', path: 'supplier-bills', icon: <AccountBalanceIcon /> },
+    { text: 'Parcelas', path: 'installment-payments', icon: <PaymentIcon /> },
     { text: 'Clientes', path: 'customers', icon: <PeopleIcon /> },
     { text: 'Categoria de Produtos', path: 'productCategories', icon: <CategoryIcon /> },
     { text: 'Unidades', path: 'units', icon: <ScaleIcon /> },

@@ -159,7 +159,8 @@ export const createInboundOrder = async (inboundOrderInfo: Partial<InboundOrder>
     batch.update(productRef, { inventory: increment(balanceInBaseUnit) });
   }
 
-  return batch.commit();
+  await batch.commit();
+  return { id: inboundOrderID, publicId };
 }
 
 export const deleteInboundOrder = async (inboundOrderID: string) => {

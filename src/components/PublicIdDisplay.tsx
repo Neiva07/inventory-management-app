@@ -17,13 +17,13 @@ const PublicIdContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(1),
   borderRadius: theme.shape.borderRadius,
   transition: 'all 0.2s ease',
-  backgroundColor: theme.palette.grey[100],
-  border: `1px solid ${theme.palette.grey[300]}`,
+  backgroundColor: theme.palette.grey[50],
+  border: `1px solid ${theme.palette.grey[200]}`,
   '&:hover': {
-    backgroundColor: theme.palette.grey[200],
-    borderColor: theme.palette.primary.main,
+    backgroundColor: theme.palette.grey[100],
+    borderColor: theme.palette.primary.light,
     transform: 'translateY(-1px)',
-    boxShadow: theme.shadows[2],
+    boxShadow: 'none',
   },
 }));
 

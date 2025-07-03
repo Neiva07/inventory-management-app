@@ -117,7 +117,7 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
     formMethods.reset(fetchedInboundOrderForm)
   }, [fetchedInboundOrderForm])
 
-  const onSubmit = useCallback((data: InboundOrderFormDataInterface) => {
+  const onSubmit = useCallback(async (data: InboundOrderFormDataInterface) => {
     const { supplier, dueDate, status, payments, items, orderDate, ...rest } = data;
 
     const inboundOrder = {
@@ -144,19 +144,28 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
     } as InboundOrder
 
     try {
-      inboundOrderID ? updateInboundOrder(inboundOrderID, inboundOrder) : createInboundOrder(inboundOrder);
-
-      toast.success('Compra realizada com sucesso', {
-        position: "bottom-right",
-        theme: "colored",
-      })
-
+      if (inboundOrderID) {
+        await updateInboundOrder(inboundOrderID, inboundOrder);
+        toast.success('Compra atualizada com sucesso', {
+          position: "bottom-right",
+          theme: "colored",
+        });
+        return { id: inboundOrderID, publicId: '' };
+      } else {
+        const result = await createInboundOrder(inboundOrder);
+        toast.success('Compra realizada com sucesso', {
+          position: "bottom-right",
+          theme: "colored",
+        });
+        return result;
+      }
     } catch (err) {
       console.error(err)
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
         position: "bottom-right",
         theme: "colored",
       })
+      return null;
     }
   }, [inboundOrderID]);
 
@@ -188,6 +197,7 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
   return {
     ...formMethods,
     onFormSubmit: formMethods.handleSubmit(onSubmit),
+    onSubmit,
     onDelete,
     inboundOrder,
     reset: formMethods.reset,

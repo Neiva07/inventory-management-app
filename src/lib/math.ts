@@ -89,3 +89,15 @@ export function integerDivide(a: number | string | Decimal, b: number | string |
   const result = createDecimal(a).dividedBy(b);
   return result.floor().toNumber();
 }
+
+/**
+ * Formats a number as Brazilian Real currency
+ * @param value - The value to format
+ * @returns Formatted currency string
+ */
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+}

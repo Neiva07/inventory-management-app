@@ -12,14 +12,20 @@ import { useState } from 'react';
 import { add, integerDivide, multiply, subtract } from "lib/math";
 import { Product, Variant } from "model/products";
 import { InstallmentPlanModal } from 'components/InstallmentPlanModal';
+import { createSupplierBill } from 'model/supplierBill';
+import { createMultipleInstallmentPayments } from 'model/installmentPayment';
+import { getSupplier } from 'model/suppliers';
+import { useAuth } from 'context/auth';
+import { toast } from 'react-toastify';
 
 export const InboundOrderForm = () => {
   const { inboundOrderID } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [installmentModalOpen, setInstallmentModalOpen] = useState(false);
-  const { register, onFormSubmit, onDelete, inboundOrder, reset, ...formMethods } = useInboundOrderForm(inboundOrderID);
+  const { register, onFormSubmit, onSubmit, onDelete, inboundOrder, reset, ...formMethods } = useInboundOrderForm(inboundOrderID);
 
   // Watch the items to check if there are any line items
   const items = formMethods.watch('items');
@@ -34,11 +40,65 @@ export const InboundOrderForm = () => {
     }
   };
 
-  // New: handle modal submit
-  const handleInstallmentModalSubmit = (data: any) => {
-    setInstallmentModalOpen(false);
-    handleSubmit();
-    // Optionally, you can use 'data' to send installment info to backend
+  // Handle installment modal submit - create SupplierBill and InstallmentPayments
+  const handleInstallmentModalSubmit = async (data: any) => {
+    try {
+      setInstallmentModalOpen(false);
+      
+      // Get the form data to create the supplier bill
+      const formData = formMethods.getValues();
+      const totalCost = formData.totalCost || 0;
+      
+      // First, create the inbound order and get its id/publicId
+      const inboundOrderResult = await onSubmit(formData);
+      
+      // Fetch supplier data to get the public ID
+      const supplierDoc = await getSupplier(formData.supplier.value);
+      const supplierData = supplierDoc.data();
+      
+      const supplierBillData = {
+        userID: user.id,
+        supplier: {
+          supplierID: formData.supplier.value,
+          publicID: supplierData?.publicId ?? '',
+          supplierName: formData.supplier.label,
+        },
+        inboundOrder: {
+          id: inboundOrderResult?.id ?? '',
+          publicId: inboundOrderResult?.publicId ?? '',
+        },
+        totalValue: totalCost,
+        initialCashInstallment: data.initialCashInstallment || 0,
+        remainingValue: totalCost - (data.initialCashInstallment || 0),
+        startDate: data.startDate.getTime(),
+      };
+      
+      // Create SupplierBill and get its ID
+      const supplierBillID = await createSupplierBill(supplierBillData);
+      
+      // Create InstallmentPayments
+      const installmentPayments = data.plannedPayments.map((payment: any, index: number) => ({
+        userID: user.id,
+        supplierBillID,
+        installmentNumber: index + 1,
+        dueDate: payment.dueDate.getTime(),
+        amount: payment.amount,
+        paymentMethod: payment.paymentMethod,
+      }));
+      
+      await createMultipleInstallmentPayments(installmentPayments);
+      
+      toast.success('Plano de parcelamento criado com sucesso!');
+      
+      if (inboundOrderID || !isCreateMode) {
+        navigate('/inbound-orders');
+      } else {
+        reset();
+      }
+    } catch (error) {
+      console.error('Error creating installment plan:', error);
+      toast.error('Erro ao criar plano de parcelamento');
+    }
   };
 
   const handleDelete = () => {

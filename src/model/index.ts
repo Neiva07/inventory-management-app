@@ -6,7 +6,9 @@ export type CollectionName =
   | 'suppliers'
   | 'orders'
   | 'inbound_orders'
-  | 'units';
+  | 'units'
+  | 'supplier_bills'
+  | 'installment_payments';
 
 // Export collection names as constants for consistency
 export const COLLECTION_NAMES = {
@@ -16,7 +18,9 @@ export const COLLECTION_NAMES = {
   SUPPLIERS: 'suppliers',
   ORDERS: 'orders',
   INBOUND_ORDERS: 'inbound_orders',
-  UNITS: 'units'
+  UNITS: 'units',
+  SUPPLIER_BILLS: 'supplier_bills',
+  INSTALLMENT_PAYMENTS: 'installment_payments'
 } as const;
 
 // Export payment methods
