@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { DataGrid, GridColDef, GridPaginationModel, GridRowSelectionModel } from '@mui/x-data-grid';
-import { Button, Grid, InputAdornment, TextField, Box, Autocomplete } from '@mui/material';
+import { Grid, TextField, Box, Autocomplete, IconButton, Tooltip } from '@mui/material';
+import { Payment, Visibility, Refresh } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { InstallmentPayment, getInstallmentPayments, InstallmentPaymentStatus } from '../../model/installmentPayment';
@@ -8,84 +9,11 @@ import { useAuth } from '../../context/auth';
 import { ptBR } from '@mui/x-data-grid/locales';
 import { PageTitle } from '../../components/PageTitle';
 import { DeleteConfirmationDialog } from '../../components/DeleteConfirmationDialog';
+import { PaymentModal } from '../../components/PaymentModal';
 import { formatCurrency } from 'lib/math';
 import { DatePicker } from '@mui/x-date-pickers';
-
-const columns: GridColDef[] = [
-  { 
-    field: 'publicId', 
-    headerName: 'ID', 
-    width: 200,
-  },
-  { 
-    field: 'installmentNumber', 
-    headerName: 'Parcela', 
-    width: 100,
-  },
-  { 
-    field: 'amount', 
-    headerName: 'Valor', 
-    width: 150,
-    valueFormatter: (params) => formatCurrency(params.value),
-  },
-  { 
-    field: 'paymentMethod.label', 
-    headerName: 'Forma de Pagamento', 
-    width: 180,
-    valueGetter: (params) => params.row.paymentMethod?.label || '',
-  },
-  {
-    field: 'dueDate',
-    headerName: 'Vencimento',
-    width: 150,
-    valueFormatter: (params) => new Date(params.value).toLocaleDateString('pt-BR'),
-  },
-  {
-    field: 'status',
-    headerName: 'Status',
-    width: 120,
-    renderCell: (params) => {
-      const statusColors = {
-        pending: '#ff9800',
-        paid: '#2e7d32',
-        overdue: '#d32f2f',
-        cancelled: '#757575',
-      };
-      const statusLabels = {
-        pending: 'Pendente',
-        paid: 'Pago',
-        overdue: 'Vencido',
-        cancelled: 'Cancelado',
-      };
-      return (
-        <Box
-          sx={{
-            backgroundColor: statusColors[params.value as keyof typeof statusColors] || '#757575',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-          }}
-        >
-          {statusLabels[params.value as keyof typeof statusLabels] || params.value}
-        </Box>
-      );
-    },
-  },
-  {
-    field: 'paidAmount',
-    headerName: 'Valor Pago',
-    width: 150,
-    valueFormatter: (params) => params.value ? formatCurrency(params.value) : '-',
-  },
-  {
-    field: 'paidAt',
-    headerName: 'Data do Pagamento',
-    width: 150,
-    valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString('pt-BR') : '-',
-  },
-];
+import { useOverdueCheck } from '../../lib/overdueCheck';
+import { getDateStartTimestamp, getDateEndTimestamp } from '../../lib/date';
 
 const statuses = [
   {
@@ -113,16 +41,146 @@ const statuses = [
 export const InstallmentPaymentList = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { forceCheckOverdue } = useOverdueCheck();
 
   const [installmentPayments, setInstallmentPayments] = React.useState<Array<InstallmentPayment>>([]);
+  const [paymentModalOpen, setPaymentModalOpen] = React.useState(false);
+  const [selectedInstallment, setSelectedInstallment] = React.useState<InstallmentPayment | null>(null);
   const [count, setCount] = React.useState<number>();
   const [selectedRowID, setSelectedRowID] = React.useState<string>();
   const [loading, setLoading] = React.useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const [statusSelected, setStatusSelected] = React.useState<SelectField<InstallmentPaymentStatus | ""> | null>(statuses[0]);
+  const [statusSelected, setStatusSelected] = React.useState<SelectField<InstallmentPaymentStatus | ""> | null>(statuses[1]);
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
+
+  // Define columns inside component to access navigate function
+  const columns: GridColDef[] = [
+    { 
+      field: 'publicId', 
+      headerName: 'ID', 
+      width: 180,
+      minWidth: 150,
+    },
+    { 
+      field: 'installmentNumber', 
+      headerName: '# Parcela', 
+      width: 80,
+      minWidth: 80,
+    },
+    { 
+      field: 'amount', 
+      headerName: 'Valor a Pagar', 
+      width: 120,
+      minWidth: 100,
+      valueFormatter: (params) => formatCurrency(params.value),
+    },
+    { 
+      field: 'paymentMethod.label', 
+      headerName: 'Forma de Pagamento', 
+      width: 160,
+      minWidth: 140,
+      valueGetter: (params) => params.row.paymentMethod?.label || '',
+    },
+    {
+      field: 'dueDate',
+      headerName: 'Vencimento',
+      width: 120,
+      minWidth: 100,
+      valueFormatter: (params) => new Date(params.value).toLocaleDateString('pt-BR'),
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 100,
+      minWidth: 90,
+      renderCell: (params) => {
+        const statusColors = {
+          pending: '#ff9800',
+          paid: '#2e7d32',
+          overdue: '#d32f2f',
+          cancelled: '#757575',
+        };
+        const statusLabels = {
+          pending: 'Pendente',
+          paid: 'Pago',
+          overdue: 'Vencido',
+          cancelled: 'Cancelado',
+        };
+        return (
+          <Box
+            sx={{
+              backgroundColor: statusColors[params.value as keyof typeof statusColors] || '#757575',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+            }}
+          >
+            {statusLabels[params.value as keyof typeof statusLabels] || params.value}
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'paidAmount',
+      headerName: 'Valor Pago',
+      width: 120,
+      minWidth: 100,
+      valueFormatter: (params) => params.value ? formatCurrency(params.value) : '-',
+    },
+    {
+      field: 'paidAt',
+      headerName: 'Data do Pagamento',
+      width: 130,
+      minWidth: 110,
+      valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString('pt-BR') : '-',
+    },
+    {
+      field: 'actions',
+      headerName: 'Ações',
+      width: 100,
+      minWidth: 90,
+      sortable: false,
+      renderCell: (params) => {
+        const installment = params.row as InstallmentPayment;
+        const canPay = installment.status === 'pending' || installment.status === 'overdue';
+        
+        return (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title="Ver Detalhes">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/installment-payments/${installment.id}`);
+                }}
+              >
+                <Visibility fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            {canPay && (
+              <Tooltip title="Registrar Pagamento">
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedInstallment(installment);
+                    setPaymentModalOpen(true);
+                  }}
+                >
+                  <Payment fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        );
+      },
+    },
+  ];
 
   const queryInstallmentPayments = React.useCallback(() => {
     setLoading(true);
@@ -131,8 +189,8 @@ export const InstallmentPaymentList = () => {
       pageSize,
       status: statusSelected?.value || undefined,
       dateRange: {
-        startDate: startDate ? startDate.getTime() : undefined,
-        endDate: endDate ? endDate.getTime() : undefined,
+        startDate: startDate ? getDateStartTimestamp(startDate) : undefined,
+        endDate: endDate ? getDateEndTimestamp(endDate) : undefined,
       },
       cursor: installmentPayments[-1],
     }).then(result => {
@@ -141,8 +199,9 @@ export const InstallmentPaymentList = () => {
     }).finally(() => {
       setLoading(false);
     });
-  }, [user, pageSize, statusSelected, installmentPayments, startDate, endDate]);
+  }, [user, pageSize, statusSelected, startDate, endDate]);
 
+  // Query when dependencies change
   React.useEffect(() => {
     queryInstallmentPayments();
   }, [user, pageSize, statusSelected, startDate, endDate]);
@@ -184,9 +243,30 @@ export const InstallmentPaymentList = () => {
     navigate(`/installment-payments/${params.row.id}`);
   };
 
+  const handlePaymentRecorded = () => {
+    queryInstallmentPayments();
+  };
+
+  const handlePaymentModalClose = () => {
+    setPaymentModalOpen(false);
+    setSelectedInstallment(null);
+  };
+
+  const handleRefreshOverdue = async () => {
+    await forceCheckOverdue();
+    queryInstallmentPayments();
+  };
+
   return (
-    <Box sx={{ height: 600, width: '100%' }}>
-      <PageTitle>Parcelas</PageTitle>
+    <Box sx={{ height: 'calc(100vh - 200px)', width: '100%' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+        <PageTitle>Parcelas</PageTitle>
+        <Tooltip title="Verificar vencimentos">
+          <IconButton onClick={handleRefreshOverdue} color="primary">
+            <Refresh />
+          </IconButton>
+        </Tooltip>
+      </Box>
       
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={6} md={3}>
@@ -211,7 +291,9 @@ export const InstallmentPaymentList = () => {
             options={statuses}
             getOptionLabel={(option) => option.label}
             value={statusSelected}
-            onChange={(_, value) => setStatusSelected(value)}
+            onChange={(_, value) => {
+              setStatusSelected(value);
+            }}
             isOptionEqualToValue={(option, value) => option.value === value.value}
             renderInput={(params) => (
               <TextField {...params} label="Status" fullWidth variant="outlined" />
@@ -236,6 +318,22 @@ export const InstallmentPaymentList = () => {
         disableRowSelectionOnClick
         paginationMode="server"
         getRowId={(row) => row.id}
+        sx={{
+          '& .MuiDataGrid-cell': {
+            fontSize: '0.875rem',
+          },
+          '& .MuiDataGrid-columnHeader': {
+            fontSize: '0.875rem',
+            fontWeight: 600,
+          },
+        }}
+      />
+
+      <PaymentModal
+        open={paymentModalOpen}
+        onClose={handlePaymentModalClose}
+        onPaymentRecorded={handlePaymentRecorded}
+        installment={selectedInstallment}
       />
 
       <DeleteConfirmationDialog

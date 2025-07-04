@@ -144,6 +144,14 @@ export const SupplierBillDetail = () => {
           </Box>
         )}
         <Box sx={{ flexGrow: 1 }} />
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={() => navigate('/installment-payments')}
+          sx={{ minWidth: 120, mr: 2 }}
+        >
+          Ver Parcelas
+        </Button>
         <Tooltip title="Em breve">
           <span>
             <Button
@@ -364,12 +372,13 @@ export const SupplierBillDetail = () => {
                       {installment.paidAt ? formatDate(installment.paidAt) : '-'}
                     </TableCell>
                     <TableCell align="center">
-                      <Tooltip title="Ver Detalhe (em breve)">
-                        <span>
-                          <IconButton disabled>
-                            <OpenInNewIcon fontSize="small" />
-                          </IconButton>
-                        </span>
+                      <Tooltip title="Ver Detalhes da Parcela">
+                        <IconButton
+                          onClick={() => navigate(`/installment-payments/${installment.id}`)}
+                          color="primary"
+                        >
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
                       </Tooltip>
                     </TableCell>
                   </TableRow>

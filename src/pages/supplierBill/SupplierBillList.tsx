@@ -11,6 +11,7 @@ import { PageTitle } from '../../components/PageTitle';
 import { DeleteConfirmationDialog } from '../../components/DeleteConfirmationDialog';
 import { formatCurrency } from 'lib/math';
 import { DatePicker } from '@mui/x-date-pickers';
+import { getDateStartTimestamp, getDateEndTimestamp } from '../../lib/date';
 
 const columns: GridColDef[] = [
   { 
@@ -142,8 +143,8 @@ export const SupplierBillList = () => {
       supplierID: selectedSupplier?.id ?? undefined,
       status: statusSelected?.value || undefined,
       dateRange: {
-        startDate: startDate ? startDate.getTime() : undefined,
-        endDate: endDate ? endDate.getTime() : undefined,
+        startDate: startDate ? getDateStartTimestamp(startDate) : undefined,
+        endDate: endDate ? getDateEndTimestamp(endDate) : undefined,
       },
       cursor: supplierBills[-1],
     }).then(result => {

@@ -37,6 +37,8 @@ import { InboundOrderList } from "pages/inboundOrder/InboundOrderList";
 import { SupplierBillList } from "pages/supplierBill/SupplierBillList";
 import { SupplierBillDetail } from "pages/supplierBill/SupplierBillDetail";
 import { InstallmentPaymentList } from "pages/installmentPayment/InstallmentPaymentList";
+import { InstallmentPaymentDetail } from "pages/installmentPayment/InstallmentPaymentDetail";
+import { useOverdueCheck } from "./lib/overdueCheck";
 
 declare module '@mui/material/styles' {
   interface Components {
@@ -299,6 +301,13 @@ const theme = createTheme({
 
 const App = () => {
   const { layout } = useUI();
+  const { checkOverdue } = useOverdueCheck();
+  
+  // Check for overdue installments when app loads
+  React.useEffect(() => {
+    checkOverdue();
+  }, [checkOverdue]);
+  
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <OfflineIndicator />
@@ -308,8 +317,8 @@ const App = () => {
         sx={{
           flexGrow: 1,
           p: 0.5,
-          width: { sm: `calc(100% - ${layout === 'navbar' ? 0 : 270}px)` },
-          ml: { sm: layout === 'navbar' ? 0 : '270px' },
+          width: { sm: '100%' },
+          ml: { sm: 0 },
           transition: 'margin 0.2s',
           mt: layout === 'navbar' ? '60px' : 0,
           maxWidth: '100%',
@@ -369,6 +378,7 @@ const AppRouter = () => {
             <Route path="supplier-bills/:supplierBillID" element={<SupplierBillDetail />} />
             <Route path="supplier-bills" element={<SupplierBillList />} />
 
+            <Route path="installment-payments/:installmentPaymentID" element={<InstallmentPaymentDetail />} />
             <Route path="installment-payments" element={<InstallmentPaymentList />} />
 
             <Route path="suppliers/:supplierID" element={<SupplierForm />} />

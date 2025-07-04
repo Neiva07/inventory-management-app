@@ -38,12 +38,12 @@ const cadastros = [
 const movimentos = [
   { text: 'Lista de Compras', icon: <AssignmentIcon />, path: '/purchase-list' }, // Placeholder
   { text: 'Compras de Mercadorias', icon: <ShoppingCartIcon />, path: '/inbound-orders' },
-  { text: 'Requisição de Clientes', icon: <AssignmentIcon />, path: '/customer-requests' }, // Placeholder
+  { text: 'Requisição de Clientes', icon: <AssignmentIcon />, path: '/customer-requests' },
   { text: 'Vendas de Mercadorias', icon: <ShoppingCartIcon />, path: '/orders' },
   { text: 'Emissão de Recibos', icon: <ReceiptIcon />, path: '/receipts' }, // Placeholder
   { text: 'Vales e Adiantamentos', icon: <PaidIcon />, path: '/advances' }, // Placeholder
   { text: 'Contas a Receber', icon: <AccountBalanceWalletIcon />, path: '/accounts-receivable' }, // Placeholder
-  { text: 'Contas a Pagar', icon: <MoneyOffIcon />, path: '/accounts-payable' }, // Placeholder
+  { text: 'Contas a Pagar', icon: <MoneyOffIcon />, path: '/supplier-bills' }, 
   { text: 'Movimento Financeiro', icon: <SwapHorizIcon />, path: '/financial-movements' }, // Placeholder
   { text: 'Fluxo das Contas', icon: <AccountBalanceIcon />, path: '/account-flows' }, // Placeholder
   { text: 'Caixa Diário', icon: <CalendarTodayIcon />, path: '/daily-cash' }, // Placeholder

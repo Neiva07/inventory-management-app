@@ -4,7 +4,7 @@ import { collection, doc, getDoc, getDocs, limit, orderBy, query, QueryConstrain
 import { getDocumentCount } from "../lib/count";
 import { generatePublicId } from "../lib/publicId";
 import { COLLECTION_NAMES } from "./index";
-import { multiply, divide } from "lib/math";
+import { multiply, divide, formatCurrency } from "lib/math";
 
 export type InstallmentPaymentStatus = "pending" | "paid" | "overdue" | "cancelled";
 
@@ -158,7 +158,28 @@ export const updateInstallmentPayment = async (installmentPaymentID: string, ins
 };
 
 export const recordPayment = async (installmentPaymentID: string, paidAmount: number, paymentMethod?: { id: string; label: string }) => {
+  // First, get the current installment to validate
   const installmentPaymentDoc = doc(db, INSTALLMENT_PAYMENT_COLLECTION, installmentPaymentID);
+  const installmentSnapshot = await getDoc(installmentPaymentDoc);
+  
+  if (!installmentSnapshot.exists()) {
+    throw new Error('Parcela não encontrada');
+  }
+  
+  const currentInstallment = convertInstallmentPaymentUnitsDisplay(installmentSnapshot.data()) as InstallmentPayment;
+  
+  // Validate payment conditions
+  if (currentInstallment.status === 'paid') {
+    throw new Error('Esta parcela já foi paga');
+  }
+  
+  if (currentInstallment.status === 'cancelled') {
+    throw new Error('Esta parcela foi cancelada e não pode ser paga');
+  }
+  
+  if (paidAmount !== currentInstallment.amount) {
+    throw new Error(`Valor deve ser exatamente ${formatCurrency(currentInstallment.amount)}`);
+  }
   
   const updateData: Partial<InstallmentPayment> = {
     status: "paid",
@@ -183,6 +204,49 @@ export const deleteInstallmentPayment = async (installmentPaymentID: string) => 
       date: Date.now(),
     }
   });
+};
+
+/**
+ * Update overdue installments - should be called periodically (daily)
+ * Changes status from 'pending' to 'overdue' for installments past due date
+ * Only considers the date part, not time - installments are overdue the day AFTER due date
+ */
+export const updateOverdueInstallments = async (userID: string) => {
+  // Get today's date at 00:00:00 (start of day)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayTimestamp = today.getTime();
+  
+  // Get all pending installments that are past due (due date is before today)
+  const overdueQuery = query(
+    installmentPaymentCollection,
+    where("userID", "==", userID),
+    where("status", "==", "pending"),
+    where("dueDate", "<", todayTimestamp),
+    where("deleted.isDeleted", "==", false)
+  );
+  
+  const overdueSnapshot = await getDocs(overdueQuery);
+  
+  if (overdueSnapshot.empty) {
+    return { updated: 0 };
+  }
+  
+  // Update all overdue installments in a batch
+  const batch = writeBatch(db);
+  let updatedCount = 0;
+  
+  overdueSnapshot.docs.forEach((doc) => {
+    batch.update(doc.ref, {
+      status: "overdue",
+      updatedAt: Date.now(),
+    });
+    updatedCount++;
+  });
+  
+  await batch.commit();
+  
+  return { updated: updatedCount };
 };
 
 // Helper functions for unit conversion (storing in cents, displaying in currency)
