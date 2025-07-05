@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Button from "@mui/material/Button";
 import { Box } from "@mui/material";
 
@@ -9,6 +9,7 @@ import {
   Grid,
   TextField,
   Typography,
+  Tooltip,
 } from "@mui/material";
 import { Controller, FormProvider } from "react-hook-form";
 import { SelectField, useProductCreateForm } from "./useProductCreateForm";
@@ -23,6 +24,9 @@ import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
+import { useFormKeyboardShortcuts } from 'hooks/useFormKeyboardShortcuts';
+import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { KeyboardShortcutsHelp } from 'components/KeyboardShortcutsHelp';
 
 interface ProductFormProps {
   productID?: string;
@@ -37,6 +41,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
   const navigate = useNavigate();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
   
   // Use prop productID if provided (for modal), otherwise use param (for page)
   const productID = propProductID ?? paramProductID;
@@ -102,6 +107,110 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
     setDeleteDialogOpen(false);
   }
 
+  const handleCancel = () => {
+    if (isModal) {
+      onProductUpdated?.();
+    } else {
+      navigate('/products');
+    }
+  }
+
+  const handleReset = () => {
+    if (window.confirm('Tem certeza que deseja resetar o formulário? Todas as alterações serão perdidas.')) {
+      formMethods.reset();
+      if (!productID) {
+        // Auto-focus first field after reset for new products
+        setTimeout(() => {
+          titleRef.current?.focus();
+        }, 100);
+      }
+    }
+  }
+
+  const handleAddVariant = () => {
+    // This will be handled by the Variants component
+    // We'll pass this function down to trigger variant addition
+  }
+
+  const handleAddPrice = () => {
+    // This will be handled by the Variants component
+    // We'll pass this function down to trigger price addition
+  }
+
+  const handleFocusSearch = () => {
+    titleRef.current?.focus();
+  }
+
+  const handleShowHelp = () => {
+    setHelpModalOpen(true);
+  }
+
+  // Field navigation refs
+  const titleRef = useRef<HTMLInputElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLInputElement>(null);
+  const commissionRef = useRef<HTMLInputElement>(null);
+  const suppliersRef = useRef<HTMLDivElement>(null);
+  const baseUnitRef = useRef<HTMLDivElement>(null);
+  const inventoryRef = useRef<HTMLInputElement>(null);
+  const minInventoryRef = useRef<HTMLInputElement>(null);
+  const costRef = useRef<HTMLInputElement>(null);
+  const weightRef = useRef<HTMLInputElement>(null);
+
+  // Field navigation functions
+  const focusNextField = (currentRef: React.RefObject<HTMLElement>) => {
+    const fields = [titleRef, categoryRef, descriptionRef, commissionRef, suppliersRef, baseUnitRef, inventoryRef, minInventoryRef, costRef, weightRef];
+    const currentIndex = fields.findIndex(ref => ref === currentRef);
+    const nextIndex = (currentIndex + 1) % fields.length;
+    const nextField = fields[nextIndex];
+    
+    if (nextField.current) {
+      if (nextField.current.tagName === 'INPUT') {
+        (nextField.current as HTMLInputElement).focus();
+      } else {
+        const input = nextField.current.querySelector('input');
+        input?.focus();
+      }
+    }
+  };
+
+  const focusPreviousField = (currentRef: React.RefObject<HTMLElement>) => {
+    const fields = [titleRef, categoryRef, descriptionRef, commissionRef, suppliersRef, baseUnitRef, inventoryRef, minInventoryRef, costRef, weightRef];
+    const currentIndex = fields.findIndex(ref => ref === currentRef);
+    const prevIndex = currentIndex === 0 ? fields.length - 1 : currentIndex - 1;
+    const prevField = fields[prevIndex];
+    
+    if (prevField.current) {
+      if (prevField.current.tagName === 'INPUT') {
+        (prevField.current as HTMLInputElement).focus();
+      } else {
+        const input = prevField.current.querySelector('input');
+        input?.focus();
+      }
+    }
+  };
+
+  // Auto-focus first field on form load for new products
+  useEffect(() => {
+    if (!productID && titleRef.current) {
+      titleRef.current.focus();
+    }
+  }, [productID]);
+
+  // Keyboard shortcuts
+  useFormKeyboardShortcuts({
+    onSubmit: handleSubmit,
+    onCancel: handleCancel,
+    onDelete: productID ? handleDelete : undefined,
+    onInactivate: product && product.status === 'active' ? onDeactiveProduct : undefined,
+    onActivate: product && product.status === 'inactive' ? onActivateProduct : undefined,
+    onReset: handleReset,
+    onAddVariant: handleAddVariant,
+    onAddPrice: handleAddPrice,
+    onFocusSearch: handleFocusSearch,
+    onShowHelp: handleShowHelp,
+  });
+
   return (
     <FormProvider register={register} {...formMethods}>
       <Box sx={{ position: 'relative', pt: 8 }}>
@@ -135,10 +244,13 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                   return (
                     <TextField
                       {...field}
+                      ref={titleRef}
                       variant="outlined"
                       label="Nome do produto"
                       error={!!formMethods.formState.errors.title}
                       helperText={formMethods.formState.errors.title?.message}
+                      autoFocus
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
@@ -153,41 +265,33 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                 render={({ field: { value: productCategory, ...props } }) => {
                   const handleChange = (
                     _: React.SyntheticEvent<Element, Event>,
-                    value: SelectField
+                    value: SelectField | null
                   ) => {
                     props.onChange(value);
                   };
 
                   return (
-                    <>
-                      <Autocomplete
-                        value={productCategory}
-                        {...props}
-                        id="tags-standard"
-                        options={categories.map((c) => {
-                          return {
-                            label: c.name,
-                            value: c.id,
-                          } as SelectField;
-                        })}
-                        getOptionLabel={(option) => option.label}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            variant="outlined"
-                            label="Categoria"
-                            error={
-                              !!formMethods.formState.errors.productCategory
-                            }
-                            helperText={formMethods.formState.errors.productCategory?.label?.message}
-                          />
-                        )}
-                        isOptionEqualToValue={(option, value) =>
-                          option.value === value.value
-                        }
-                        onChange={handleChange}
-                      />
-                    </>
+                    <EnhancedAutocomplete
+                      value={productCategory}
+                      {...props}
+                      id="product-category"
+                      options={categories.map((c) => {
+                        return {
+                          label: c.name,
+                          value: c.id,
+                        } as SelectField;
+                      })}
+                      getOptionLabel={(option) => (option as SelectField)?.label ?? ''}
+                      isOptionEqualToValue={(option, value) =>
+                        option.value === value?.value
+                      }
+                      onChange={handleChange}
+                      label="Categoria"
+                      error={!!formMethods.formState.errors.productCategory}
+                      helperText={formMethods.formState.errors.productCategory?.label?.message}
+                      onNextField={() => focusNextField(categoryRef)}
+                      onPreviousField={() => focusPreviousField(categoryRef)}
+                    />
                   );
                 }}
                 name="productCategory"
@@ -202,6 +306,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                 render={({ field: { value: description, onChange } }) => {
                   return (
                     <TextField
+                      ref={descriptionRef}
                       label="descrição"
                       variant="outlined"
                       style={{
@@ -227,6 +332,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                   return (
                     <TextField
                       {...props}
+                      ref={commissionRef}
                       variant="outlined"
                       label="Comissão do vendedor"
                       onFocus={(e) => e.target.select()}
@@ -249,26 +355,22 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                     props.onChange(value);
                   };
                   return (
-                    <Autocomplete
+                    <EnhancedAutocomplete
                       multiple
                       id="suppliers"
                       {...props}
                       options={suppliers.map(
                         (s) => ({ label: s.tradeName, value: s.id } as SelectField)
                       )}
-                      getOptionLabel={(option) => option.label}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Fornecedores"
-                        />
-                      )}
-                      onChange={handleChange}
+                      getOptionLabel={(option: SelectField) => option.label}
                       isOptionEqualToValue={(option, value) =>
-                        option.value === value.value
+                        option.value === value?.value
                       }
                       value={value}
+                      label="Fornecedores"
+                      onNextField={() => focusNextField(suppliersRef)}
+                      onPreviousField={() => focusPreviousField(suppliersRef)}
+                      onChange={handleChange}
                       renderTags={(list) => {
                         const displayList = list
                           .map((item) => item.label)
@@ -296,37 +398,31 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                 render={({ field: { value: baseUnit, ...props } }) => {
                   const handleChange = (
                     _: React.SyntheticEvent<Element, Event>,
-                    value: SelectField
+                    value: SelectField | null
                   ) => {
                     props.onChange(value);
                   };
                   return (
-                    <>
-                      <Autocomplete
-                        {...props}
-                        id="tags-standard"
-                        value={baseUnit}
-                        options={units.map((c) => {
-                          return {
-                            label: c.name,
-                            value: c.id,
-                          } as SelectField;
-                        })}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            variant="outlined"
-                            label="Unidade base"
-                            error={!!formMethods.formState.errors.baseUnit}
-                            helperText={formMethods.formState.errors.baseUnit?.label?.message}
-                          />
-                        )}
-                        isOptionEqualToValue={(option, value) =>
-                          option.value === value.value
-                        }
-                        onChange={handleChange}
-                      />
-                    </>
+                    <EnhancedAutocomplete
+                      {...props}
+                      id="base-unit"
+                      value={baseUnit}
+                      options={units.map((c) => {
+                        return {
+                          label: c.name,
+                          value: c.id,
+                        } as SelectField;
+                      })}
+                      isOptionEqualToValue={(option, value) =>
+                        option.value === value?.value
+                      }
+                      onChange={handleChange}
+                      label="Unidade base"
+                      error={!!formMethods.formState.errors.baseUnit}
+                      helperText={formMethods.formState.errors.baseUnit?.label?.message}
+                      onNextField={() => focusNextField(baseUnitRef)}
+                      onPreviousField={() => focusPreviousField(baseUnitRef)}
+                    />
                   );
                 }}
                 name="baseUnit"
@@ -340,6 +436,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                 render={({ field }) => {
                   return (
                     <TextField {...field}
+                      ref={inventoryRef}
                       variant="outlined"
                       label="Estoque (unidades base)"
                       onFocus={(e) => e.target.select()}
@@ -357,6 +454,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                 render={({ field: { ...props } }) => {
                   return (
                     <TextField
+                      ref={minInventoryRef}
                       variant="outlined"
                       label="Estoque Mínimo"
                       {...props}
@@ -375,6 +473,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                 render={({ field: { ...props } }) => {
                   return (
                     <TextField
+                      ref={costRef}
                       variant="outlined"
                       label="Custo de compra"
                       {...props}
@@ -393,6 +492,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                 render={({ field: { ...props } }) => {
                   return (
                     <TextField
+                      ref={weightRef}
                       variant="outlined"
                       label="Peso (kg)"
                       {...props}
@@ -406,12 +506,16 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
           </Grid>
         </Grid>
         <Divider style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }} />
-        <Variants {...formMethods} />
+        <Variants 
+          {...formMethods} 
+        />
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, marginTop: "12px" }}>
           {productID ? (
-            <Button onClick={handleSubmit} variant="contained">
-              Atualizar Produto
-            </Button>
+            <Tooltip title="Ctrl/Cmd + Enter" placement="top">
+              <Button onClick={handleSubmit} variant="contained">
+                Atualizar Produto
+              </Button>
+            </Tooltip>
           ) : (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <CreateModeToggle
@@ -420,9 +524,11 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                 listingText="Redirecionar para listagem de produtos"
                 createText="Criar mais produtos"
               />
-              <Button onClick={handleSubmit} variant="contained">
-                Criar produto
-              </Button>
+              <Tooltip title="Ctrl/Cmd + Enter" placement="top">
+                <Button onClick={handleSubmit} variant="contained">
+                  Criar produto
+                </Button>
+              </Tooltip>
             </Box>
           )}
         </Box>
@@ -431,6 +537,10 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
           onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
           resourceName="produto"
+        />
+        <KeyboardShortcutsHelp
+          open={helpModalOpen}
+          onClose={() => setHelpModalOpen(false)}
         />
       </Box>
     </FormProvider>

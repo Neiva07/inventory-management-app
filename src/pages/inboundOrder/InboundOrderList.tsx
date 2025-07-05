@@ -59,6 +59,8 @@ export const InboundOrderList = () => {
   const [suppliers, setSuppliers] = React.useState<Array<Supplier>>([]);
   const [statusSelected, setStatusSelected] = React.useState<InboundOrderStatus>();
   const [pageSize, setPageSize] = React.useState<number>(10);
+  const [page, setPage] = React.useState<number>(0);
+  const [currentCursor, setCurrentCursor] = React.useState<InboundOrder | undefined>();
   const [startDate, setStartDate] = React.useState<Date>();
   const [endDate, setEndDate] = React.useState<Date>();
   const [loading, setLoading] = React.useState(true);
@@ -70,7 +72,7 @@ export const InboundOrderList = () => {
     getSuppliers({ pageSize: 10000, userID: user.id }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
   }, [user]);
 
-  const queryInboundOrders = React.useCallback(() => {
+  const queryInboundOrders = () => {
     setLoading(true);
     getInboundOrders({
       pageSize,
@@ -80,19 +82,31 @@ export const InboundOrderList = () => {
       },
       userID: user.id,
       supplierID: selectedSupplier?.id,
-      cursor: inboundOrders[-1],
+      cursor: page > 0 ? currentCursor : undefined,
       status: statusSelected,
     }).then(result => {
-      setInboundOrders(result.inboundOrders)
-      setCount(result.count.count)
+      const newInboundOrders = result.inboundOrders;
+      setInboundOrders(newInboundOrders);
+      setCount(result.count.count);
+      
+      // Store cursor for next page
+      if (newInboundOrders.length > 0) {
+        setCurrentCursor(newInboundOrders[newInboundOrders.length - 1]);
+      }
     }).finally(() => {
       setLoading(false);
     });
-  }, [startDate, endDate, selectedSupplier, pageSize, statusSelected])
+  }
+
+  // Reset cursor and page when filters change
+  React.useEffect(() => {
+    setCurrentCursor(undefined);
+    setPage(0);
+  }, [user, selectedSupplier, statusSelected, startDate, endDate]);
 
   React.useEffect(() => {
     queryInboundOrders();
-  }, [startDate, endDate, selectedSupplier, statusSelected]);
+  }, [user, selectedSupplier, statusSelected, startDate, endDate, pageSize, page]);
 
   const handleSupplierSelection = (_: React.SyntheticEvent<Element, Event>, value: Supplier) => {
     setSelectedSupplier(value)
@@ -102,7 +116,8 @@ export const InboundOrderList = () => {
   }
 
   const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPageSize(model.pageSize)
+    setPage(model.page);
+    setPageSize(model.pageSize);
   }
   const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
     if (rowSelection && rowSelection[0]) {
@@ -128,6 +143,8 @@ export const InboundOrderList = () => {
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
   }
+
+  console.log(page, pageSize, count, inboundOrders.length, currentCursor, statusSelected, selectedSupplier, startDate, endDate)
 
   return (
     <>
@@ -199,13 +216,8 @@ export const InboundOrderList = () => {
             <DataGrid
               rows={inboundOrders}
               columns={columns}
-              initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize },
-                },
-              }}
               pageSizeOptions={[10, 20]}
-              pagination
+              paginationModel={{ page, pageSize }}
               onRowSelectionModelChange={handleRowSelection}
               onPaginationModelChange={handlePaginationModelChange}
               onRowDoubleClick={(params) => navigate(`/inbound-orders/${params.row.id}`)}

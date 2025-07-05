@@ -52,13 +52,16 @@ const supplierBillCollection = collection(db, SUPPLIER_BILL_COLLECTION);
 export const getSupplierBills = async (searchParams: SupplierBillSearchParams) => {
   const userID = searchParams.userID;
   const constrains: QueryConstraint[] = [where("userID", "==", userID)];
+  const countConstraints: QueryConstraint[] = [where("userID", "==", userID)];
 
   if (searchParams.supplierID) {
     constrains.push(where("supplier.supplierID", "==", searchParams.supplierID));
+    countConstraints.push(where("supplier.supplierID", "==", searchParams.supplierID));
   }
 
   if (searchParams.status) {
     constrains.push(where("status", "==", searchParams.status));
+    countConstraints.push(where("status", "==", searchParams.status));
   }
 
   constrains.push(orderBy("createdAt", "desc"));
@@ -70,19 +73,23 @@ export const getSupplierBills = async (searchParams: SupplierBillSearchParams) =
   if (searchParams.dateRange) {
     if (searchParams.dateRange.startDate) {
       constrains.push(where("createdAt", ">=", searchParams.dateRange.startDate));
+      countConstraints.push(where("createdAt", ">=", searchParams.dateRange.startDate));
     }
     if (searchParams.dateRange.endDate) {
       constrains.push(where("createdAt", "<=", searchParams.dateRange.endDate));
+      countConstraints.push(where("createdAt", "<=", searchParams.dateRange.endDate));
     }
   }
 
   constrains.push(where("deleted.isDeleted", "==", false));
+  countConstraints.push(where("deleted.isDeleted", "==", false));
+
   constrains.push(limit(searchParams.pageSize));
 
   const q = query(supplierBillCollection, ...constrains);
   const [docs, count] = await Promise.all([
     getDocs(q),
-    getDocumentCount(supplierBillCollection, constrains.slice(0, -1), searchParams.pageSize)
+    getDocumentCount(supplierBillCollection, countConstraints, searchParams.pageSize)
   ]);
   const supplierBills = docs.docs.map(d => convertSupplierBillUnitsDisplay(d.data()) as SupplierBill);
 

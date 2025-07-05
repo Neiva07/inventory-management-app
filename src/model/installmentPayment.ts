@@ -49,16 +49,20 @@ const installmentPaymentCollection = collection(db, INSTALLMENT_PAYMENT_COLLECTI
 export const getInstallmentPayments = (searchParams: InstallmentPaymentSearchParams) => {
   const userID = searchParams.userID;
   const constrains: QueryConstraint[] = [where("userID", "==", userID)];
+  const countConstraints: QueryConstraint[] = [where("userID", "==", userID)];
 
   if (searchParams.supplierBillID) {
     constrains.push(where("supplierBillID", "==", searchParams.supplierBillID));
+    countConstraints.push(where("supplierBillID", "==", searchParams.supplierBillID));
   }
 
   if (searchParams.status) {
     constrains.push(where("status", "==", searchParams.status));
+    countConstraints.push(where("status", "==", searchParams.status));
   }
 
   constrains.push(orderBy("dueDate", "asc"));
+  countConstraints.push(orderBy("dueDate", "asc"));
 
   if (searchParams.cursor) {
     constrains.push(startAfter(searchParams.cursor.dueDate));
@@ -67,17 +71,22 @@ export const getInstallmentPayments = (searchParams: InstallmentPaymentSearchPar
   if (searchParams.dateRange) {
     if (searchParams.dateRange.startDate) {
       constrains.push(where("dueDate", ">=", searchParams.dateRange.startDate));
+      countConstraints.push(where("dueDate", ">=", searchParams.dateRange.startDate));
     }
     if (searchParams.dateRange.endDate) {
       constrains.push(where("dueDate", "<=", searchParams.dateRange.endDate));
+      countConstraints.push(where("dueDate", "<=", searchParams.dateRange.endDate));
     }
   }
 
   constrains.push(where("deleted.isDeleted", "==", false));
+  countConstraints.push(where("deleted.isDeleted", "==", false));
+
   constrains.push(limit(searchParams.pageSize));
+  countConstraints.push(limit(searchParams.pageSize));
 
   const q = query(installmentPaymentCollection, ...constrains);
-  return Promise.all([getDocs(q), getDocumentCount(installmentPaymentCollection, constrains.slice(0, -1), searchParams.pageSize)]).then(([docs, count]) => {
+  return Promise.all([getDocs(q), getDocumentCount(installmentPaymentCollection, countConstraints.slice(0, -1), searchParams.pageSize)]).then(([docs, count]) => {
     return {
       installmentPayments: docs.docs.map(d => convertInstallmentPaymentUnitsDisplay(d.data()) as InstallmentPayment),
       count,

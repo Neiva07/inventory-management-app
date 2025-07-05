@@ -54,7 +54,8 @@ export const InstallmentPaymentList = () => {
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
-
+  const [page, setPage] = React.useState<number>(0);
+  const [currentCursor, setCurrentCursor] = React.useState<InstallmentPayment | undefined>();
   // Define columns inside component to access navigate function
   const columns: GridColDef[] = [
     { 
@@ -182,7 +183,7 @@ export const InstallmentPaymentList = () => {
     },
   ];
 
-  const queryInstallmentPayments = React.useCallback(() => {
+  const queryInstallmentPayments = () => {
     setLoading(true);
     getInstallmentPayments({
       userID: user.id,
@@ -192,25 +193,34 @@ export const InstallmentPaymentList = () => {
         startDate: startDate ? getDateStartTimestamp(startDate) : undefined,
         endDate: endDate ? getDateEndTimestamp(endDate) : undefined,
       },
-      cursor: installmentPayments[-1],
+      cursor: page > 0 ? currentCursor : undefined,
     }).then(result => {
       setInstallmentPayments(result.installmentPayments);
       setCount(result.count.count);
+      if (result.installmentPayments.length > 0) {
+        setCurrentCursor(result.installmentPayments[result.installmentPayments.length - 1]);
+      }
     }).finally(() => {
       setLoading(false);
     });
-  }, [user, pageSize, statusSelected, startDate, endDate]);
+  }
+
+  React.useEffect(() => {
+    setCurrentCursor(undefined);
+    setPage(0);
+  }, [user, statusSelected, startDate, endDate]);
 
   // Query when dependencies change
   React.useEffect(() => {
     queryInstallmentPayments();
-  }, [user, pageSize, statusSelected, startDate, endDate]);
+  }, [user, pageSize, statusSelected, startDate, endDate, page]);
 
   const handleStatusSelection = (event: React.SyntheticEvent<Element, Event>, value: SelectField<InstallmentPaymentStatus | "">) => {
     setStatusSelected(value);
   };
 
   const handlePaginationModelChange = (model: GridPaginationModel) => {
+    setPage(model.page);
     setPageSize(model.pageSize);
   };
 
@@ -256,6 +266,8 @@ export const InstallmentPaymentList = () => {
     await forceCheckOverdue();
     queryInstallmentPayments();
   };
+
+  console.log(page, pageSize, count, installmentPayments.length, currentCursor, statusSelected, startDate, endDate)
 
   return (
     <Box sx={{ height: 'calc(100vh - 200px)', width: '100%' }}>
@@ -305,9 +317,8 @@ export const InstallmentPaymentList = () => {
       <DataGrid
         rows={installmentPayments}
         columns={columns}
-        pagination
         rowCount={count ?? 0}
-        paginationModel={{ page: 0, pageSize }}
+        paginationModel={{ page, pageSize }}
         onPaginationModelChange={handlePaginationModelChange}
         pageSizeOptions={[10, 25, 50]}
         rowSelectionModel={selectedRowID ? [selectedRowID] : []}

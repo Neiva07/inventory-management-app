@@ -30,13 +30,13 @@ export interface ProductFormDataInterface {
   variants: Array<FormVariant>;
   weight: number;
   inventory: number; // Inventory in base units
-  baseUnit: SelectField; // The base unit for inventory tracking
+  baseUnit: SelectField | null; // The base unit for inventory tracking
   cost: number; // Cost per base unit
   minInventory: number;
   title: string;
   description: string;
   sailsmanComission: number;
-  productCategory: SelectField; //category entity later
+  productCategory: SelectField | null; //category entity later
   suppliers: Array<SelectField>;
 }
 
@@ -64,14 +64,8 @@ const INITIAL_PRODUCT_FORM_STATE = {
   description: "",
   variants: [DEFAULT_VARIANT_VALUE],
   cost: 0,
-  productCategory: {
-    label: "",
-    value: "",
-  },
-  baseUnit: {
-    label: "",
-    value: "",
-  },
+  productCategory: null,
+  baseUnit: null,
   weight: 0,
   inventory: 0,
   minInventory: 0,
@@ -155,19 +149,19 @@ export const useProductCreateForm = (productID?: string) => {
     }, data.variants[0]);
     try {
       createProduct({
-        productCategory: {
+        productCategory: data.productCategory ? {
           name: data.productCategory.label,
           id: data.productCategory.value,
-        } as ProductCategory,
+        } as ProductCategory : null,
         cost: Number(data.cost) ?? 0,
         description: data.description,
         inventory: Number(data.inventory) ?? 0,
         title: data.title,
         sailsmanComission: Number(data.sailsmanComission) ?? 0,
-        baseUnit: {
+        baseUnit: data.baseUnit ? {
           id: data.baseUnit.value,
           name: data.baseUnit.label,
-        } as ProductUnit,
+        } as ProductUnit : null,
         status: "active",
         userID: user.id,
         variants: data.variants.map(so => {
@@ -220,10 +214,10 @@ export const useProductCreateForm = (productID?: string) => {
         inventory: Number(data.inventory) ?? 0,
         title: data.title,
         sailsmanComission: data.sailsmanComission,
-        baseUnit: {
+        baseUnit: data.baseUnit ? {
           id: data.baseUnit.value,
           name: data.baseUnit.label,
-        } as ProductUnit,
+        } as ProductUnit : null,
         status: "active",
         variants: data.variants.map(so => {
           const { unit, ...rest } = so;

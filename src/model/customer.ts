@@ -41,11 +41,13 @@ const customerCollection = collection(db, CUSTOMER_COLLECTION)
 
 export const getCustomers = (searchParams: CustomerSearchParams) => {
   const constrains: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
+  const countConstraints: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
 
   const title = searchParams?.name || ''
 
   if (searchParams.status && searchParams.status !== "") {
     constrains.push(where("status", "==", searchParams.status))
+    countConstraints.push(where("status", "==", searchParams.status))
   }
 
   constrains.push(orderBy("name"))
@@ -55,13 +57,14 @@ export const getCustomers = (searchParams: CustomerSearchParams) => {
   }
 
   constrains.push(where("name", ">=", title), where('name', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
+  countConstraints.push(where("name", ">=", title), where('name', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
 
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(customerCollection, ...constrains);
   return Promise.all([
     getDocs(q), 
-    getDocumentCount(customerCollection, constrains.slice(0, -1), searchParams.pageSize)
+    getDocumentCount(customerCollection, countConstraints, searchParams.pageSize)
   ]);
 }
 

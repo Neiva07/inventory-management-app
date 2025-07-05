@@ -59,6 +59,8 @@ export const OrderList = () => {
   const [customers, setCustomers] = React.useState<Array<Customer>>([]);
   const [statusSelected, setStatusSelected] = React.useState<OrderStatus>();
   const [pageSize, setPageSize] = React.useState<number>(10);
+  const [page, setPage] = React.useState<number>(0);
+  const [currentCursor, setCurrentCursor] = React.useState<Order | undefined>();
   const [startDate, setStartDate] = React.useState<Date>();
   const [endDate, setEndDate] = React.useState<Date>();
   const [loading, setLoading] = React.useState(true);
@@ -70,7 +72,7 @@ export const OrderList = () => {
     getCustomers({ pageSize: 10000, userID: user.id }).then(queryResult => setCustomers(queryResult[0].docs.map(qr => qr.data() as Customer)))
   }, [user]);
 
-  const queryOrders = React.useCallback(() => {
+  const queryOrders = () => {
     setLoading(true);
     getOrders({
       pageSize,
@@ -80,19 +82,31 @@ export const OrderList = () => {
       },
       userID: user.id,
       customerID: selectedCustomer?.id,
-      cursor: orders[-1],
+      cursor: page > 0 ? currentCursor : undefined,
       status: statusSelected,
     }).then(result => {
-      setOrders(result.orders)
-      setCount(result.count.count)
+      const newOrders = result.orders;
+      setOrders(newOrders);
+      setCount(result.count.count);
+      
+      // Store cursor for next page
+      if (newOrders.length > 0) {
+        setCurrentCursor(newOrders[newOrders.length - 1]);
+      }
     }).finally(() => {
       setLoading(false);
     });
-  }, [startDate, endDate, selectedCustomer, pageSize, statusSelected])
+  }
+
+  // Reset cursor and page when filters change
+  React.useEffect(() => {
+    setCurrentCursor(undefined);
+    setPage(0);
+  }, [user, selectedCustomer, statusSelected, startDate, endDate]);
 
   React.useEffect(() => {
     queryOrders();
-  }, [startDate, endDate, selectedCustomer, statusSelected]);
+  }, [user, selectedCustomer, statusSelected, startDate, endDate, pageSize, page]);
 
   const handleCustomerSelection = (_: React.SyntheticEvent<Element, Event>, value: Customer) => {
     setSelectedCustomer(value)
@@ -102,7 +116,8 @@ export const OrderList = () => {
   }
 
   const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPageSize(model.pageSize)
+    setPage(model.page);
+    setPageSize(model.pageSize);
   }
   const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
     if (rowSelection && rowSelection[0]) {
@@ -128,6 +143,8 @@ export const OrderList = () => {
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
   }
+
+  console.log(page, pageSize, count, orders.length, currentCursor, statusSelected, selectedCustomer, startDate, endDate)
 
   return (
     <>
@@ -199,13 +216,8 @@ export const OrderList = () => {
             <DataGrid
               rows={orders}
               columns={columns}
-              initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize },
-                },
-              }}
               pageSizeOptions={[10, 20]}
-              pagination
+              paginationModel={{ page, pageSize }}
               onRowSelectionModelChange={handleRowSelection}
               onPaginationModelChange={handlePaginationModelChange}
               onRowDoubleClick={(params) => navigate(`/orders/${params.row.id}`)}

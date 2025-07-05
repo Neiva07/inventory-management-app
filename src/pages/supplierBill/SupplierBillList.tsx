@@ -126,6 +126,8 @@ export const SupplierBillList = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [statusSelected, setStatusSelected] = React.useState<SelectField<SupplierBillStatus | ""> | null>(statuses[0]);
   const [pageSize, setPageSize] = React.useState<number>(10);
+  const [page, setPage] = React.useState<number>(0);
+  const [currentCursor, setCurrentCursor] = React.useState<SupplierBill | undefined>();
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
 
@@ -135,7 +137,7 @@ export const SupplierBillList = () => {
 
   console.log(statusSelected, supplierBills);
 
-  const querySupplierBills = React.useCallback(() => {
+  const querySupplierBills = () => {
     setLoading(true);
     getSupplierBills({
       userID: user.id,
@@ -146,18 +148,30 @@ export const SupplierBillList = () => {
         startDate: startDate ? getDateStartTimestamp(startDate) : undefined,
         endDate: endDate ? getDateEndTimestamp(endDate) : undefined,
       },
-      cursor: supplierBills[-1],
+      cursor: page > 0 ? currentCursor : undefined,
     }).then(result => {
-      setSupplierBills(result.supplierBills);
+      const newSupplierBills = result.supplierBills;
+      setSupplierBills(newSupplierBills);
       setCount(result.count.count);
+      
+      // Store cursor for next page
+      if (newSupplierBills.length > 0) {
+        setCurrentCursor(newSupplierBills[newSupplierBills.length - 1]);
+      }
     }).finally(() => {
       setLoading(false);
     });
-  }, [user, selectedSupplier, pageSize, statusSelected, supplierBills, startDate, endDate]);
+  }
+
+  // Reset cursor and page when filters change
+  React.useEffect(() => {
+    setCurrentCursor(undefined);
+    setPage(0);
+  }, [user, selectedSupplier, statusSelected, startDate, endDate]);
 
   React.useEffect(() => {
     querySupplierBills();
-  }, [user, selectedSupplier, pageSize, statusSelected, startDate, endDate]);
+  }, [user, selectedSupplier, pageSize, statusSelected, startDate, endDate, page]);
 
   const handleSupplierSelection = (_: React.SyntheticEvent<Element, Event>, value: Supplier) => {
     setSelectedSupplier(value);
@@ -168,6 +182,7 @@ export const SupplierBillList = () => {
   };
 
   const handlePaginationModelChange = (model: GridPaginationModel) => {
+    setPage(model.page);
     setPageSize(model.pageSize);
   };
 
@@ -195,6 +210,8 @@ export const SupplierBillList = () => {
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
   };
+
+  console.log(page, pageSize, count, supplierBills.length, currentCursor, statusSelected, selectedSupplier, startDate, endDate)
 
   const handleRowDoubleClick = (params: any) => {
     navigate(`/supplier-bills/${params.row.id}`);
@@ -260,9 +277,8 @@ export const SupplierBillList = () => {
       <DataGrid
         rows={supplierBills}
         columns={columns}
-        pagination
         rowCount={count ?? 0}
-        paginationModel={{ page: 0, pageSize }}
+        paginationModel={{ page, pageSize }}
         onPaginationModelChange={handlePaginationModelChange}
         pageSizeOptions={[10, 25, 50]}
         rowSelectionModel={selectedRowID ? [selectedRowID] : []}

@@ -8,8 +8,9 @@ import {
   Typography,
   IconButton,
 } from "@mui/material";
+import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
 import DeleteIcon from '@mui/icons-material/Delete';
-import React from "react";
+import React, { useEffect } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
 import {
   FormPrice,
@@ -104,25 +105,17 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
                   console.log(value);
                 };
                 return (
-                  <>
-                    <Autocomplete
-                      {...props}
-                      id={`variants.${parentIndex}.prices.${index}.paymentMethod`}
-                      options={availablePaymentMethods}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Método de Pagamento"
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) =>
-                        option.value === value.value
-                      }
-                      onChange={handleChange}
-                      value={paymentMethod}
-                    />
-                  </>
+                  <EnhancedAutocomplete
+                    {...props}
+                    id={`variants.${parentIndex}.prices.${index}.paymentMethod`}
+                    options={availablePaymentMethods}
+                    isOptionEqualToValue={(option, value) =>
+                      option.value === value.value
+                    }
+                    onChange={handleChange}
+                    value={paymentMethod}
+                    label="Método de Pagamento"
+                  />
                 );
               }}
               name={`variants.${parentIndex}.prices.${index}.paymentMethod`}
@@ -274,30 +267,22 @@ const VariantItem = ({ formMethods, index }: VariantProps) => {
                   }
                 };
                 return (
-                  <>
-                    <Autocomplete
-                      {...props}
-                      id={`variants.${index}.unit`}
-                      options={units.map((c) => {
-                        return {
-                          label: c.name,
-                          value: c.id,
-                        } as SelectField;
-                      })}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Unidade"
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) =>
-                        option.value === value.value
-                      }
-                      onChange={handleChange}
-                      value={unit}
-                    />
-                  </>
+                  <EnhancedAutocomplete
+                    {...props}
+                    id={`variants.${index}.unit`}
+                    options={units.map((c) => {
+                      return {
+                        label: c.name,
+                        value: c.id,
+                      } as SelectField;
+                    })}
+                    isOptionEqualToValue={(option, value) =>
+                      option.value === value.value
+                    }
+                    onChange={handleChange}
+                    value={unit}
+                    label="Unidade"
+                  />
                 );
               }}
               name={`variants.${index}.unit`}
@@ -399,6 +384,38 @@ const VariantItem = ({ formMethods, index }: VariantProps) => {
 export const Variants = (
   formMethods: UseFormReturn<ProductFormDataInterface>
 ) => {
+  // Listen for keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl/Cmd + O: Add new variant
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') {
+        event.preventDefault();
+        handleAddNewVariant();
+        return;
+      }
+
+      // Ctrl/Cmd + P: Add new price to current variant
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'p') {
+        event.preventDefault();
+        // Add price to the last variant (or first if none exists)
+        const currentVariants = formMethods.getValues('variants');
+        if (currentVariants.length > 0) {
+          const lastVariantIndex = currentVariants.length - 1;
+          const currentPrices = formMethods.getValues(`variants.${lastVariantIndex}.prices`);
+          formMethods.setValue(`variants.${lastVariantIndex}.prices`, [
+            ...currentPrices,
+            DEFAULT_PRICE,
+          ]);
+        }
+        return;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [formMethods]);
   const handleAddNewVariant = () => {
     formMethods.setValue("variants", [
       ...formMethods.getValues("variants"),

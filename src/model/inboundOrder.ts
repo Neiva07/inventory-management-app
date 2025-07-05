@@ -83,15 +83,19 @@ const inboundOrderCollection = collection(db, INBOUND_ORDER_COLLECTION)
 export const getInboundOrders = (searchParams: InboundOrderSearchParams) => {
   const userID = searchParams.userID;
   const constrains: QueryConstraint[] = [where("userID", "==", userID)]
+  const countConstraints: QueryConstraint[] = [where("userID", "==", userID)]
 
   if (searchParams.supplierID) {
     constrains.push(where("supplier.id", "==", searchParams.supplierID))
+    countConstraints.push(where("supplier.id", "==", searchParams.supplierID))
   }
 
   if (searchParams.status) {
     constrains.push(where("status", "==", searchParams.status))
+    countConstraints.push(where("status", "==", searchParams.status))
   } else {
     constrains.push(where("status", "==", "complete"))
+    countConstraints.push(where("status", "==", "complete"))
   }
 
   constrains.push(orderBy("createdAt"))
@@ -103,18 +107,21 @@ export const getInboundOrders = (searchParams: InboundOrderSearchParams) => {
   if (searchParams.dateRange) {
     if (searchParams.dateRange.startDate) {
       constrains.push(where("createdAt", ">=", searchParams.dateRange.startDate))
+      countConstraints.push(where("createdAt", ">=", searchParams.dateRange.startDate))
     }
     if (searchParams.dateRange.endDate) {
       constrains.push(where("createdAt", "<=", searchParams.dateRange.endDate))
+      countConstraints.push(where("createdAt", "<=", searchParams.dateRange.endDate))
     }
   }
 
   constrains.push(where("deleted.isDeleted", "==", false))
+  countConstraints.push(where("deleted.isDeleted", "==", false))
 
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(inboundOrderCollection, ...constrains);
-  return Promise.all([getDocs(q), getDocumentCount(inboundOrderCollection, constrains.slice(0, -1), searchParams.pageSize)]).then(([docs, count]) => {
+  return Promise.all([getDocs(q), getDocumentCount(inboundOrderCollection, countConstraints, searchParams.pageSize)]).then(([docs, count]) => {
     return {
       inboundOrders: docs.docs.map(d => convertInboundOrderUnitsDisplay(d.data()) as InboundOrder),
       count,

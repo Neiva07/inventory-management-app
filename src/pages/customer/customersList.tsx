@@ -54,28 +54,42 @@ export const CustomerList = () => {
 
   const [statusSelected, setStatusSelected] = React.useState<SelectField<string>>();
   const [pageSize, setPageSize] = React.useState<number>(10);
+  const [page, setPage] = React.useState<number>(0);
+  const [currentCursor, setCurrentCursor] = React.useState<Customer | undefined>();
 
   const navigate = useNavigate();
 
-  const queryCustomers = React.useCallback(() => {
+  const queryCustomers = () => {
     setLoading(true);
     getCustomers({
       userID: user.id,
       pageSize,
       name: searchName,
-      cursor: customers[-1],
+      cursor: page > 0 ? currentCursor : undefined,
       status: statusSelected?.value
     }).then(result => {
-      setCustomers(result[0].docs.map(qr => qr.data() as Customer))
-      setCount(result[1].count)
+      const newCustomers = result[0].docs.map(qr => qr.data() as Customer);
+      setCustomers(newCustomers);
+      setCount(result[1].count);
+      
+      // Store cursor for next page
+      if (newCustomers.length > 0) {
+        setCurrentCursor(newCustomers[newCustomers.length - 1]);
+      }
     }).finally(() => {
       setLoading(false);
     });
-  }, [user, searchName, pageSize, statusSelected])
+  }
+
+  // Reset cursor and page when filters change
+  React.useEffect(() => {
+    setCurrentCursor(undefined);
+    setPage(0);
+  }, [user, searchName, statusSelected]);
 
   React.useEffect(() => {
     queryCustomers();
-  }, [user, searchName, pageSize, statusSelected]);
+  }, [user, searchName, pageSize, statusSelected, page]);
 
   const handleSearchName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchName(e.target.value)
@@ -86,7 +100,8 @@ export const CustomerList = () => {
   }
 
   const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPageSize(model.pageSize)
+    setPage(model.page);
+    setPageSize(model.pageSize);
   }
   const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
     if (rowSelection && rowSelection[0]) {
@@ -115,6 +130,8 @@ export const CustomerList = () => {
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
   }
+
+  console.log(page, pageSize, count, customers.length, currentCursor, statusSelected, searchName)
 
   return (
     <>
@@ -179,13 +196,8 @@ export const CustomerList = () => {
             <DataGrid
               rows={customers}
               columns={columns}
-              initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize },
-                },
-              }}
               pageSizeOptions={[10, 20]}
-              pagination
+              paginationModel={{ page, pageSize }}
               onRowSelectionModelChange={handleRowSelection}
               onPaginationModelChange={handlePaginationModelChange}
               onRowDoubleClick={(params) => navigate(`/customers/${params.row.id}`)}

@@ -74,16 +74,19 @@ const productColletion = collection(db, PRODUCTS_COLLECTION)
 
 export const getProducts = async (searchParams: ProductSearchParams) => {
   const constrains: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
+  const countConstraints: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
 
   const category = searchParams.productCategory;
   const title = searchParams?.title || ''
 
   if (category && category.id) {
     constrains.push(where("productCategory.id", "==", category.id))
+    countConstraints.push(where("productCategory.id", "==", category.id))
   }
 
   if (searchParams.status && searchParams.status !== "") {
-    constrains.push(where("status", "==", searchParams.status))
+    constrains.push(where("status", "==", searchParams.status)) 
+    countConstraints.push(where("status", "==", searchParams.status))
   }
 
   constrains.push(orderBy("title"))
@@ -93,11 +96,12 @@ export const getProducts = async (searchParams: ProductSearchParams) => {
   }
 
   constrains.push(where("title", ">=", title), where('title', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
+  countConstraints.push(where("title", ">=", title), where('title', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
 
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(productColletion, ...constrains);
-  return Promise.all([getDocs(q).then(docs => docs.docs.map(doc => convertProductUnitsDisplay(doc.data() as Product))), getDocumentCount(productColletion, constrains.slice(0, -1), searchParams.pageSize)])
+  return Promise.all([getDocs(q).then(docs => docs.docs.map(doc => convertProductUnitsDisplay(doc.data() as Product))), getDocumentCount(productColletion, countConstraints, searchParams.pageSize)])
 }
 
 export const getProduct = (productID: string) => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Stack } from '@mui/material';
+import { Box, Button, Stack, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -28,37 +28,43 @@ export const FormActions: React.FC<FormActionsProps> = ({
     <Box sx={absolute ? { position: 'absolute', top: 24, right: 24, zIndex: 10 } : { display: 'flex', alignItems: 'center' }}>
       <Stack direction="row" spacing={2}>
         {showDelete && (
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteIcon />}
-            onClick={onDelete}
-            sx={{ fontWeight: 600 }}
-          >
-            Deletar
-          </Button>
+          <Tooltip title="Ctrl/Cmd + D" placement="top">
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={onDelete}
+              sx={{ fontWeight: 600 }}
+            >
+              Deletar
+            </Button>
+          </Tooltip>
         )}
         {showInactivate && (
-          <Button
-            variant="outlined"
-            color="warning"
-            startIcon={<BlockIcon />}
-            onClick={onInactivate}
-            sx={{ fontWeight: 600 }}
-          >
-            Inativar
-          </Button>
+          <Tooltip title="Ctrl/Cmd + I" placement="top">
+            <Button
+              variant="outlined"
+              color="warning"
+              startIcon={<BlockIcon />}
+              onClick={onInactivate}
+              sx={{ fontWeight: 600 }}
+            >
+              Inativar
+            </Button>
+          </Tooltip>
         )}
         {showActivate && (
-          <Button
-            variant="outlined"
-            color="success"
-            startIcon={<CheckCircleIcon />}
-            onClick={onActivate}
-            sx={{ fontWeight: 600 }}
-          >
-            Ativar
-          </Button>
+          <Tooltip title="Ctrl/Cmd + I" placement="top">
+            <Button
+              variant="outlined"
+              color="success"
+              startIcon={<CheckCircleIcon />}
+              onClick={onActivate}
+              sx={{ fontWeight: 600 }}
+            >
+              Ativar
+            </Button>
+          </Tooltip>
         )}
       </Stack>
     </Box>

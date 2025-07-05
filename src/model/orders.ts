@@ -79,16 +79,19 @@ const orderCollection = collection(db, ORDER_COLLECTION)
 export const getOrders = (searchParams: OrderSearchParams) => {
   const userID = searchParams.userID;
   const constrains: QueryConstraint[] = [where("userID", "==", userID)]
-
+  const countConstraints: QueryConstraint[] = [where("userID", "==", userID)]
 
   if (searchParams.customerID) {
     constrains.push(where("customer.id", "==", searchParams.customerID))
+    countConstraints.push(where("customer.id", "==", searchParams.customerID))
   }
 
   if (searchParams.status) {
     constrains.push(where("status", "==", searchParams.status))
+    countConstraints.push(where("status", "==", searchParams.status))
   } else {
     constrains.push(where("status", "==", "complete"))
+    countConstraints.push(where("status", "==", "complete"))
   }
 
   constrains.push(orderBy("createdAt"))
@@ -100,18 +103,21 @@ export const getOrders = (searchParams: OrderSearchParams) => {
   if (searchParams.dateRange) {
     if (searchParams.dateRange.startDate) {
       constrains.push(where("createdAt", ">=", searchParams.dateRange.startDate))
+      countConstraints.push(where("createdAt", ">=", searchParams.dateRange.startDate))
     }
     if (searchParams.dateRange.endDate) {
       constrains.push(where("createdAt", "<=", searchParams.dateRange.endDate))
+      countConstraints.push(where("createdAt", "<=", searchParams.dateRange.endDate))
     }
   }
 
   constrains.push(where("deleted.isDeleted", "==", false))
+  countConstraints.push(where("deleted.isDeleted", "==", false))
 
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(orderCollection, ...constrains);
-  return Promise.all([getDocs(q), getDocumentCount(orderCollection, constrains.slice(0, -1), searchParams.pageSize)]).then(([docs, count]) => {
+  return Promise.all([getDocs(q), getDocumentCount(orderCollection, countConstraints, searchParams.pageSize)]).then(([docs, count]) => {
     return {
       orders: docs.docs.map(d => convertOrderUnitsDisplay(d.data()) as Order),
       count,

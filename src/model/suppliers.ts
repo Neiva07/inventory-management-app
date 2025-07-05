@@ -53,20 +53,20 @@ const supplierColletion = collection(db, SUPPLIERS_COLLECTION)
 
 export const getSuppliers = (searchParams: SuppliersSearchParams) => {
   const constrains: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
-
+  const countConstraints: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
 
   const category = searchParams.productCategory;
   const title = searchParams?.tradeName || ''
 
-
   if (category && category.id) {
     constrains.push(where("productCategories", "array-contains", { id: category.id, name: category.name }))
+    countConstraints.push(where("productCategories", "array-contains", { id: category.id, name: category.name }))
   }
 
   if (searchParams.status && searchParams.status !== "") {
     constrains.push(where("status", "==", searchParams.status))
+    countConstraints.push(where("status", "==", searchParams.status))
   }
-
 
   constrains.push(orderBy("tradeName"))
 
@@ -75,14 +75,13 @@ export const getSuppliers = (searchParams: SuppliersSearchParams) => {
   }
 
   constrains.push(where("tradeName", ">=", title), where('tradeName', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
-
-  const countQuery = query(supplierColletion, ...constrains)
+  countConstraints.push(where("tradeName", ">=", title), where('tradeName', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
 
   constrains.push(limit(searchParams.pageSize))
 
   const q = query(supplierColletion, ...constrains);
   
-  return Promise.all([getDocs(q), getDocumentCount(supplierColletion, constrains.slice(0, -1), searchParams.pageSize)])
+  return Promise.all([getDocs(q), getDocumentCount(supplierColletion, countConstraints, searchParams.pageSize)])
 }
 
 export const createSupplier = async (supplierInfo: Supplier) => {

@@ -57,6 +57,8 @@ export const SupplierList = () => {
   const [categorySelected, setCategorySelected] = React.useState<ProductCategory>();
   const [statusSelected, setStatusSelected] = React.useState<SelectField<string>>();
   const [pageSize, setPageSize] = React.useState<number>(10);
+  const [page, setPage] = React.useState<number>(0);
+  const [currentCursor, setCurrentCursor] = React.useState<Supplier | undefined>();
 
   const navigate = useNavigate();
 
@@ -64,26 +66,38 @@ export const SupplierList = () => {
     getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
   }, [user]);
 
-  const querySuppliers = React.useCallback(() => {
+  const querySuppliers = () => {
     setLoading(true);
     getSuppliers({
       userID: user.id,
       pageSize,
       tradeName: searchTitle,
       productCategory: categorySelected,
-      cursor: suppliers[-1],
+      cursor: page > 0 ? currentCursor : undefined,
       status: statusSelected?.value
     }).then(result => {
-      setSuppliers(result[0].docs.map(qr => qr.data() as Supplier))
-      setCount(result[1].count)
+      const newSuppliers = result[0].docs.map(qr => qr.data() as Supplier);
+      setSuppliers(newSuppliers);
+      setCount(result[1].count);
+      
+      // Store cursor for next page
+      if (newSuppliers.length > 0) {
+        setCurrentCursor(newSuppliers[newSuppliers.length - 1]);
+      }
     }).finally(() => {
       setLoading(false);
     });
-  }, [user, searchTitle, categorySelected, pageSize, statusSelected])
+  }
+
+  // Reset cursor and page when filters change
+  React.useEffect(() => {
+    setCurrentCursor(undefined);
+    setPage(0);
+  }, [user, searchTitle, categorySelected, statusSelected, pageSize]);
 
   React.useEffect(() => {
     querySuppliers();
-  }, [user, searchTitle, categorySelected, pageSize, statusSelected]);
+  }, [user, searchTitle, categorySelected, pageSize, statusSelected, page]);
 
   const handleSearchTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTitle(e.target.value)
@@ -97,7 +111,8 @@ export const SupplierList = () => {
   }
 
   const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPageSize(model.pageSize)
+    setPage(model.page);
+    setPageSize(model.pageSize);
   }
   const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
     if (rowSelection && rowSelection[0]) {
@@ -126,6 +141,8 @@ export const SupplierList = () => {
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
   }
+
+  console.log({page, pageSize, count, tamanho:suppliers.length, currentCursor, statusSelected, categorySelected, searchTitle})
 
   return (
     <>
@@ -212,18 +229,13 @@ export const SupplierList = () => {
             <DataGrid
               rows={suppliers}
               columns={columns}
-              initialState={{
-                pagination: {
-                  paginationModel: { page: 0, pageSize },
-                },
-              }}
-              pageSizeOptions={[10, 20]}
-              pagination
+              pageSizeOptions={[5,10, 20]}
+              paginationModel={{ page, pageSize }}
               onRowSelectionModelChange={handleRowSelection}
               onPaginationModelChange={handlePaginationModelChange}
               onRowDoubleClick={(params) => navigate(`/suppliers/${params.row.id}`)}
               hideFooterSelectedRowCount
-              rowCount={count || 0}
+              rowCount={count ?? 0}
               rowSelectionModel={[selectedRowID]}
               paginationMode="server"
               loading={loading}

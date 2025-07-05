@@ -95,6 +95,8 @@ export const ProductList = () => {
   const [categorySelected, setCategorySelected] = React.useState<ProductCategory>();
   const [statusSelected, setStatusSelected] = React.useState<SelectField<string>>();
   const [pageSize, setPageSize] = React.useState<number>(10);
+  const [page, setPage] = React.useState<number>(0);
+  const [currentCursor, setCurrentCursor] = React.useState<Product | undefined>();
 
   const navigate = useNavigate();
 
@@ -102,27 +104,38 @@ export const ProductList = () => {
     getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
   }, [user.id]);
 
-  const queryProducts = React.useCallback(() => {
+  const queryProducts = () => {
     setLoading(true);
     getProducts({
       pageSize,
       title: searchTitle,
       productCategory: categorySelected,
       userID: user.id,
-      cursor: products[-1],
+      cursor: page > 0 ? currentCursor : undefined,
       status: statusSelected?.value
     }).then(result => { 
-      setProducts(result[0].map(p => p as Product))
-      setCount(result[1].count)
+      const newProducts = result[0].map(p => p as Product);
+      setProducts(newProducts);
+      setCount(result[1].count);
+
+      // Store cursor for next page
+      if (newProducts.length > 0) {
+        setCurrentCursor(newProducts[newProducts.length - 1]);
+      }
     }).finally(() => {
       setLoading(false);
     });
-  }, [user, searchTitle, categorySelected, pageSize, statusSelected])
+  }
 
+  // Reset cursor and page when filters change
+  React.useEffect(() => {
+    setCurrentCursor(undefined);
+    setPage(0);
+  }, [user, searchTitle, categorySelected, statusSelected]);
 
   React.useEffect(() => {
     queryProducts();
-  }, [user, searchTitle, categorySelected, pageSize, statusSelected]);
+  }, [user, searchTitle, categorySelected, pageSize, statusSelected, page]);
 
   const handleSearchTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTitle(e.target.value)
@@ -136,7 +149,8 @@ export const ProductList = () => {
   }
 
   const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPageSize(model.pageSize)
+    setPage(model.page);
+    setPageSize(model.pageSize);
   }
   const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
     if (rowSelection && rowSelection[0]) {
@@ -166,10 +180,12 @@ export const ProductList = () => {
     setDeleteDialogOpen(false);
   }
 
+  console.log(page, pageSize, count, products.length, currentCursor, statusSelected, categorySelected, searchTitle)
+
   return (
     <>
       <PageTitle>Produtos</PageTitle>
-      <Grid spacing={2} container>
+      <Grid spacing={1} container>
 
         <Grid item xs={4}>
           <TextField
@@ -244,25 +260,23 @@ export const ProductList = () => {
           > Cadastrar Produto </Button>
         </Grid>
 
-
-
         <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
           <DataGrid
             rows={products}
             columns={columns}
             initialState={{
               pagination: {
-                paginationModel: { page: 0, pageSize },
+                paginationModel: { page: 0, pageSize: 10 },
               },
             }}
             pageSizeOptions={[10, 20]}
-            pagination
+            paginationModel={{ page, pageSize }}
             onRowSelectionModelChange={handleRowSelection}
             onPaginationModelChange={handlePaginationModelChange}
             onRowDoubleClick={(params) => navigate(`/products/${params.row.id}`)}
             hideFooterSelectedRowCount
-            rowCount={count || 0}
-            rowSelectionModel={[selectedRowID]}
+            rowCount={count ?? 0}
+            rowSelectionModel={[selectedRowID]} 
             paginationMode="server"
             loading={loading}
             disableColumnMenu
