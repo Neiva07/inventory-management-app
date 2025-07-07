@@ -1,4 +1,4 @@
-import { Autocomplete, FormControl, Grid, TextField, Box, IconButton } from "@mui/material"
+import { FormControl, Grid, Box } from "@mui/material"
 import { Supplier, getSuppliers } from "model/suppliers";
 import { SelectField } from "pages/product/useProductCreateForm";
 import { useEffect, useState } from "react";
@@ -13,8 +13,9 @@ import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { InboundOrder } from 'model/inboundOrder';
 import { statuses } from './useInboundOrderForm';
 import { TotalCostDisplay } from 'components/TotalCostDisplay';
+import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
 
-export const InboundOrderFormHeader = ({ onDelete, inboundOrder }: { onDelete?: () => void; inboundOrder?: InboundOrder }) => {
+export const InboundOrderFormHeader = ({ onDelete, inboundOrder, firstFieldRef, onShowHelp }: { onDelete?: () => void; inboundOrder?: InboundOrder; firstFieldRef?: React.RefObject<HTMLDivElement>; onShowHelp?: () => void  }) => {
   const { user } = useAuth();
   const { inboundOrderID } = useParams();
   const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
@@ -56,6 +57,7 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder }: { onDelete?: 
           <FormActions
             showDelete={!!inboundOrderID}
             onDelete={onDelete}
+            onShowHelp={onShowHelp}
           />
         </Box>
       </Box>
@@ -74,30 +76,26 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder }: { onDelete?: 
 
                 return (
                   <>
-                    <Autocomplete
+                    <EnhancedAutocomplete
+                      label="Fornecedor"
                       value={supplier}
                       {...props}
                       id="supplier-select"
+                      name="supplier"
                       options={suppliers.map((s) => {
                         return {
                           label: s.tradeName,
                           value: s.id,
                         } as SelectField;
                       })}
-                      getOptionLabel={(option) => option.label}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Fornecedor"
-                          error={!!formMethods.formState.errors.supplier}
-                          helperText={formMethods.formState.errors.supplier?.label?.message}
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) =>
+                      getOptionLabel={(option: SelectField) => option.label}
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value.value
                       }
                       onChange={handleChange}
+                      error={!!formMethods.formState.errors.supplier}
+                      helperText={formMethods.formState.errors.supplier?.label?.message}
+                      ref={firstFieldRef}
                     />
                   </>
                 );
@@ -120,22 +118,16 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder }: { onDelete?: 
 
                 return (
                   <>
-                    <Autocomplete
+                    <EnhancedAutocomplete
                       value={status}
                       {...props}
                       id="status-select"
                       options={statuses}
-                      getOptionLabel={(option) => option.label}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Tipo de compra"
-                          error={!!formMethods.formState.errors.status}
-                          helperText={formMethods.formState.errors.status?.message}
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) =>
+                      getOptionLabel={(option: SelectField) => option.label}
+                      label="Tipo de compra"
+                      error={!!formMethods.formState.errors.status}
+                      helperText={formMethods.formState.errors.status?.message}
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value.value
                       }
                       onChange={handleChange}

@@ -1,4 +1,4 @@
-import { Autocomplete, Button, FormControl, Grid, TextField, Typography, Box } from '@mui/material';
+import { Button, FormControl, Grid, TextField, Typography, Box, Tooltip } from '@mui/material';
 import { useSupplierCreateForm } from './useSupplierCreateForm';
 import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
@@ -13,6 +13,9 @@ import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
+import { useFormWrapper } from '../../hooks/useFormWrapper';
+import { KeyboardShortcutsHelp } from 'components/KeyboardShortcutsHelp';
+import { EnhancedAutocomplete } from '../../components/EnhancedAutocomplete';
 
 export const SupplierForm = () => {
   const { user } = useAuth();
@@ -59,9 +62,37 @@ export const SupplierForm = () => {
     setDeleteDialogOpen(false);
   }
 
+  const handleReset = () => {
+    if (window.confirm('Tem certeza que deseja resetar o formulário? Todas as alterações serão perdidas.')) {
+      form.reset();
+    }
+  }
+
+  const handleToggleCreateMode = () => {
+    setIsCreateMode(!isCreateMode);
+  }
+
+  // Form wrapper with keyboard shortcuts
+  const {
+    showHelp,
+    closeHelp,
+    formRef,
+    firstFieldRef,
+  } = useFormWrapper({
+    onSubmit: handleSubmit,
+    onCancel: () => navigate('/suppliers'),
+    onDelete: supplierID ? handleDelete : undefined,
+    onInactivate: supplier && supplier.status === 'active' ? onDeactivate : undefined,
+    onActivate: supplier && supplier.status === 'inactive' ? onActivate : undefined,
+    onReset: handleReset,
+    onToggleCreateMode: handleToggleCreateMode,
+    autoFocusField: 'tradeName',
+    helpTitle: 'Atalhos do Teclado - Fornecedor',
+  });
+
   return (
     <FormProvider {...form}>
-      <Box sx={{ position: 'relative', pt: 8 }}>
+      <Box sx={{ position: 'relative', pt: 8 }} component="form" ref={formRef}>
         <FormActions
           showDelete={!!supplierID}
           showInactivate={!!supplier && supplier.status === 'active'}
@@ -69,6 +100,18 @@ export const SupplierForm = () => {
           onDelete={handleDelete}
           onInactivate={onDeactivate}
           onActivate={onActivate}
+          onShowHelp={() => {
+            // Trigger F1 key programmatically to show help
+            const f1Event = new KeyboardEvent('keydown', {
+              key: 'F1',
+              code: 'F1',
+              keyCode: 112,
+              which: 112,
+              bubbles: true,
+              cancelable: true,
+            });
+            document.dispatchEvent(f1Event);
+          }}
           absolute
         />
         <Grid container spacing={2}>
@@ -213,33 +256,25 @@ export const SupplierForm = () => {
                   };
 
                   return (
-                    <>
-                      <Autocomplete
-                        {...props}
-                        id="regions"
-                        options={states.map((s) => {
-                          return {
-                            label: s.name,
-                            value: s.code,
-                          } as SelectField;
-                        })}
-                        getOptionLabel={(option) => option.label}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            variant="outlined"
-                            label="Estado"
-                            error={!!(form.formState.errors.address?.region)}
-                            helperText={form.formState.errors.address?.region?.message}
-                          />
-                        )}
-                        value={region}
-                        isOptionEqualToValue={(option, value) =>
-                          option.value === value.value
-                        }
-                        onChange={handleChange}
-                      />
-                    </>
+                    <EnhancedAutocomplete
+                      {...props}
+                      id="regions"
+                      options={states.map((s) => {
+                        return {
+                          label: s.name,
+                          value: s.code,
+                        } as SelectField;
+                      })}
+                      getOptionLabel={(option: SelectField) => option.label}
+                      label="Estado"
+                      error={!!(form.formState.errors.address?.region)}
+                      helperText={form.formState.errors.address?.region?.message}
+                      value={region}
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
+                        option.value === value.value
+                      }
+                      onChange={handleChange}
+                    />
                   );
                 }}
                 name="address.region"
@@ -259,29 +294,21 @@ export const SupplierForm = () => {
                   };
 
                   return (
-                    <>
-                      <Autocomplete
-                        {...props}
-                        id="cities"
-                        options={availableCities || []}
-                        getOptionLabel={(option) => option.label}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            variant="outlined"
-                            label="Cidade"
-                            error={!!(form.formState.errors.address?.city)}
-                            helperText={form.formState.errors.address?.city?.message}
-                          />
-                        )}
-                        value={city}
-                        isOptionEqualToValue={(option, value) =>
-                          option.value === value.value
-                        }
-                        onChange={handleChange}
-                        disabled={!availableCities || availableCities.length === 0}
-                      />
-                    </>
+                    <EnhancedAutocomplete
+                      {...props}
+                      id="cities"
+                      options={availableCities || []}
+                      getOptionLabel={(option: SelectField) => option.label}
+                      label="Cidade"
+                      error={!!(form.formState.errors.address?.city)}
+                      helperText={form.formState.errors.address?.city?.message}
+                      value={city}
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
+                        option.value === value.value
+                      }
+                      onChange={handleChange}
+                      disabled={!availableCities || availableCities.length === 0}
+                    />
                   );
                 }}
                 name="address.city"
@@ -381,31 +408,25 @@ export const SupplierForm = () => {
                     props.onChange(value);
                   };
                   return (
-                    <Autocomplete
+                    <EnhancedAutocomplete
                       multiple
                       id="productCategories"
                       {...props}
                       options={categories.map(
                         (s) => ({ label: s.name, value: s.id } as SelectField)
                       )}
-                      getOptionLabel={(option) => option.label}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Categorias de Produto"
-                          error={!!form.formState.errors.productCategories}
-                          helperText={form.formState.errors.productCategories?.message}
-                        />
-                      )}
+                      getOptionLabel={(option: SelectField) => option.label}
+                      label="Categorias de Produto"
+                      error={!!form.formState.errors.productCategories}
+                      helperText={form.formState.errors.productCategories?.message}
                       value={value}
                       onChange={handleChange}
-                      isOptionEqualToValue={(option, value) =>
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value.value
                       }
-                      renderTags={(list) => {
+                      renderTags={(list: SelectField[]) => {
                         const displayList = list
-                          .map((item) => item.label)
+                          .map((item: SelectField) => item.label)
                           .join(", ");
 
                         return <span>{displayList}</span>;
@@ -440,12 +461,14 @@ export const SupplierForm = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, marginTop: "12px" }}>
           {
             supplierID ?
-              <Button
-                onClick={handleSubmit}
-                variant="contained"
-              >
-                Editar Fornecedor
-              </Button>
+              <Tooltip title="Ctrl/Cmd + Enter" placement="top">
+                <Button
+                  onClick={handleSubmit}
+                  variant="contained"
+                >
+                  Editar Fornecedor
+                </Button>
+              </Tooltip>
 
               :
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -455,12 +478,14 @@ export const SupplierForm = () => {
                   listingText="Redirecionar para listagem de fornecedores"
                   createText="Criar mais fornecedores"
                 />
-                <Button
-                  onClick={handleSubmit}
-                  variant="contained"
-                >
-                  Criar Fornecedor
-                </Button>
+                <Tooltip title="Ctrl/Cmd + Enter" placement="top">
+                  <Button
+                    onClick={handleSubmit}
+                    variant="contained"
+                  >
+                    Criar Fornecedor
+                  </Button>
+                </Tooltip>
               </Box>
 
           }
@@ -470,6 +495,13 @@ export const SupplierForm = () => {
           onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
           resourceName="fornecedor"
+        />
+        
+        <KeyboardShortcutsHelp
+          open={showHelp}
+          onClose={closeHelp}
+          title="Atalhos do Teclado - Fornecedor"
+          showVariants={false}
         />
       </Box>
     </FormProvider>

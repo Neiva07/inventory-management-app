@@ -1,264 +1,88 @@
-import { Autocomplete, Box, Button, Grid, TextField } from "@mui/material";
-import { useAuth } from "context/auth";
-import { calcItemTotalCost } from "model/orders";
-import { getProducts, Product, ProductUnit, Variant } from "model/products";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useFormContext } from "react-hook-form";
-import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm";
-import { add, divide, integerDivide, multiply, subtract } from "lib/math";
+import { Box, Button, Grid, TextField } from "@mui/material";
+import { Product, Variant } from "model/products";
+import React from "react";
+import { useFormContext, Controller } from "react-hook-form";
+import { OrderFormDataInterface } from "./useOrderForm";
 import { DuplicateItemDialog } from "components/DuplicateItemDialog";
+import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
 
 
-export const OrderFormLineItemForm = ({ calculateBaseUnitInventory, deleteLineItemFromForm }: { calculateBaseUnitInventory: (product: Product) => number, deleteLineItemFromForm: (item: ItemDataInterface) => void }) => {
-  const { user } = useAuth();
+export const OrderFormLineItemForm = ({ 
+  productSelectRef,
+  products,
+  // Form methods and business logic
+  handleSelectProduct,
+  handleSelectVariant,
+  handleAddItem,
+  // Dialog handlers
+  showDuplicateDialog,
+  handleDialogOverride,
+  handleDialogClose,
+}: { 
+  productSelectRef: React.RefObject<HTMLDivElement>,
+  products: Array<Product>,
+  // Form methods and business logic
+  handleSelectProduct: (event: React.SyntheticEvent<Element, Event>, value: Product) => void,
+  handleSelectVariant: (event: React.SyntheticEvent<Element, Event>, value: Variant) => void,
+  handleAddItem: () => void,
+  // Dialog handlers
+  showDuplicateDialog: boolean,
+  handleDialogOverride: () => void,
+  handleDialogClose: () => void,
+}) => {
   const formMethods = useFormContext<OrderFormDataInterface>();
 
-  const [products, setProducts] = useState<Array<Product>>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product>(null);
+  // Get pendingItem from form data
+  const pendingItem = formMethods.watch('pendingItem');
 
-  // Ref for the product selection Autocomplete
-  const productSelectRef = React.useRef<HTMLDivElement>(null);
-
-  const [quantity, setQuantity] = useState<number>();
-  const [inventory, setInventory] = useState<number>(0);
-  const [descount, setDescount] = useState<number>(0);
-  const [unitCost, setUnitCost] = useState<number>(0);
-  const [productComission, setProductComission] = useState<number>(0);
-  const [variant, setVariant] = useState<Variant>(null);
-  const [unitPrice, setUnitPrice] = useState<number>(0);
+  const isFormCompleted = formMethods.watch('pendingItem.isFormCompleted')
   
-  // Dialog state
-  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
-
-  const paymentMethod = formMethods.watch("paymentMethod")
-
-  useEffect(() => {
-    if (selectedProduct && variant) {
-      // Calculate available inventory for this variant
-      const availableInventory = integerDivide(calculateBaseUnitInventory(selectedProduct), variant.conversionRate);
-      setInventory(availableInventory);
-      setProductComission(selectedProduct.sailsmanComission);
-      setUnitCost(variant.unitCost);
-    }
-  }, [selectedProduct, variant, paymentMethod]);
-
-
-  const queryProducts = React.useCallback(() => {
-    getProducts({
-      pageSize: 10000,
-      status: 'active',
-      userID: user.id,
-    }).then(result => {
-      setProducts(result[0].map(p => p as Product))
-    })
-
-  }, [user]);
-
-  React.useEffect(() => {
-    queryProducts();
-  }, [user]);
-
-  const handleSelectProduct = (_: React.SyntheticEvent<Element, Event>, value: Product) => {
-    setSelectedProduct(value)
-    if(value) {
-      setVariant(value.variants[0])
-      setUnitPrice(value.variants[0].prices.find(p => p.paymentMethod.id === paymentMethod.value)?.value ?? 0)
-    }
-  }
-
-  const handleSelectVariant = (_: React.SyntheticEvent<Element, Event>, value: Variant) => {
-    setVariant(value)
-    if (value) {
-      setUnitCost(value.unitCost)
-      // Calculate available inventory for this variant
-      const availableInventory = integerDivide(calculateBaseUnitInventory(selectedProduct), value.conversionRate);
-      setInventory(availableInventory)
-      setUnitPrice(value.prices.find(p => p.paymentMethod.id === paymentMethod.value)?.value ?? 0)
-    } else {
-      setUnitCost(0)
-      setInventory(0)
-    }
-  }
-
-  const clearLineItemForm = () => {
-    const nextIndex = products.findIndex(p => p.id === selectedProduct.id) + 1
-    const nextProduct = nextIndex === products.length ? products[0] : products[nextIndex]
-    handleSelectProduct(null, nextProduct);
-    setQuantity(0);
-    setShowDuplicateDialog(false);
-  }
-
-  const itemTotalCost = useMemo(() => {
-    const totalCost = calcItemTotalCost({
-      unitPrice,
-      descount,
-      quantity: quantity ?? 0,
-    })
-    return totalCost
-
-  }, [quantity, descount, unitPrice])
-
-  const calculateBaseUnitBalance = (product: Product, itemVariant: Variant, submittedItemQuantity: number) => {
-      const prevBalance = calculateBaseUnitInventory(product)
-
-    return subtract(prevBalance, multiply(submittedItemQuantity, itemVariant.conversionRate))
-  } 
-
-  const addItemToForm = (overrideExisting: boolean = false) => {
-    const prevItems = formMethods.getValues("items")
-    
-    // Calculate the new balance in base units
-    const baseUnitBalance = calculateBaseUnitBalance(selectedProduct, variant, quantity);
-
-    let updatedItems;
-    if (overrideExisting) {
-      // Remove existing item with same product and unit
-      const itemsWithoutDuplicate = prevItems.filter(item => 
-        !(item.productID === selectedProduct.id && item.variant.unit.id === variant.unit.id)
-      );
-      
-      const itemsFromSameProduct = itemsWithoutDuplicate.filter(item => item.productID === selectedProduct.id)
-      const updatedSameProductItems = itemsFromSameProduct.map(item => {
-        return {
-          ...item,
-          balance: integerDivide(baseUnitBalance, item.variant.conversionRate)
-        }
-      })
-      
-      const itemsFromOtherProducts = itemsWithoutDuplicate.filter(item => item.productID !== selectedProduct.id)
-      
-      updatedItems = [...itemsFromOtherProducts, ...updatedSameProductItems, {
-        quantity,
-        cost: unitCost,
-        descount,
-        variant,
-        unitPrice,
-        itemTotalCost,
-        title: selectedProduct.title,
-        productID: selectedProduct.id,
-        commissionRate: productComission,
-        balance: integerDivide(baseUnitBalance, variant.conversionRate),
-      } as ItemDataInterface]
-    } else {
-      // Add as new item (existing logic)
-      const itemsFromSameProduct = prevItems.filter(item => item.productID === selectedProduct.id)
-      const updatedSameProductItems = itemsFromSameProduct.map(item => {
-        return {
-          ...item,
-          balance: integerDivide(baseUnitBalance, item.variant.conversionRate)
-        }
-      })
-      
-      const itemsFromOtherProducts = prevItems.filter(item => item.productID !== selectedProduct.id)
-      
-      updatedItems = [...itemsFromOtherProducts, ...updatedSameProductItems, {
-        quantity,
-        cost: unitCost,
-        descount,
-        variant,
-        unitPrice,
-        itemTotalCost,
-        title: selectedProduct.title,
-        productID: selectedProduct.id,
-        commissionRate: productComission,
-        balance: integerDivide(baseUnitBalance, variant.conversionRate),
-      } as ItemDataInterface]
-    }
-
-    formMethods.setValue("items", updatedItems)
-
-    const prevCommission = formMethods.getValues("totalComission")
-    const prevTotalCost = formMethods.getValues("totalCost")
-
-    formMethods.setValue("totalComission", add(prevCommission, divide(multiply(productComission, itemTotalCost), 100)))
-    formMethods.setValue("totalCost", add(prevTotalCost, itemTotalCost))
-
-    clearLineItemForm();
-    
-    // Focus the product selection component after a short delay to ensure state updates
-    setTimeout(() => {
-      if (productSelectRef.current) {
-        const inputElement = productSelectRef.current.querySelector('input');
-          inputElement?.focus();
-      }
-    }, 100);
-  }
-  
-  const submitItem = () => {
-    const prevItems = formMethods.getValues("items")
-
-    const existingItem = prevItems.find(item => item.productID === selectedProduct.id && item.variant.unit.id === variant.unit.id);
-    
-    if (existingItem) {
-      // Show dialog for duplicate item
-  
-      setShowDuplicateDialog(true);
-      return;
-    }
-
-    // No duplicate, add normally
-    addItemToForm();
-  }
-
-  const handleDialogOverride = () => {
-    const itemToDelete = formMethods.getValues("items").find(item => item.productID === selectedProduct.id && item.variant.unit.id === variant.unit.id)
-    deleteLineItemFromForm(itemToDelete);
-    setShowDuplicateDialog(false);
-    addItemToForm(true);
-  }
-
-  const handleDialogClose = () => {
-    setShowDuplicateDialog(false);
-  }
-
-  const isFormCompleted = useMemo(() => itemTotalCost > 0, [itemTotalCost])
-
   return <Box>
     <Grid container spacing={1}>
       <Grid item xs={3}>
-        <Autocomplete
-          id="product-select"
-          value={selectedProduct}
-          options={products}
-          getOptionLabel={(option) => option.title}
-          fullWidth
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              fullWidth
-              variant="outlined"
+        <Controller
+          name="pendingItem.selectedProduct"
+          control={formMethods.control}
+          render={({ field }) => (
+            <EnhancedAutocomplete
+              {...field}
+              id="product-select"
+              options={products}
+              getOptionLabel={(option: Product) => option.title}
               label="Produto"
-              onFocus={(e) => e.target.select()}
+              isOptionEqualToValue={(option: Product, value: Product) =>
+                option.id === value.id
+              }
+              onChange={(event: React.SyntheticEvent<Element, Event>, value: Product) => {
+                field.onChange(value);
+                handleSelectProduct(event, value);
+              }}
+              ref={productSelectRef}
             />
           )}
-          isOptionEqualToValue={(option, value) =>
-            option.id === value.id
-          }
-          onChange={handleSelectProduct}
-          ref={productSelectRef}
         />
       </Grid>
       <Grid item xs={3}>
-        <Autocomplete
-          id="unit-select"
-          options={selectedProduct?.variants ?? []}
-          getOptionLabel={(option) => option.unit.name}
-          value={variant}
-          fullWidth
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              fullWidth
-              value={variant}
-              variant="outlined"
+        <Controller
+          name="pendingItem.variant"
+          control={formMethods.control}
+          render={({ field }) => (
+            <EnhancedAutocomplete
+              {...field}
+              id="unit-select"
+              options={pendingItem.selectedProduct?.variants ?? []}
+              getOptionLabel={(option: Variant) => option.unit.name}
               label="Unidade"
+              isOptionEqualToValue={(option: Variant, value: Variant) =>
+                option.unit.id === value.unit.id
+              }
+              disabled={!pendingItem.selectedProduct}
+              onChange={(event: React.SyntheticEvent<Element, Event>, value: Variant) => {
+                field.onChange(value);
+                handleSelectVariant(event, value);
+              }}
             />
           )}
-          isOptionEqualToValue={(option, value) =>
-            option.unit.id === value.unit.id
-          }
-          disabled={!selectedProduct}
-          onChange={handleSelectVariant}
         />
       </Grid>
       <Grid item xs={3}>
@@ -267,17 +91,23 @@ export const OrderFormLineItemForm = ({ calculateBaseUnitInventory, deleteLineIt
           fullWidth
           variant="outlined"
           disabled
-          value={inventory}
+          value={pendingItem.inventory}
         />
       </Grid>
       <Grid item xs={3}>
-        <TextField
-          label="Quantidade"
-          fullWidth
-          variant="outlined"
-          onChange={(e) => setQuantity(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
-          onFocus={(e) => e.target.select()}
-          value={quantity}
+        <Controller
+          name="pendingItem.quantity"
+          control={formMethods.control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Quantidade"
+              fullWidth
+              variant="outlined"
+              onChange={(e) => field.onChange(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
+              onFocus={(e) => e.target.select()}
+            />
+          )}
         />
       </Grid>
       <Grid item xs={2}>
@@ -286,51 +116,84 @@ export const OrderFormLineItemForm = ({ calculateBaseUnitInventory, deleteLineIt
           fullWidth
           variant="outlined"
           disabled
-          value={unitCost}
+          value={pendingItem.unitCost}
         />
       </Grid>
       <Grid item xs={2}>
-        <TextField
-          label="Preço"
-          fullWidth
-          variant="outlined"
-          onChange={(e) => setUnitPrice(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
-          onFocus={(e) => e.target.select()}
-          value={unitPrice}
+        <Controller
+          name="pendingItem.unitPrice"
+          control={formMethods.control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Preço"
+              fullWidth
+              variant="outlined"
+              onChange={(e) => field.onChange(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
+              onFocus={(e) => e.target.select()}
+            />
+          )}
         />
       </Grid>
       <Grid item xs={2}>
-        <TextField
-          label="Desconto (%)"
-          fullWidth
-          variant="outlined"
-          onChange={(e) => setDescount(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
-          value={descount}
-          onFocus={(e) => e.target.select()}
+        <Controller
+          name="pendingItem.descount"
+          control={formMethods.control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Desconto (%)"
+              fullWidth
+              variant="outlined"
+              onChange={(e) => field.onChange(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
+              onFocus={(e) => e.target.select()}
+            />
+          )}
         />
       </Grid>
       <Grid item xs={2}>
-        <TextField
-          label="Comissão do Vendedor (%)"
-          fullWidth
-          variant="outlined"
-          onChange={(e) => setProductComission(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
-          value={productComission}
-          onFocus={(e) => e.target.select()}
+        <Controller
+          name="pendingItem.productComission"
+          control={formMethods.control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Comissão do Vendedor (%)"
+              fullWidth
+              variant="outlined"
+              onChange={(e) => field.onChange(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
+              onFocus={(e) => e.target.select()}
+            />
+          )}
         />
       </Grid>
       <Grid item xs={2}>
-        <TextField
-          label="Total do produto"
-          fullWidth
-          variant="outlined"
-          disabled
-          value={itemTotalCost}
-          onFocus={(e) => e.target.select()}
+        <Controller
+          name="pendingItem.itemTotalCost"
+          control={formMethods.control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Total do produto"
+              fullWidth
+              variant="outlined"
+              disabled
+              value={field.value}
+              onFocus={(e) => e.target.select()}
+            />
+          )}
         />
       </Grid>
       <Grid item xs={2}>
-        <Button onClick={submitItem} fullWidth style={{ height: "100%" }} variant="outlined" disabled={!isFormCompleted} > Adicionar Item </Button>
+        <Button 
+          onClick={handleAddItem} 
+          fullWidth 
+          style={{ height: "100%" }} 
+          variant="outlined" 
+          disabled={!isFormCompleted} 
+        > 
+          Adicionar Item 
+        </Button>
       </Grid>
     </Grid>
     
@@ -338,8 +201,8 @@ export const OrderFormLineItemForm = ({ calculateBaseUnitInventory, deleteLineIt
       open={showDuplicateDialog}
       onClose={handleDialogClose}
       onOverride={handleDialogOverride}
-      productName={selectedProduct?.title ?? ''}
-      unitName={variant?.unit.name ?? ''}
+      productName={pendingItem.selectedProduct?.title ?? ''}
+      unitName={pendingItem.variant?.unit.name ?? ''}
     />
-  </Box>
+    </Box>
 }

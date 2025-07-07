@@ -12,9 +12,17 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
+interface ShortcutItem {
+  shortcut: string;
+  description: string;
+}
+
 interface KeyboardShortcutsHelpProps {
   open: boolean;
   onClose: () => void;
+  title?: string;
+  showVariants?: boolean;
+  customShortcuts?: ShortcutItem[];
 }
 
 const ShortcutItem = ({ shortcut, description }: { shortcut: string; description: string }) => (
@@ -37,6 +45,9 @@ const ShortcutItem = ({ shortcut, description }: { shortcut: string; description
 export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
   open,
   onClose,
+  title = "Atalhos do Teclado",
+  showVariants = false,
+  customShortcuts = [],
 }) => {
   return (
     <Dialog 
@@ -49,7 +60,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
       }}
     >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">Atalhos do Teclado</Typography>
+        <Typography variant="h6">{title}</Typography>
         <Button onClick={onClose} size="small">
           <CloseIcon />
         </Button>
@@ -65,16 +76,29 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
             <ShortcutItem shortcut="Ctrl/Cmd + D" description="Deletar (modo edição)" />
             <ShortcutItem shortcut="Ctrl/Cmd + I" description="Inativar/Ativar" />
             <ShortcutItem shortcut="Ctrl/Cmd + R" description="Resetar formulário" />
-            <ShortcutItem shortcut="Ctrl/Cmd + F" description="Focar campo de busca" />
+            <ShortcutItem shortcut="Ctrl/Cmd + T" description="Alternar modo de criação" />
           </Grid>
           
-          <Grid item xs={12} md={6}>
-            <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-              Variantes
-            </Typography>
-            <ShortcutItem shortcut="Ctrl/Cmd + O" description="Adicionar nova variante" />
-            <ShortcutItem shortcut="Ctrl/Cmd + P" description="Adicionar novo preço" />
-          </Grid>
+          {showVariants && (
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                Variantes
+              </Typography>
+              <ShortcutItem shortcut="Ctrl/Cmd + O" description="Adicionar nova variante" />
+              <ShortcutItem shortcut="Ctrl/Cmd + P" description="Adicionar novo preço" />
+            </Grid>
+          )}
+          
+          {customShortcuts.length > 0 && (
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                Ações Específicas
+              </Typography>
+              {customShortcuts.map((item, index) => (
+                <ShortcutItem key={index} shortcut={item.shortcut} description={item.description} />
+              ))}
+            </Grid>
+          )}
           
           <Grid item xs={12} md={6}>
             <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>

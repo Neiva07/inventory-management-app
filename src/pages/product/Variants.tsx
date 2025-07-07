@@ -109,7 +109,7 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
                     {...props}
                     id={`variants.${parentIndex}.prices.${index}.paymentMethod`}
                     options={availablePaymentMethods}
-                    isOptionEqualToValue={(option, value) =>
+                    isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                       option.value === value.value
                     }
                     onChange={handleChange}
@@ -276,7 +276,7 @@ const VariantItem = ({ formMethods, index }: VariantProps) => {
                         value: c.id,
                       } as SelectField;
                     })}
-                    isOptionEqualToValue={(option, value) =>
+                    isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                       option.value === value.value
                     }
                     onChange={handleChange}

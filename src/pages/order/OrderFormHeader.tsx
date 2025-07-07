@@ -1,4 +1,4 @@
-import { Autocomplete, FormControl, Grid, TextField, Box } from "@mui/material"
+import { FormControl, Grid, Box } from "@mui/material"
 import { Customer, getCustomers } from "model/customer";
 import { SelectField } from "pages/product/useProductCreateForm";
 import { useEffect, useState } from "react";
@@ -15,6 +15,7 @@ import { statuses } from './useOrderForm';
 import { paymentMethods } from "model";
 import { TotalCostDisplay } from 'components/TotalCostDisplay';
 import { TotalComissionDisplay } from 'components/TotalComissionDisplay';
+import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
 
 export const paymentOptions = [
   {
@@ -35,7 +36,7 @@ export const paymentOptions = [
   }
 ]
 
-export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; order?: Order }) => {
+export const OrderFormHeader = ({ onDelete, order, firstFieldRef }: { onDelete?: () => void; order?: Order, firstFieldRef?: React.RefObject<HTMLDivElement> }) => {
   const { user } = useAuth();
   const { orderID } = useParams();
   const [customers, setCustomers] = useState<Array<Customer>>([]);
@@ -44,7 +45,17 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
   const totalCost = formMethods.watch('totalCost');
   const totalComission = formMethods.watch('totalComission');
   useEffect(() => {
-    getCustomers({ pageSize: 1000, userID: user.id }).then(results => setCustomers(results[0].docs.map(qr => qr.data() as Customer)))
+    getCustomers({ pageSize: 1000, userID: user.id }).then(results => {
+
+      const queriedCustomers = results[0].docs.map(qr => qr.data() as Customer)
+      setCustomers(queriedCustomers)
+      if (queriedCustomers.length > 0) {
+        formMethods.setValue('customer', {
+          label: queriedCustomers[0].name,
+          value: queriedCustomers[0].id,
+        })
+      }
+    })
   }, []);
 
   return (
@@ -74,6 +85,18 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
           <FormActions
             showDelete={!!orderID}
             onDelete={onDelete}
+            onShowHelp={() => {
+              // Trigger F1 key programmatically to show help
+              const f1Event = new KeyboardEvent('keydown', {
+                key: 'F1',
+                code: 'F1',
+                keyCode: 112,
+                which: 112,
+                bubbles: true,
+                cancelable: true,
+              });
+              document.dispatchEvent(f1Event);
+            }}
           />
         </Box>
       </Box>
@@ -92,30 +115,26 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
 
                 return (
                   <>
-                    <Autocomplete
+                    <EnhancedAutocomplete
+                      label="Cliente"
                       value={customer}
                       {...props}
                       id="customer-select"
+                      name="customer"
                       options={customers.map((c) => {
                         return {
                           label: c.name,
                           value: c.id,
                         } as SelectField;
                       })}
-                      getOptionLabel={(option) => option.label}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Cliente"
-                          error={!!formMethods.formState.errors.customer}
-                          helperText={formMethods.formState.errors.customer?.label?.message}
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) =>
+                      getOptionLabel={(option: SelectField) => option.label}
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value.value
                       }
                       onChange={handleChange}
+                      error={!!formMethods.formState.errors.customer}
+                      helperText={formMethods.formState.errors.customer?.label?.message}
+                      ref={firstFieldRef}
                     />
                   </>
                 );
@@ -138,22 +157,16 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
 
                 return (
                   <>
-                    <Autocomplete
+                    <EnhancedAutocomplete
                       value={status}
                       {...props}
                       id="status-select"
                       options={statuses}
-                      getOptionLabel={(option) => option.label}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Tipo de venda"
-                          error={!!formMethods.formState.errors.status}
-                          helperText={formMethods.formState.errors.status?.message}
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) =>
+                      getOptionLabel={(option: SelectField) => option.label}
+                      label="Tipo de venda"
+                      error={!!formMethods.formState.errors.status}
+                      helperText={formMethods.formState.errors.status?.message}
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value.value
                       }
                       onChange={handleChange}
@@ -179,7 +192,7 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
 
                 return (
                   <>
-                    <Autocomplete
+                    <EnhancedAutocomplete
                       value={paymentType}
                       {...props}
                       id="payment-method-select"
@@ -187,20 +200,14 @@ export const OrderFormHeader = ({ onDelete, order }: { onDelete?: () => void; or
                         label: pm.label,
                         value: pm.id,
                       }))}
-                      getOptionLabel={(option) => option.label}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                          label="Método de pagamento"
-                          error={!!formMethods.formState.errors.paymentMethod}
-                          helperText={formMethods.formState.errors.paymentMethod?.message}
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) =>
+                      getOptionLabel={(option: SelectField) => option.label}
+                      label="Método de pagamento"
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value.value
                       }
                       onChange={handleChange}
+                      error={!!formMethods.formState.errors.paymentMethod}
+                      helperText={formMethods.formState.errors.paymentMethod?.message}
                     />
                   </>
                 );

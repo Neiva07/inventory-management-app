@@ -42,7 +42,7 @@ const useSupplierFormValidationSchema = (): yup.ObjectSchema<CustomerFormDataInt
         if (!val) return val;
         return val.replace(/[^0-9]/gi, "");
       })
-        .test('len', 'RG precisa ter 9 digitos', val => !val || val.length === 9),
+        .test('len', 'RG precisa ter 7 digitos', val => !val || val.length === 7),
     }) as yup.ObjectSchema<CustomerFormDataInterface>;
   }, []);
 };

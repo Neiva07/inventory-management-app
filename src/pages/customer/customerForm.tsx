@@ -1,4 +1,4 @@
-import { Autocomplete, Button, FormControl, Grid, TextField, Typography, Box } from '@mui/material';
+import { Button, FormControl, Grid, TextField, Typography, Box, Tooltip } from '@mui/material';
 import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import ReactInputMask from 'react-input-mask';
@@ -11,6 +11,9 @@ import { CreateModeToggle } from 'components/CreateModeToggle';
 import { useState } from 'react';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
+import { useFormWrapper } from '../../hooks/useFormWrapper';
+import { KeyboardShortcutsHelp } from 'components/KeyboardShortcutsHelp';
+import { EnhancedAutocomplete } from '../../components/EnhancedAutocomplete';
 
 export const CustomerForm = () => {
   const { customerID } = useParams();
@@ -51,9 +54,37 @@ export const CustomerForm = () => {
     setDeleteDialogOpen(false);
   }
 
+  const handleReset = () => {
+    if (window.confirm('Tem certeza que deseja resetar o formulário? Todas as alterações serão perdidas.')) {
+      form.reset();
+    }
+  }
+
+  const handleToggleCreateMode = () => {
+    setIsCreateMode(!isCreateMode);
+  }
+
+  // Form wrapper with keyboard shortcuts
+  const {
+    showHelp,
+    closeHelp,
+    formRef,
+    firstFieldRef,
+  } = useFormWrapper({
+    onSubmit: handleSubmit,
+    onCancel: () => navigate('/customers'),
+    onDelete: customerID ? handleDelete : undefined,
+    onInactivate: customer && customer.status === 'active' ? onDeactivate : undefined,
+    onActivate: customer && customer.status === 'inactive' ? onActivate : undefined,
+    onReset: handleReset,
+    onToggleCreateMode: handleToggleCreateMode,
+    autoFocusField: 'name',
+    helpTitle: 'Atalhos do Teclado - Cliente',
+  });
+
   return (
     <FormProvider {...form}>
-      <Box sx={{ position: 'relative', pt: 8 }}>
+      <Box sx={{ position: 'relative', pt: 8 }} component="form" ref={formRef}>
         <FormActions
           showDelete={!!customerID}
           showInactivate={!!customer && customer.status === 'active'}
@@ -61,6 +92,18 @@ export const CustomerForm = () => {
           onDelete={handleDelete}
           onInactivate={onDeactivate}
           onActivate={onActivate}
+          onShowHelp={() => {
+            // Trigger F1 key programmatically to show help
+            const f1Event = new KeyboardEvent('keydown', {
+              key: 'F1',
+              code: 'F1',
+              keyCode: 112,
+              which: 112,
+              bubbles: true,
+              cancelable: true,
+            });
+            document.dispatchEvent(f1Event);
+          }}
           absolute
         />
         <Grid container spacing={2}>
@@ -212,35 +255,23 @@ export const CustomerForm = () => {
                   };
 
                   return (
-                    <>
-                      <Autocomplete
-                        {...props}
-                        id="regions"
-                        options={states.map((c) => {
-                          return {
-                            label: c.name,
-                            value: c.code,
-                          } as SelectField;
-                        })}
-                        getOptionLabel={(option) => option.label}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            variant="outlined"
-                            label="Estado"
-                            error={!!(form.formState.errors.address?.region)}
-                            helperText={form.formState.errors.address?.region?.message}
-                          />
-                        )}
-                        value={region}
-                        isOptionEqualToValue={(option, value) => {
-                          console.log(option, value)
-                          return option.value === value.value
-                        }
-                        }
-                        onChange={handleChange}
-                      />
-                    </>
+                    <EnhancedAutocomplete
+                      {...props}
+                      id="regions"
+                      options={states.map((c) => {
+                        return {
+                          label: c.name,
+                          value: c.code,
+                        } as SelectField;
+                      })}
+                      getOptionLabel={(option: SelectField) => option.label}
+                      label="Estado"
+                      error={!!(form.formState.errors.address?.region)}
+                      helperText={form.formState.errors.address?.region?.message}
+                      value={region}
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) => option.value === value.value}
+                      onChange={handleChange}
+                    />
                   );
                 }}
                 name="address.region"
@@ -260,29 +291,21 @@ export const CustomerForm = () => {
                   };
 
                   return (
-                    <>
-                      <Autocomplete
-                        {...props}
-                        id="cities"
-                        options={availableCities || []}
-                        getOptionLabel={(option) => option.label}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            variant="outlined"
-                            label="Cidade"
-                            error={!!(form.formState.errors.address?.city)}
-                            helperText={form.formState.errors.address?.city?.message}
-                          />
-                        )}
-                        value={city}
-                        isOptionEqualToValue={(option, value) =>
-                          option.value === value.value
-                        }
-                        onChange={handleChange}
-                        disabled={!availableCities || availableCities.length === 0}
-                      />
-                    </>
+                    <EnhancedAutocomplete
+                      {...props}
+                      id="cities"
+                      options={availableCities || []}
+                      getOptionLabel={(option: SelectField) => option.label}
+                      label="Cidade"
+                      error={!!(form.formState.errors.address?.city)}
+                      helperText={form.formState.errors.address?.city?.message}
+                      value={city}
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
+                        option.value === value.value
+                      }
+                      onChange={handleChange}
+                      disabled={!availableCities || availableCities.length === 0}
+                    />
                   );
                 }}
                 name="address.city"
@@ -375,12 +398,14 @@ export const CustomerForm = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, marginTop: "12px" }}>
           {
             customerID ?
-              <Button
-                onClick={handleSubmit}
-                variant="contained"
-              >
-                Editar Cliente
-              </Button>
+              <Tooltip title="Ctrl/Cmd + Enter" placement="top">
+                <Button
+                  onClick={handleSubmit}
+                  variant="contained"
+                >
+                  Editar Cliente
+                </Button>
+              </Tooltip>
 
               :
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -390,12 +415,14 @@ export const CustomerForm = () => {
                   listingText="Redirecionar para listagem de clientes"
                   createText="Criar mais clientes"
                 />
-                <Button
-                  onClick={handleSubmit}
-                  variant="contained"
-                >
-                  Criar Cliente
-                </Button>
+                <Tooltip title="Ctrl/Cmd + Enter" placement="top">
+                  <Button
+                    onClick={handleSubmit}
+                    variant="contained"
+                  >
+                    Criar Cliente
+                  </Button>
+                </Tooltip>
               </Box>
 
           }
@@ -405,6 +432,14 @@ export const CustomerForm = () => {
           onClose={handleCancelDelete}
           onConfirm={handleConfirmDelete}
           resourceName="cliente"
+        />
+        
+        {/* Keyboard Help Modal */}
+        <KeyboardShortcutsHelp
+          open={showHelp}
+          onClose={closeHelp}
+          title="Atalhos do Teclado - Cliente"
+          showVariants={false}
         />
       </Box>
     </FormProvider>

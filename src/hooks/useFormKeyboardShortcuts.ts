@@ -7,10 +7,13 @@ interface FormKeyboardHandlers {
   onInactivate?: () => void;
   onActivate?: () => void;
   onReset?: () => void;
-  onAddVariant?: () => void;
-  onAddPrice?: () => void;
   onFocusSearch?: () => void;
   onShowHelp?: () => void;
+  onToggleCreateMode?: () => void;
+  // Form-specific shortcuts
+  customShortcuts?: {
+    [key: string]: () => void;
+  };
 }
 
 export const useFormKeyboardShortcuts = (handlers: FormKeyboardHandlers) => {
@@ -37,18 +40,23 @@ export const useFormKeyboardShortcuts = (handlers: FormKeyboardHandlers) => {
       return;
     }
 
-    // Ctrl/Cmd + O: Add new variant
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') {
+    // Ctrl/Cmd + T: Toggle create mode
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 't') {
       event.preventDefault();
-      handlers.onAddVariant?.();
+      handlers.onToggleCreateMode?.();
       return;
     }
 
-    // Ctrl/Cmd + P: Add new price
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'p') {
-      event.preventDefault();
-      handlers.onAddPrice?.();
-      return;
+    // Handle custom shortcuts
+    if (handlers.customShortcuts) {
+      const key = event.key.toLowerCase();
+      const shortcut = `${event.ctrlKey || event.metaKey ? 'Ctrl/Cmd + ' : ''}${key.toUpperCase()}`;
+      
+      if (handlers.customShortcuts[shortcut]) {
+        event.preventDefault();
+        handlers.customShortcuts[shortcut]();
+        return;
+      }
     }
 
     // Ctrl/Cmd + R: Reset form

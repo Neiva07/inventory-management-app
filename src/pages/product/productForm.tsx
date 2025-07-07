@@ -137,12 +137,14 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
     // We'll pass this function down to trigger price addition
   }
 
-  const handleFocusSearch = () => {
-    titleRef.current?.focus();
-  }
+
 
   const handleShowHelp = () => {
     setHelpModalOpen(true);
+  }
+
+  const handleToggleCreateMode = () => {
+    setIsCreateMode(!isCreateMode);
   }
 
   // Field navigation refs
@@ -205,10 +207,12 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
     onInactivate: product && product.status === 'active' ? onDeactiveProduct : undefined,
     onActivate: product && product.status === 'inactive' ? onActivateProduct : undefined,
     onReset: handleReset,
-    onAddVariant: handleAddVariant,
-    onAddPrice: handleAddPrice,
-    onFocusSearch: handleFocusSearch,
+    onToggleCreateMode: handleToggleCreateMode,
     onShowHelp: handleShowHelp,
+    customShortcuts: {
+      'Ctrl/Cmd + O': handleAddVariant,
+      'Ctrl/Cmd + P': handleAddPrice,
+    },
   });
 
   return (
@@ -221,6 +225,18 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
           onDelete={handleDelete}
           onInactivate={onDeactiveProduct}
           onActivate={onActivateProduct}
+          onShowHelp={() => {
+            // Trigger F1 key programmatically to show help
+            const f1Event = new KeyboardEvent('keydown', {
+              key: 'F1',
+              code: 'F1',
+              keyCode: 112,
+              which: 112,
+              bubbles: true,
+              cancelable: true,
+            });
+            document.dispatchEvent(f1Event);
+          }}
           absolute
         />
         <Grid container spacing={1}>
@@ -282,7 +298,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                         } as SelectField;
                       })}
                       getOptionLabel={(option) => (option as SelectField)?.label ?? ''}
-                      isOptionEqualToValue={(option, value) =>
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value?.value
                       }
                       onChange={handleChange}
@@ -363,7 +379,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                         (s) => ({ label: s.tradeName, value: s.id } as SelectField)
                       )}
                       getOptionLabel={(option: SelectField) => option.label}
-                      isOptionEqualToValue={(option, value) =>
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value?.value
                       }
                       value={value}
@@ -371,7 +387,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                       onNextField={() => focusNextField(suppliersRef)}
                       onPreviousField={() => focusPreviousField(suppliersRef)}
                       onChange={handleChange}
-                      renderTags={(list) => {
+                      renderTags={(list: SelectField[]) => {
                         const displayList = list
                           .map((item) => item.label)
                           .join(", ");
@@ -413,7 +429,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                           value: c.id,
                         } as SelectField;
                       })}
-                      isOptionEqualToValue={(option, value) =>
+                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value?.value
                       }
                       onChange={handleChange}
@@ -541,6 +557,8 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
         <KeyboardShortcutsHelp
           open={helpModalOpen}
           onClose={() => setHelpModalOpen(false)}
+          title="Atalhos do Teclado - Produto"
+          showVariants={true}
         />
       </Box>
     </FormProvider>

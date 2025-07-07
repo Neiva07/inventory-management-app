@@ -8,15 +8,20 @@ import { InboundOrderFormLineItemList } from "./InboundOrderFormLineItemList";
 import { InboundOrderItemDataInterface, useInboundOrderForm } from "./useInboundOrderForm";
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { CreateModeToggle } from 'components/CreateModeToggle';
-import { useState } from 'react';
-import { add, integerDivide, multiply, subtract } from "lib/math";
-import { Product, Variant } from "model/products";
+import React, { useState } from 'react';
+import { integerDivide, multiply } from "lib/math";
+import { subtract } from "lib/math";
 import { InstallmentPlanModal } from 'components/InstallmentPlanModal';
 import { createSupplierBill } from 'model/supplierBill';
 import { createMultipleInstallmentPayments } from 'model/installmentPayment';
 import { getSupplier } from 'model/suppliers';
 import { useAuth } from 'context/auth';
 import { toast } from 'react-toastify';
+import { useFormWrapper } from '../../hooks/useFormWrapper';
+import { KeyboardShortcutsHelp } from 'components/KeyboardShortcutsHelp';
+import { ProductUpdateModal } from 'components/ProductUpdateModal';
+import { ProductUpdateToggle } from 'components/ProductUpdateToggle';
+import { Product, Variant } from 'model/products';
 
 export const InboundOrderForm = () => {
   const { inboundOrderID } = useParams();
@@ -25,7 +30,39 @@ export const InboundOrderForm = () => {
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [installmentModalOpen, setInstallmentModalOpen] = useState(false);
-  const { register, onFormSubmit, onSubmit, onDelete, inboundOrder, reset, ...formMethods } = useInboundOrderForm(inboundOrderID);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  
+  // Product update modal state
+  const [showProductUpdateModal, setShowProductUpdateModal] = useState(false);
+  const [pendingProductUpdate, setPendingProductUpdate] = useState<{
+    productID: string;
+    newUnitCost: number;
+    variantUnitID: string;
+  } | null>(null);
+  
+  // Ref for the product selection Autocomplete
+  const productSelectRef = React.useRef<HTMLDivElement>(null);
+  
+  const { 
+    register, 
+    onFormSubmit, 
+    onSubmit, 
+    onDelete, 
+    inboundOrder, 
+    reset, 
+    products,
+    // Line item business logic
+    calculateBaseUnitInventory,
+    handleSelectProduct,
+    handleSelectVariant,
+    submitItem,
+    addItemToForm,
+    // Product update functionality
+    shouldUpdateProduct,
+    setShouldUpdateProduct,
+    handleProductUpdateConfirm,
+    ...formMethods 
+  } = useInboundOrderForm(inboundOrderID);
 
   // Watch the items to check if there are any line items
   const items = formMethods.watch('items');
@@ -114,18 +151,127 @@ export const InboundOrderForm = () => {
     setDeleteDialogOpen(false);
   }
 
-  console.log(inboundOrder);
-
-  const calculateBaseUnitInventory = (product: Product) => {
-    const inventoryWithoutSubmmitedInboundOrder = inboundOrder ? inboundOrder.items.reduce((acc, item) => subtract(acc, multiply(item.quantity, item.variant.conversionRate)), product.inventory) : product.inventory;
-    console.log(inventoryWithoutSubmmitedInboundOrder)
-
-    const items = formMethods.getValues('items')
-    return items.filter(item => item.productID === product.id).reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), inventoryWithoutSubmmitedInboundOrder)
+  const handleReset = () => {
+    if (window.confirm('Tem certeza que deseja resetar o formulário? Todas as alterações serão perdidas.')) {
+      reset();
+    }
   }
 
-  const deleteLineItemFromForm = (itemToDelete: InboundOrderItemDataInterface) => {
+  // UI handlers for dialogs
+  const handleDialogOverride = () => {
+    const pendingItem = formMethods.getValues('pendingItem');
+    const itemToDelete = formMethods.getValues("items").find(item => item.productID === pendingItem.selectedProduct.id && item.variant.unit.id === pendingItem.variant.unit.id)
+    deleteLineItemFromForm(itemToDelete);
+    setShowDuplicateDialog(false);
+    addItemToForm(true);
+  }
 
+  const handleDialogClose = () => {
+    setShowDuplicateDialog(false);
+  }
+
+  const handleAddItem = () => {
+    const pendingItem = formMethods.getValues('pendingItem');
+    
+    if (pendingItem.isFormCompleted) {
+      const result = submitItem();
+      
+      if (result === true) {
+        // Duplicate item found
+        setShowDuplicateDialog(true);
+      } else if (result && result.needsProductUpdate) {
+        // Product update needed
+        setPendingProductUpdate({
+          productID: pendingItem.selectedProduct.id,
+          newUnitCost: pendingItem.unitCost,
+          variantUnitID: pendingItem.variant.unit.id,
+        });
+        setShowProductUpdateModal(true);
+      } else {
+        // Item was added successfully, focus the product selection for next item
+        setTimeout(() => {
+          if (productSelectRef.current) {
+            const inputElement = productSelectRef.current.querySelector('input');
+            inputElement?.focus();
+          }
+        }, 100);
+      }
+    }
+  }
+
+  const handleToggleCreateMode = () => {
+    setIsCreateMode(!isCreateMode);
+  }
+
+  const handleToggleProductUpdate = () => {
+    setShouldUpdateProduct(!shouldUpdateProduct);
+  }
+
+  const handleProductUpdateConfirmModal = async (updatedProduct: Product) => {
+    try {
+      const success = await handleProductUpdateConfirm(updatedProduct);
+      if (success) {
+        setShowProductUpdateModal(false);
+        setPendingProductUpdate(null);
+        
+        // Focus the product selection after successful update
+        setTimeout(() => {
+          if (productSelectRef.current) {
+            const inputElement = productSelectRef.current.querySelector('input');
+            inputElement?.focus();
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error in product update confirmation:', error);
+    }
+  }
+
+  const handleProductUpdateCancel = () => {
+    setShowProductUpdateModal(false);
+    setPendingProductUpdate(null);
+    // Reset the unit cost to the original value
+    const pendingItem = formMethods.getValues('pendingItem');
+    if (pendingItem.variant) {
+      formMethods.setValue('pendingItem.unitCost', pendingItem.variant.unitCost);
+    }
+  }
+
+  const handleShowHelp = () => {
+    // The F1 shortcut is handled by the form wrapper, but we need this for the button
+    // We'll trigger the F1 key programmatically
+    const f1Event = new KeyboardEvent('keydown', {
+      key: 'F1',
+      code: 'F1',
+      keyCode: 112,
+      which: 112,
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(f1Event);
+  };
+
+  // Form wrapper with keyboard shortcuts
+  const {
+    showHelp,
+    closeHelp,
+    formRef,
+    firstFieldRef,
+  } = useFormWrapper({
+    onSubmit: hasItems ? () => setInstallmentModalOpen(true) : undefined,
+    onCancel: () => navigate('/inbound-orders'),
+    onDelete: inboundOrderID ? handleDelete : undefined,
+    onReset: handleReset,
+    onToggleCreateMode: handleToggleCreateMode,
+    autoFocusField: 'supplier',
+    helpTitle: 'Atalhos do Teclado - Compra',
+    customShortcuts: {
+      'Ctrl/Cmd + P': handleAddItem,
+      'Ctrl/Cmd + Y': handleToggleProductUpdate,
+    },
+  });
+
+  const deleteLineItemFromForm = (itemToDelete: InboundOrderItemDataInterface) => {
     const filteredItems = items.filter(i => !(i.productID === itemToDelete.productID && i.variant.unit.id === itemToDelete.variant.unit.id))
     const balanceToSubtract = multiply(itemToDelete.variant.conversionRate, itemToDelete.quantity)
     formMethods.setValue('items', filteredItems.map(item => {
@@ -143,49 +289,69 @@ export const InboundOrderForm = () => {
 
   return (
     <FormProvider register={register} reset={reset} {...formMethods}>
-        <InboundOrderFormHeader onDelete={handleDelete} inboundOrder={inboundOrder} />
+      <Box component="form" ref={formRef}>
+        <InboundOrderFormHeader onDelete={handleDelete} inboundOrder={inboundOrder} firstFieldRef={firstFieldRef} onShowHelp={handleShowHelp} />
         <Box style={{ marginTop: 40 }}>
-          <InboundOrderFormLineItemForm calculateBaseUnitInventory={calculateBaseUnitInventory} deleteLineItemFromForm={deleteLineItemFromForm} />
+          <InboundOrderFormLineItemForm 
+            productSelectRef={productSelectRef}
+            products={products}
+            handleSelectProduct={handleSelectProduct}
+            handleSelectVariant={handleSelectVariant}
+            handleAddItem={handleAddItem}
+            // Dialog handlers
+            showDuplicateDialog={showDuplicateDialog}
+            handleDialogOverride={handleDialogOverride}
+            handleDialogClose={handleDialogClose}
+          />
+          
+          <Box sx={{ mt: 2 }}>
+            <ProductUpdateToggle
+              shouldUpdateProduct={shouldUpdateProduct}
+              onToggle={setShouldUpdateProduct}
+            />
+          </Box>
         </Box>
 
         <Box style={{ marginTop: 40 }}>
           <InboundOrderFormLineItemList deleteLineItemFromForm={deleteLineItemFromForm} />
         </Box>
         
-          {inboundOrderID ? (
+        {inboundOrderID ? (
+          <Tooltip title="Ctrl/Cmd + Enter" placement="top">
             <Button onClick={handleSubmit} variant="outlined" size="large" style={{ marginTop: 20}}>
               Editar Nota
             </Button>
-          ) : (
-            <>  
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end', marginTop: 8}}>
-              <CreateModeToggle
-                isCreateMode={isCreateMode}
-                onToggle={setIsCreateMode}
-                listingText="Redirecionar para listagem de compras"
-                createText="Criar mais compras"
-              />
-            </Box>
+          </Tooltip>
+        ) : (
+          <>  
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end', marginTop: 8}}>
+            <CreateModeToggle
+              isCreateMode={isCreateMode}
+              onToggle={setIsCreateMode}
+              listingText="Redirecionar para listagem de compras"
+              createText="Criar mais compras"
+            />
+          </Box>
 
-              <Tooltip 
-                title={!hasItems ? "Você precisa adicionar ao menos 1 item para fechar a nota" : ""}
-                arrow
+            <Tooltip 
+              title={!hasItems ? "Você precisa adicionar ao menos 1 item para fechar a compra" : "Ctrl/Cmd + Enter"}
+              arrow
+            >
+              <Button 
+                onClick={hasItems ? () => setInstallmentModalOpen(true) : undefined} 
+                variant="outlined" 
+                size="large"
+                style={{ 
+                  marginTop: 20,
+                  opacity: hasItems ? 1 : 0.6,
+                  cursor: hasItems ? 'pointer' : 'not-allowed'
+                }}
               >
-                <Button 
-                  onClick={hasItems ? () => setInstallmentModalOpen(true) : undefined} 
-                  variant="outlined" 
-                  size="large"
-                  style={{ 
-                    marginTop: 20,
-                    opacity: hasItems ? 1 : 0.6,
-                    cursor: hasItems ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  Fechar Nota
-                </Button>
-              </Tooltip>
-              </>
-          )}
+                Fechar Compra
+              </Button>
+            </Tooltip>
+            </>
+        )}
         
         <DeleteConfirmationDialog
           open={deleteDialogOpen}
@@ -193,20 +359,38 @@ export const InboundOrderForm = () => {
           onConfirm={handleConfirmDelete}
           resourceName="compra"
         />
-        {/* <InstallmentPaymentModal
-          open={installmentModalOpen}
-          onClose={() => setInstallmentModalOpen(false)}
-          onSubmit={handleInstallmentModalSubmit}
-          totalValue={formMethods.watch('totalCost') ?? 0}
-        /> */}
+
         <InstallmentPlanModal
           open={installmentModalOpen}
           onClose={() => setInstallmentModalOpen(false)}
           onSubmit={handleInstallmentModalSubmit}
           totalValue={formMethods.watch('totalCost') ?? 0}
           orderDate={formMethods.watch('orderDate') ?? new Date()}
-          
         />
+
+        {pendingProductUpdate && (
+          <ProductUpdateModal
+            open={showProductUpdateModal}
+            onClose={handleProductUpdateCancel}
+            onConfirm={handleProductUpdateConfirmModal}
+            productID={pendingProductUpdate.productID}
+            newUnitCost={pendingProductUpdate.newUnitCost}
+            variantUnitID={pendingProductUpdate.variantUnitID}
+          />
+        )}
+        
+        {/* Keyboard Help Modal */}
+        <KeyboardShortcutsHelp
+          open={showHelp}
+          onClose={closeHelp}
+          title="Atalhos do Teclado - Compra"
+          showVariants={false}
+          customShortcuts={[
+            { shortcut: 'Ctrl/Cmd + P', description: 'Adicionar item (quando disponível)' },
+            { shortcut: 'Ctrl/Cmd + Y', description: 'Alternar atualização de custo do produto' }
+          ]}
+        />
+      </Box>
     </FormProvider>
   )
 } 

@@ -8,17 +8,37 @@ import { OrderFormLineItemList } from "./OrderFormLineItemList";
 import { ItemDataInterface, useOrderForm } from "./useOrderForm";
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { CreateModeToggle } from 'components/CreateModeToggle';
-import { useState } from 'react';
-import { add, integerDivide, multiply } from "lib/math";
-import { Product, Variant } from "model/products";
+import React, { useState } from 'react';
+import { integerDivide, multiply } from "lib/math";
 import { subtract } from "lib/math";
+import { useFormWrapper } from '../../hooks/useFormWrapper';
+import { KeyboardShortcutsHelp } from 'components/KeyboardShortcutsHelp';
 
 export const OrderForm = () => {
   const { orderID } = useParams();
   const navigate = useNavigate();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { register, onFormSubmit, onDelete, order, reset, ...formMethods } = useOrderForm(orderID);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  
+  // Ref for the product selection Autocomplete
+  const productSelectRef = React.useRef<HTMLDivElement>(null);
+  
+  const { 
+    register, 
+    onFormSubmit, 
+    onDelete, 
+    order, 
+    reset, 
+    products,
+    // Line item business logic
+    calculateBaseUnitInventory,
+    handleSelectProduct,
+    handleSelectVariant,
+    submitItem,
+    addItemToForm,
+    ...formMethods 
+  } = useOrderForm(orderID);
 
   // Watch the items to check if there are any line items
   const items = formMethods.watch('items');
@@ -46,11 +66,80 @@ export const OrderForm = () => {
     setDeleteDialogOpen(false);
   }
 
-  const calculateBaseUnitInventory = (product: Product) => {
-    const inventoryWithoutSubmmitedOrder = order ? order.items.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), product.inventory) : product.inventory;
-    const items = formMethods.getValues('items')
-    return items.filter(item => item.productID === product.id).reduce((acc, item) => subtract(acc, multiply(item.quantity, item.variant.conversionRate)), inventoryWithoutSubmmitedOrder)
+  const handleReset = () => {
+    if (window.confirm('Tem certeza que deseja resetar o formulário? Todas as alterações serão perdidas.')) {
+      reset();
+    }
   }
+
+  // UI handlers for dialogs
+  const handleDialogOverride = () => {
+    const pendingItem = formMethods.getValues('pendingItem');
+    const itemToDelete = formMethods.getValues("items").find(item => item.productID === pendingItem.selectedProduct.id && item.variant.unit.id === pendingItem.variant.unit.id)
+    deleteLineItemFromForm(itemToDelete);
+    setShowDuplicateDialog(false);
+    addItemToForm(true);
+  }
+
+  const handleDialogClose = () => {
+    setShowDuplicateDialog(false);
+  }
+
+  const handleAddItem = () => {
+    const pendingItem = formMethods.getValues('pendingItem');
+    
+    if (pendingItem.isFormCompleted) {
+      const hasDuplicate = submitItem();
+      if (hasDuplicate) {
+        setShowDuplicateDialog(true);
+      } else {
+        // Item was added successfully, focus the product selection for next item
+        setTimeout(() => {
+          if (productSelectRef.current) {
+            const inputElement = productSelectRef.current.querySelector('input');
+            inputElement?.focus();
+          }
+        }, 100);
+      }
+    }
+  }
+
+  const handleToggleCreateMode = () => {
+    setIsCreateMode(!isCreateMode);
+  }
+
+  const handleShowHelp = () => {
+    // The F1 shortcut is handled by the form wrapper, but we need this for the button
+    // We'll trigger the F1 key programmatically
+    const f1Event = new KeyboardEvent('keydown', {
+      key: 'F1',
+      code: 'F1',
+      keyCode: 112,
+      which: 112,
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(f1Event);
+  };
+
+  // Form wrapper with keyboard shortcuts
+  const {
+    showHelp,
+    closeHelp,
+    formRef,
+    firstFieldRef,
+  } = useFormWrapper({
+    onSubmit: hasItems ? handleSubmit : undefined,
+    onCancel: () => navigate('/orders'),
+    onDelete: orderID ? handleDelete : undefined,
+    onReset: handleReset,
+    onToggleCreateMode: handleToggleCreateMode,
+    autoFocusField: 'customer',
+    helpTitle: 'Atalhos do Teclado - Venda',
+    customShortcuts: {
+      'Ctrl/Cmd + P': handleAddItem,
+    },
+  });
 
   const deleteLineItemFromForm = (itemToDelete: ItemDataInterface) => {
     const filteredItems = items.filter(i => !(i.productID === itemToDelete.productID && i.variant.unit.id === itemToDelete.variant.unit.id))
@@ -68,11 +157,22 @@ export const OrderForm = () => {
     formMethods.setValue('totalCost', subtract(prevTotalCost, itemToDelete.itemTotalCost))
   }
 
-  return (
+    return (
     <FormProvider register={register} reset={reset} {...formMethods}>
-        <OrderFormHeader onDelete={handleDelete} order={order} />
+      <Box component="form" ref={formRef}>
+        <OrderFormHeader onDelete={handleDelete} order={order} firstFieldRef={firstFieldRef} />
         <Box style={{ marginTop: 40 }}>
-          <OrderFormLineItemForm calculateBaseUnitInventory={calculateBaseUnitInventory} deleteLineItemFromForm={deleteLineItemFromForm} />
+          <OrderFormLineItemForm 
+            productSelectRef={productSelectRef}
+            products={products}
+            handleSelectProduct={handleSelectProduct}
+            handleSelectVariant={handleSelectVariant}
+            handleAddItem={handleAddItem}
+            // Dialog handlers
+            showDuplicateDialog={showDuplicateDialog}
+            handleDialogOverride={handleDialogOverride}
+            handleDialogClose={handleDialogClose}
+          />
         </Box>
 
         <Box style={{ marginTop: 40 }}>
@@ -80,9 +180,11 @@ export const OrderForm = () => {
         </Box>
         
           {orderID ? (
-            <Button onClick={handleSubmit} variant="outlined" size="large" style={{ marginTop: 20}}>
-              Editar Nota
-            </Button>
+            <Tooltip title="Ctrl/Cmd + Enter" placement="top">
+              <Button onClick={handleSubmit} variant="outlined" size="large" style={{ marginTop: 20}}>
+                Editar Nota
+              </Button>
+            </Tooltip>
           ) : (
             <>  
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end', marginTop: 8}}>
@@ -95,7 +197,7 @@ export const OrderForm = () => {
             </Box>
 
               <Tooltip 
-                title={!hasItems ? "Você precisa adicionar ao menos 1 item para fechar a nota" : ""}
+                title={!hasItems ? "Você precisa adicionar ao menos 1 item para fechar a nota" : "Ctrl/Cmd + Enter"}
                 arrow
               >
                 <Button 
@@ -120,6 +222,18 @@ export const OrderForm = () => {
           onConfirm={handleConfirmDelete}
           resourceName="venda"
         />
+        
+        {/* Keyboard Help Modal */}
+        <KeyboardShortcutsHelp
+          open={showHelp}
+          onClose={closeHelp}
+          title="Atalhos do Teclado - Venda"
+          showVariants={false}
+          customShortcuts={[
+            { shortcut: 'Ctrl/Cmd + P', description: 'Adicionar item (quando disponível)' }
+          ]}
+        />
+      </Box>
     </FormProvider>
   )
 }

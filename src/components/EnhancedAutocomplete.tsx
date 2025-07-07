@@ -8,22 +8,24 @@ interface EnhancedAutocompleteProps<T> extends Omit<AutocompleteProps<T, boolean
   helperText?: string;
   onNextField?: () => void;
   onPreviousField?: () => void;
+  name?: string;
 }
 
-export const EnhancedAutocomplete = <T,>({
-  label,
-  error,
-  helperText,
-  onNextField,
-  onPreviousField,
-  onOpen,
-  onClose,
-  onChange,
-  ...autocompleteProps
-}: EnhancedAutocompleteProps<T>) => {
+export const EnhancedAutocomplete = React.forwardRef(<T,>(props: EnhancedAutocompleteProps<T>, ref: React.Ref<HTMLDivElement>) => {
+  const {
+    label,
+    error,
+    helperText,
+    onNextField,
+    onPreviousField,
+    name,
+    onOpen,
+    onClose,
+    onChange,
+    ...autocompleteProps
+  } = props;
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedValue, setHighlightedValue] = useState<T | null>(null);
-  const autocompleteRef = useRef<HTMLDivElement>(null);
 
   const handleOpen = (event: React.SyntheticEvent) => {
     setIsOpen(true);
@@ -40,16 +42,16 @@ export const EnhancedAutocomplete = <T,>({
     setHighlightedValue(option);
   };
 
-  const { handleKeyDown } = useAutocompleteKeyboard({
+    const { handleKeyDown } = useAutocompleteKeyboard({
     isOpen,
     onSelect: (value: T) => {
       // For multiple selection, we need to handle this differently
       if (autocompleteProps.multiple) {
         // Get current value and add the new value
-        const currentValue = autocompleteProps.value as T[] ?? [];
+        const currentValue = Array.isArray(autocompleteProps.value) ? autocompleteProps.value as T[] : [];
         const isEqualValue = currentValue.some(v => autocompleteProps.isOptionEqualToValue?.(v, value));
-        const newValue = isEqualValue ? currentValue.filter(v => !autocompleteProps.isOptionEqualToValue?.(v, value)) : [...currentValue, value] as T[];
-
+        const newValue = isEqualValue ? currentValue.filter(v => !autocompleteProps.isOptionEqualToValue?.(v, value)) : [...currentValue, value];
+        
         onChange?.({} as React.SyntheticEvent, newValue, isEqualValue ? 'removeOption' : 'selectOption');
       } else {
         // Single selection
@@ -66,7 +68,7 @@ export const EnhancedAutocomplete = <T,>({
   return (
     <Autocomplete
       {...autocompleteProps}
-      ref={autocompleteRef}
+      ref={ref}
       onOpen={handleOpen}
       onClose={handleClose}
       open={isOpen}
@@ -80,8 +82,11 @@ export const EnhancedAutocomplete = <T,>({
           label={label}
           error={error}
           helperText={helperText}
+          autoFocus={autocompleteProps.autoFocus}
+          onFocus={(e) => e.target.select()}
+          name={name}
         />
       )}
     />
   );
-}; 
+}); 
