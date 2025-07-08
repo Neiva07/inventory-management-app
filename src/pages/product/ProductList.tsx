@@ -1,67 +1,63 @@
 import * as React from 'react';
-import { DataGrid, GridCellParams, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
-import { deactiveProduct, deleteProduct, getProducts, Product } from 'model/products';
-import { Autocomplete, Button, Grid, InputAdornment, TextField, Skeleton, Typography, Box } from '@mui/material';
+import { GridSearchIcon } from '@mui/x-data-grid';
+import { deactiveProduct, deleteProduct, getProducts, Product, activeProduct } from 'model/products';
+import { Button, Grid, InputAdornment, TextField, Tooltip } from '@mui/material';
 import { ProductCategory, getProductCategories } from 'model/productCategories';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from './useProductCreateForm';
 import { useAuth } from 'context/auth';
-import { ptBR } from '@mui/x-data-grid/locales';
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
+import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { useListPageKeyboardShortcuts } from 'hooks/useListPageKeyboardShortcuts';
+import { ListPageKeyboardHelp } from 'components/ListPageKeyboardHelp';
+import { CustomDataTable } from 'components/CustomDataTable';
+import { ColumnDefinition } from 'components/CustomDataTable/types';
 
-const columns: GridColDef[] = [
+const columns: ColumnDefinition<Product>[] = [
   { 
     field: 'publicId', 
     headerName: 'ID', 
     width: 200,
   },
-  { field: 'title', headerName: 'Nome', flex: 1 },
+  { 
+    field: 'title', 
+    headerName: 'Nome', 
+    width: 200,
+    flex: 1 
+  },
   {
     field: 'inventory',
     headerName: 'Estoque',
-    type: 'number',
-    flex: 1,
+    width: 100,
   },
   {
     field: 'productCategory.name',
     headerName: 'Categoria',
-    type: 'string',
     flex: 1,
-    valueGetter: (params: GridCellParams<Product>) => {
-      return params.row.productCategory.name
-    }
+    valueGetter: (row: Product) => row.productCategory.name
   },
   {
     field: 'cost',
     headerName: 'Custo Compra',
-    type: 'number',
-    sortable: false,
-    flex: 1,
-    renderCell: (params) => {
-      return params.row.cost
-    }
+    width: 120,
+    valueGetter: (row: Product) => row.cost
   },
   {
     field: 'baseUnit',
     headerName: 'Unidade Base',
-    sortable: false,
-    flex: 1,
-    renderCell: (params: GridCellParams<Product>) => {
-      return params.row.baseUnit.name
-    }
+    width: 120,
+    valueGetter: (row: Product) => row.baseUnit.name
   },
   {
     field: 'minInventory',
     headerName: 'Estoque Mínimo',
-    type: 'number',
-    flex: 1,
+    width: 120,
   },
   {
     field: 'status',
     headerName: 'Status',
-    type: 'string',
-    flex: 1,
+    width: 100,
   }
 ];
 
@@ -92,13 +88,19 @@ export const ProductList = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
   const [categories, setCategories] = React.useState<Array<ProductCategory>>([]);
-  const [categorySelected, setCategorySelected] = React.useState<ProductCategory>();
-  const [statusSelected, setStatusSelected] = React.useState<SelectField<string>>();
+  const [categorySelected, setCategorySelected] = React.useState<ProductCategory | null>(null);
+  const [statusSelected, setStatusSelected] = React.useState<SelectField<string> | null>(null);
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [page, setPage] = React.useState<number>(0);
   const [currentCursor, setCurrentCursor] = React.useState<Product | undefined>();
+  const [showHelp, setShowHelp] = React.useState(false);
 
   const navigate = useNavigate();
+
+  // Refs for focus management
+  const searchFieldRef = React.useRef<HTMLInputElement>(null);
+  const categoryFilterRef = React.useRef<HTMLDivElement>(null);
+  const statusFilterRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
@@ -109,7 +111,7 @@ export const ProductList = () => {
     getProducts({
       pageSize,
       title: searchTitle,
-      productCategory: categorySelected,
+      productCategory: categorySelected ?? undefined,
       userID: user.id,
       cursor: page > 0 ? currentCursor : undefined,
       status: statusSelected?.value
@@ -131,11 +133,13 @@ export const ProductList = () => {
   React.useEffect(() => {
     setCurrentCursor(undefined);
     setPage(0);
+    setSelectedRowID(undefined);
   }, [user, searchTitle, categorySelected, statusSelected]);
 
   React.useEffect(() => {
     queryProducts();
   }, [user, searchTitle, categorySelected, pageSize, statusSelected, page]);
+
 
   const handleSearchTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTitle(e.target.value)
@@ -148,23 +152,41 @@ export const ProductList = () => {
     setStatusSelected(value)
   }
 
-  const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPage(model.page);
-    setPageSize(model.pageSize);
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    setSelectedRowID(undefined);
   }
-  const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
-    if (rowSelection && rowSelection[0]) {
-      const id = String(rowSelection[0])
-      if (id === selectedRowID) {
-        setSelectedRowID(null);
-      } else {
-        setSelectedRowID(id);
-      }
-    }
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(0);
+    setSelectedRowID(undefined);
+  }
+
+  const handleRowSelectionChange = (rowId: string | null) => {
+    setSelectedRowID(rowId || undefined);
   }
   const handleDeactivateProduct = () => {
     deactiveProduct(selectedRowID)
     queryProducts();
+  }
+
+  const handleActivateProduct = () => {
+    activeProduct(selectedRowID)
+    queryProducts();
+  }
+
+  const handleToggleStatus = () => {
+    if (!selectedRowID) return;
+    
+    const selectedProduct = products.find(p => p.id === selectedRowID);
+    if (!selectedProduct) return;
+    
+    if (selectedProduct.status === 'active') {
+      handleDeactivateProduct();
+    } else {
+      handleActivateProduct();
+    }
   }
   const handleDeleteProduct = () => {
     setDeleteDialogOpen(true);
@@ -180,7 +202,133 @@ export const ProductList = () => {
     setDeleteDialogOpen(false);
   }
 
-  console.log(page, pageSize, count, products.length, currentCursor, statusSelected, categorySelected, searchTitle)
+  // Keyboard shortcuts handlers
+  const handleFocusSearch = () => {
+    if (searchFieldRef.current) {
+      const inputElement = searchFieldRef.current.querySelector('input');
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select(); // Also select the text for easy replacement
+      }
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSearchTitle('');
+    setCategorySelected(null);
+    setStatusSelected(null);
+    setTimeout(() => searchFieldRef.current?.focus(), 100);
+  };
+
+  const handleEditSelected = () => {
+    if (selectedRowID) {
+      navigate(`/products/${selectedRowID}`);
+    }
+  };
+
+  const handleCreateNew = () => {
+    navigate('/products/create');
+  };
+
+  const handleRefresh = () => {
+    queryProducts();
+  };
+
+  const handlePreviousPage = () => {
+    if (page > 0) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (count && (page + 1) * pageSize < count) {
+      setPage(page + 1);
+    }
+  };
+
+  const handleShowHelp = () => {
+    setShowHelp(true);
+  };
+
+  const handleCloseHelp = () => {
+    setShowHelp(false);
+  };
+
+
+  // Focus navigation functions
+  const focusNextField = (currentRef: React.RefObject<HTMLElement>) => {
+    const fields = [searchFieldRef, categoryFilterRef, statusFilterRef];
+    const currentIndex = fields.findIndex(ref => ref === currentRef);
+    const nextIndex = (currentIndex + 1) % fields.length;
+    const nextField = fields[nextIndex];
+    
+    if (nextField.current) {
+      if (nextField.current.tagName === 'INPUT') {
+        (nextField.current as HTMLInputElement).focus();
+      } else {
+        const input = nextField.current.querySelector('input');
+        input?.focus();
+      }
+    }
+  };
+
+  // Focus the first row of the DataGrid
+  const focusFirstDataGridRow = () => {
+    // Blur the status filter
+    if (statusFilterRef.current) {
+      if (statusFilterRef.current.tagName === 'INPUT') {
+        (statusFilterRef.current as HTMLInputElement).blur();
+      } else {
+        const input = statusFilterRef.current.querySelector('input');
+        input?.blur();
+      }
+    }
+
+    // Focus the first row of the table
+    if (products.length > 0) {
+      const firstRow = document.querySelector('[data-row-index="0"]');
+      if (firstRow) {
+        (firstRow as HTMLElement).focus();
+        setSelectedRowID(products[0].id);
+      }
+    }
+  };
+
+  const focusPreviousField = (currentRef: React.RefObject<HTMLElement>) => {
+    const fields = [searchFieldRef, categoryFilterRef, statusFilterRef];
+    const currentIndex = fields.findIndex(ref => ref === currentRef);
+    const prevIndex = currentIndex === 0 ? fields.length - 1 : currentIndex - 1;
+    const prevField = fields[prevIndex];
+    
+    if (prevField.current) {
+      if (prevField.current.tagName === 'INPUT') {
+        (prevField.current as HTMLInputElement).focus();
+      } else {
+        const input = prevField.current.querySelector('input');
+        input?.focus();
+      }
+    }
+  };
+
+  // Keyboard shortcuts
+  useListPageKeyboardShortcuts({
+    onFocusSearch: handleFocusSearch,
+    onClearFilters: handleClearFilters,
+    onEditSelected: handleEditSelected,
+    onDeleteSelected: handleDeleteProduct,
+    onToggleStatus: handleToggleStatus,
+    onCreateNew: handleCreateNew,
+    onRefresh: handleRefresh,
+    onPreviousPage: handlePreviousPage,
+    onNextPage: handleNextPage,
+    onShowHelp: handleShowHelp,
+    hasSelectedItem: !!selectedRowID,
+    canToggleStatus: true,
+    hasNextPage: count ? (page + 1) * pageSize < count : false,
+    hasPreviousPage: page > 0,
+  });
+
+
 
   return (
     <>
@@ -189,6 +337,7 @@ export const ProductList = () => {
 
         <Grid item xs={4}>
           <TextField
+            ref={searchFieldRef}
             value={searchTitle}
             fullWidth
             onChange={handleSearchTitle}
@@ -204,83 +353,111 @@ export const ProductList = () => {
           />
         </Grid>
         <Grid item xs={4}>
-          <Autocomplete
+          <EnhancedAutocomplete
+            ref={categoryFilterRef}
             id="category-filter"
             options={categories}
-            getOptionLabel={(option) => option.name}
-            fullWidth
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                variant="outlined"
-                label="Categoria"
-              />
-            )}
-            isOptionEqualToValue={(option, value) =>
+            getOptionLabel={(option: ProductCategory) => option.name}
+            label="Categoria"
+            isOptionEqualToValue={(option: ProductCategory, value: ProductCategory) =>
               option.id === value.id
             }
             onChange={handleCategorySelect}
+            onNextField={() => focusNextField(categoryFilterRef)}
+            onPreviousField={() => focusPreviousField(categoryFilterRef)}
+            value={categorySelected}
           />
         </Grid>
         <Grid item xs={4}>
-          <Autocomplete
+          <EnhancedAutocomplete
+            ref={statusFilterRef}
             id="status-filter"
             options={statuses}
-            getOptionLabel={(option) => option.label}
-            fullWidth
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                variant="outlined"
-                label="Status"
-              />
-            )}
-            isOptionEqualToValue={(option, value) =>
+            getOptionLabel={(option: SelectField<string>) => option.label}
+            label="Status"
+            isOptionEqualToValue={(option: SelectField<string>, value: SelectField<string>) =>
               option.value === value.value
             }
             onChange={handleStatusSelection}
+            onNextField={focusFirstDataGridRow}
+            onPreviousField={() => focusPreviousField(statusFilterRef)}
+            value={statusSelected}
           />
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth disabled={!selectedRowID} onClick={() => navigate(`/products/${selectedRowID}`)}
-          > Editar Produto </Button>
+          <Tooltip title="Ctrl/Cmd + E" placement="top">
+            <Button 
+              fullWidth 
+              disabled={!selectedRowID} 
+              onClick={() => navigate(`/products/${selectedRowID}`)}
+              tabIndex={-1}
+            > 
+              Editar Produto 
+            </Button>
+          </Tooltip>
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth disabled={!selectedRowID} onClick={handleDeleteProduct}
-          > Deletar Produto </Button>
+          <Tooltip title="Ctrl/Cmd + D" placement="top">
+            <Button 
+              fullWidth 
+              disabled={!selectedRowID} 
+              onClick={handleDeleteProduct}
+              tabIndex={-1}
+            > 
+              Deletar Produto 
+            </Button>
+          </Tooltip>
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth disabled={!selectedRowID} onClick={handleDeactivateProduct}
-          > Desativar Produto </Button>
+          <Tooltip title="Ctrl/Cmd + I" placement="top">
+            <Button 
+              fullWidth 
+              disabled={!selectedRowID} 
+              onClick={handleDeactivateProduct}
+              tabIndex={-1}
+            > 
+              Desativar Produto 
+            </Button>
+          </Tooltip>
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth onClick={() => navigate(`/products/create`)}
-          > Cadastrar Produto </Button>
+          <Tooltip title="Ctrl/Cmd + N" placement="top">
+            <Button 
+              fullWidth 
+              onClick={() => navigate(`/products/create`)}
+              tabIndex={-1}
+            > 
+              Cadastrar Produto 
+            </Button>
+          </Tooltip>
         </Grid>
 
         <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
-          <DataGrid
-            rows={products}
+          <CustomDataTable
+            data={products}
             columns={columns}
-            initialState={{
-              pagination: {
-                paginationModel: { page: 0, pageSize: 10 },
-              },
-            }}
-            pageSizeOptions={[10, 20]}
-            paginationModel={{ page, pageSize }}
-            onRowSelectionModelChange={handleRowSelection}
-            onPaginationModelChange={handlePaginationModelChange}
-            onRowDoubleClick={(params) => navigate(`/products/${params.row.id}`)}
-            hideFooterSelectedRowCount
-            rowCount={count ?? 0}
-            rowSelectionModel={[selectedRowID]} 
-            paginationMode="server"
+            totalCount={count}
             loading={loading}
-            disableColumnMenu
-            localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
+            selectedRowId={selectedRowID}
+            onRowSelectionChange={handleRowSelectionChange}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            onRowDoubleClick={(product) => navigate(`/products/${product.id}`)}
+            onNavigateToNextField={() => {
+              // Navigate to next component after table (could be action buttons)
+            }}
+            onNavigateToPreviousField={() => {
+              // Navigate back to status filter
+              if (statusFilterRef.current) {
+                const input = statusFilterRef.current.querySelector('input');
+                input?.focus();
+              }
+            }}
+            getRowId={(product) => product.id}
+            onEditSelected={handleEditSelected}
+            onDeleteSelected={handleDeleteProduct}
           />
         </Grid>
       </Grid>
@@ -289,6 +466,13 @@ export const ProductList = () => {
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         resourceName="produto"
+      />
+      
+      <ListPageKeyboardHelp
+        open={showHelp}
+        onClose={handleCloseHelp}
+        title="Atalhos do Teclado - Produtos"
+        showInactivate={true}
       />
     </>
   );

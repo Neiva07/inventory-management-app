@@ -16,11 +16,11 @@ export interface SelectField<T = string> {
 export interface FormPrice {
   profit: number;
   value: number;
-  paymentMethod: SelectField;
+  paymentMethod: SelectField | null;
 }
 
 export interface FormVariant {
-  unit: SelectField;
+  unit: SelectField | null;
   conversionRate: number;
   unitCost: number;
   prices: Array<FormPrice>;
@@ -43,17 +43,11 @@ export interface ProductFormDataInterface {
 export const DEFAULT_PRICE: FormPrice = {
   profit: 0,
   value: 0,
-  paymentMethod: {
-    label: "",
-    value: "",
-  },
+  paymentMethod: null,
 }
 
 export const DEFAULT_VARIANT_VALUE: FormVariant = {
-  unit: {
-    label: "",
-    value: "",
-  },
+  unit: null,
   conversionRate: 0,
   unitCost: 0,
   prices: [DEFAULT_PRICE],

@@ -19,12 +19,50 @@ interface FormWrapperOptions {
     shortcut: string;
     description: string;
   }>;
+  fieldRefs?: React.RefObject<HTMLElement>[];
 }
 
 export const useFormWrapper = (options: FormWrapperOptions) => {
   const [showHelp, setShowHelp] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
+
+  // Field navigation functions
+  const focusNextField = (currentRef: React.RefObject<HTMLElement>) => {
+    if (!options.fieldRefs || options.fieldRefs.length === 0) return;
+    
+    const fields = options.fieldRefs;
+    const currentIndex = fields.findIndex(ref => ref === currentRef);
+    const nextIndex = (currentIndex + 1) % fields.length;
+    const nextField = fields[nextIndex];
+    
+    if (nextField.current) {
+      if (nextField.current.tagName === 'INPUT') {
+        (nextField.current as HTMLInputElement).focus();
+      } else {
+        const input = nextField.current.querySelector('input');
+        input?.focus();
+      }
+    }
+  };
+
+  const focusPreviousField = (currentRef: React.RefObject<HTMLElement>) => {
+    if (!options.fieldRefs || options.fieldRefs.length === 0) return;
+    
+    const fields = options.fieldRefs;
+    const currentIndex = fields.findIndex(ref => ref === currentRef);
+    const prevIndex = currentIndex === 0 ? fields.length - 1 : currentIndex - 1;
+    const prevField = fields[prevIndex];
+    
+    if (prevField.current) {
+      if (prevField.current.tagName === 'INPUT') {
+        (prevField.current as HTMLInputElement).focus();
+      } else {
+        const input = prevField.current.querySelector('input');
+        input?.focus();
+      }
+    }
+  };
 
   // Auto-focus first field on mount
   useEffect(() => {
@@ -61,5 +99,7 @@ export const useFormWrapper = (options: FormWrapperOptions) => {
     firstFieldRef,
     helpTitle: options.helpTitle || "Atalhos do Teclado",
     customHelpShortcuts: options.customHelpShortcuts || [],
+    focusNextField,
+    focusPreviousField,
   };
 }; 

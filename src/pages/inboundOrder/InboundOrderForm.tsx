@@ -8,7 +8,7 @@ import { InboundOrderFormLineItemList } from "./InboundOrderFormLineItemList";
 import { InboundOrderItemDataInterface, useInboundOrderForm } from "./useInboundOrderForm";
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { CreateModeToggle } from 'components/CreateModeToggle';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { integerDivide, multiply } from "lib/math";
 import { subtract } from "lib/math";
 import { InstallmentPlanModal } from 'components/InstallmentPlanModal';
@@ -21,7 +21,7 @@ import { useFormWrapper } from '../../hooks/useFormWrapper';
 import { KeyboardShortcutsHelp } from 'components/KeyboardShortcutsHelp';
 import { ProductUpdateModal } from 'components/ProductUpdateModal';
 import { ProductUpdateToggle } from 'components/ProductUpdateToggle';
-import { Product, Variant } from 'model/products';
+import { Product } from 'model/products';
 
 export const InboundOrderForm = () => {
   const { inboundOrderID } = useParams();
@@ -42,6 +42,17 @@ export const InboundOrderForm = () => {
   
   // Ref for the product selection Autocomplete
   const productSelectRef = React.useRef<HTMLDivElement>(null);
+  
+  // Header field refs
+  const supplierRef = useRef<HTMLDivElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
+  const orderDateRef = useRef<HTMLInputElement>(null);
+  const dueDateRef = useRef<HTMLInputElement>(null);
+  
+  // Line item field refs
+  const variantRef = useRef<HTMLDivElement>(null);
+  const quantityRef = useRef<HTMLInputElement>(null);
+  const unitCostRef = useRef<HTMLInputElement>(null);
   
   const { 
     register, 
@@ -223,7 +234,8 @@ export const InboundOrderForm = () => {
         }, 100);
       }
     } catch (error) {
-      console.error('Error in product update confirmation:', error);
+      console.error('Error updating product:', error);
+      toast.error('Erro ao atualizar produto');
     }
   }
 
@@ -251,12 +263,14 @@ export const InboundOrderForm = () => {
     document.dispatchEvent(f1Event);
   };
 
-  // Form wrapper with keyboard shortcuts
+  // Form wrapper with keyboard shortcuts and field navigation
   const {
     showHelp,
     closeHelp,
     formRef,
     firstFieldRef,
+    focusNextField,
+    focusPreviousField,
   } = useFormWrapper({
     onSubmit: hasItems ? () => setInstallmentModalOpen(true) : undefined,
     onCancel: () => navigate('/inbound-orders'),
@@ -269,6 +283,16 @@ export const InboundOrderForm = () => {
       'Ctrl/Cmd + P': handleAddItem,
       'Ctrl/Cmd + Y': handleToggleProductUpdate,
     },
+    fieldRefs: [
+      supplierRef, // Header row 1
+      statusRef,
+      orderDateRef, // Header row 2
+      dueDateRef,
+      productSelectRef, // Line item row 1
+      variantRef,
+      quantityRef, // (inventory is not focusable)
+      unitCostRef, // Line item row 2
+    ],
   });
 
   const deleteLineItemFromForm = (itemToDelete: InboundOrderItemDataInterface) => {
@@ -290,10 +314,28 @@ export const InboundOrderForm = () => {
   return (
     <FormProvider register={register} reset={reset} {...formMethods}>
       <Box component="form" ref={formRef}>
-        <InboundOrderFormHeader onDelete={handleDelete} inboundOrder={inboundOrder} firstFieldRef={firstFieldRef} onShowHelp={handleShowHelp} />
+        <InboundOrderFormHeader 
+          onDelete={handleDelete} 
+          inboundOrder={inboundOrder} 
+          firstFieldRef={firstFieldRef}
+          onShowHelp={handleShowHelp}
+          focusNextField={focusNextField}
+          focusPreviousField={focusPreviousField}
+          headerRefs={{
+            supplierRef,
+            statusRef,
+            orderDateRef,
+            dueDateRef,
+          }}
+        />
         <Box style={{ marginTop: 40 }}>
           <InboundOrderFormLineItemForm 
             productSelectRef={productSelectRef}
+            variantRef={variantRef}
+            quantityRef={quantityRef}
+            unitCostRef={unitCostRef}
+            focusNextField={focusNextField}
+            focusPreviousField={focusPreviousField}
             products={products}
             handleSelectProduct={handleSelectProduct}
             handleSelectVariant={handleSelectVariant}

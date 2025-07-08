@@ -4,7 +4,7 @@ import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import ReactInputMask from 'react-input-mask';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { states } from '../../model/region';
 import { useAuth } from 'context/auth';
@@ -26,6 +26,20 @@ export const SupplierForm = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { form, supplier, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, availableCities } = useSupplierCreateForm(supplierID);
+
+  // Field navigation refs
+  const tradeNameRef = useRef<HTMLInputElement>(null);
+  const legalNameRef = useRef<HTMLInputElement>(null);
+  const entityIDRef = useRef<HTMLInputElement>(null);
+  const streetRef = useRef<HTMLInputElement>(null);
+  const postalCodeRef = useRef<HTMLInputElement>(null);
+  const regionRef = useRef<HTMLDivElement>(null);
+  const cityRef = useRef<HTMLDivElement>(null);
+  const companyPhoneRef = useRef<HTMLInputElement>(null);
+  const contactNameRef = useRef<HTMLInputElement>(null);
+  const contactPhoneRef = useRef<HTMLInputElement>(null);
+  const creditTermRef = useRef<HTMLInputElement>(null);
+  const productCategoriesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
@@ -65,6 +79,12 @@ export const SupplierForm = () => {
   const handleReset = () => {
     if (window.confirm('Tem certeza que deseja resetar o formulário? Todas as alterações serão perdidas.')) {
       form.reset();
+      if (!supplierID) {
+        // Auto-focus first field after reset for new suppliers
+        setTimeout(() => {
+          tradeNameRef.current?.focus();
+        }, 100);
+      }
     }
   }
 
@@ -72,12 +92,14 @@ export const SupplierForm = () => {
     setIsCreateMode(!isCreateMode);
   }
 
-  // Form wrapper with keyboard shortcuts
+  // Form wrapper with keyboard shortcuts and field navigation
   const {
     showHelp,
     closeHelp,
     formRef,
     firstFieldRef,
+    focusNextField,
+    focusPreviousField,
   } = useFormWrapper({
     onSubmit: handleSubmit,
     onCancel: () => navigate('/suppliers'),
@@ -88,6 +110,7 @@ export const SupplierForm = () => {
     onToggleCreateMode: handleToggleCreateMode,
     autoFocusField: 'tradeName',
     helpTitle: 'Atalhos do Teclado - Fornecedor',
+    fieldRefs: [tradeNameRef, legalNameRef, entityIDRef, streetRef, postalCodeRef, regionRef, cityRef, companyPhoneRef, contactNameRef, contactPhoneRef, creditTermRef, productCategoriesRef],
   });
 
   return (
@@ -139,6 +162,7 @@ export const SupplierForm = () => {
                   return (
                     <TextField
                       {...field}
+                      ref={tradeNameRef}
                       variant="outlined"
                       label="Nome Fantasia"
                       error={!!form.formState.errors.tradeName}
@@ -158,6 +182,7 @@ export const SupplierForm = () => {
                   return (
                     <TextField
                       {...field}
+                      ref={legalNameRef}
                       variant="outlined"
                       label="Razão Social"
                       error={!!form.formState.errors.legalName}
@@ -183,6 +208,7 @@ export const SupplierForm = () => {
                       {() =>
                         <TextField
                           {...field}
+                          ref={entityIDRef}
                           variant="outlined"
                           label="CNPJ"
                           error={!!form.formState.errors.entityID}
@@ -204,10 +230,12 @@ export const SupplierForm = () => {
                   return (
                     <TextField
                       {...field}
+                      ref={streetRef}
                       variant="outlined"
                       label="Endereço"
                       error={!!(form.formState.errors.address?.street)}
                       helperText={form.formState.errors.address?.street?.message}
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
@@ -230,6 +258,7 @@ export const SupplierForm = () => {
                       {() =>
                         <TextField
                           {...field}
+                          ref={postalCodeRef}
                           variant="outlined"
                           label="CEP"
                           error={!!form.formState.errors.address?.postalCode}
@@ -274,6 +303,9 @@ export const SupplierForm = () => {
                         option.value === value.value
                       }
                       onChange={handleChange}
+                      onNextField={() => focusNextField(regionRef)}
+                      onPreviousField={() => focusPreviousField(regionRef)}
+                      ref={regionRef}
                     />
                   );
                 }}
@@ -308,6 +340,9 @@ export const SupplierForm = () => {
                       }
                       onChange={handleChange}
                       disabled={!availableCities || availableCities.length === 0}
+                      onNextField={() => focusNextField(cityRef)}
+                      onPreviousField={() => focusPreviousField(cityRef)}
+                      ref={cityRef}
                     />
                   );
                 }}
@@ -333,6 +368,7 @@ export const SupplierForm = () => {
 
                         <TextField
                           {...field}
+                          ref={companyPhoneRef}
                           variant="outlined"
                           label="Telefone da Empresa"
                           error={!!form.formState.errors.companyPhone}
@@ -364,6 +400,7 @@ export const SupplierForm = () => {
 
                         <TextField
                           {...field}
+                          ref={contactPhoneRef}
                           variant="outlined"
                           label="Telefone do Contato"
                           error={!!form.formState.errors.contactPhone}
@@ -385,6 +422,7 @@ export const SupplierForm = () => {
                   return (
                     <TextField
                       {...field}
+                      ref={contactNameRef}
                       variant="outlined"
                       label="Nome do contato"
                       error={!!form.formState.errors.contactName}
@@ -424,6 +462,9 @@ export const SupplierForm = () => {
                       isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value.value
                       }
+                      onNextField={() => focusNextField(productCategoriesRef)}
+                      onPreviousField={() => focusPreviousField(productCategoriesRef)}
+                      ref={productCategoriesRef}
                       renderTags={(list: SelectField[]) => {
                         const displayList = list
                           .map((item: SelectField) => item.label)
@@ -446,10 +487,12 @@ export const SupplierForm = () => {
                   return (
                     <TextField
                       {...field}
+                      ref={creditTermRef}
                       variant="outlined"
                       label="Prazo de crédito"
                       error={!!form.formState.errors.daysToPay}
                       helperText={form.formState.errors.daysToPay?.message}
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
@@ -506,4 +549,4 @@ export const SupplierForm = () => {
       </Box>
     </FormProvider>
   );
-}
+};

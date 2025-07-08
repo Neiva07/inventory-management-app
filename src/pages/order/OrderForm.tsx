@@ -8,7 +8,7 @@ import { OrderFormLineItemList } from "./OrderFormLineItemList";
 import { ItemDataInterface, useOrderForm } from "./useOrderForm";
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { CreateModeToggle } from 'components/CreateModeToggle';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { integerDivide, multiply } from "lib/math";
 import { subtract } from "lib/math";
 import { useFormWrapper } from '../../hooks/useFormWrapper';
@@ -23,6 +23,20 @@ export const OrderForm = () => {
   
   // Ref for the product selection Autocomplete
   const productSelectRef = React.useRef<HTMLDivElement>(null);
+  
+  // Header field refs
+  const customerRef = useRef<HTMLDivElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
+  const paymentMethodRef = useRef<HTMLDivElement>(null);
+  const orderDateRef = useRef<HTMLInputElement>(null);
+  const dueDateRef = useRef<HTMLInputElement>(null);
+  
+  // Line item field refs
+  const variantRef = useRef<HTMLDivElement>(null);
+  const quantityRef = useRef<HTMLInputElement>(null);
+  const unitPriceRef = useRef<HTMLInputElement>(null);
+  const discountRef = useRef<HTMLInputElement>(null);
+  const commissionRef = useRef<HTMLInputElement>(null);
   
   const { 
     register, 
@@ -122,12 +136,14 @@ export const OrderForm = () => {
     document.dispatchEvent(f1Event);
   };
 
-  // Form wrapper with keyboard shortcuts
+  // Form wrapper with keyboard shortcuts and field navigation
   const {
     showHelp,
     closeHelp,
     formRef,
     firstFieldRef,
+    focusNextField,
+    focusPreviousField,
   } = useFormWrapper({
     onSubmit: hasItems ? handleSubmit : undefined,
     onCancel: () => navigate('/orders'),
@@ -139,6 +155,19 @@ export const OrderForm = () => {
     customShortcuts: {
       'Ctrl/Cmd + P': handleAddItem,
     },
+    fieldRefs: [
+      customerRef, // Header row 1
+      statusRef,
+      paymentMethodRef,
+      orderDateRef, // Header row 2
+      dueDateRef,
+      productSelectRef, // Line item row 1
+      variantRef,
+      quantityRef, // (inventory is not focusable)
+      unitPriceRef, // Line item row 2
+      discountRef,
+      commissionRef, // (unit cost and total are not focusable)
+    ],
   });
 
   const deleteLineItemFromForm = (itemToDelete: ItemDataInterface) => {
@@ -160,10 +189,28 @@ export const OrderForm = () => {
     return (
     <FormProvider register={register} reset={reset} {...formMethods}>
       <Box component="form" ref={formRef}>
-        <OrderFormHeader onDelete={handleDelete} order={order} firstFieldRef={firstFieldRef} />
+        <OrderFormHeader 
+          onDelete={handleDelete} 
+          order={order} 
+          firstFieldRef={firstFieldRef}
+          focusNextField={focusNextField}
+          focusPreviousField={focusPreviousField}
+          headerRefs={{
+            customerRef,
+            statusRef,
+            paymentMethodRef,
+            orderDateRef,
+            dueDateRef,
+          }}
+        />
         <Box style={{ marginTop: 40 }}>
           <OrderFormLineItemForm 
             productSelectRef={productSelectRef}
+            variantRef={variantRef}
+            quantityRef={quantityRef}
+            unitPriceRef={unitPriceRef}
+            discountRef={discountRef}
+            commissionRef={commissionRef}
             products={products}
             handleSelectProduct={handleSelectProduct}
             handleSelectVariant={handleSelectVariant}
@@ -198,7 +245,7 @@ export const OrderForm = () => {
 
               <Tooltip 
                 title={!hasItems ? "Você precisa adicionar ao menos 1 item para fechar a nota" : "Ctrl/Cmd + Enter"}
-                arrow
+                placement="top"
               >
                 <Button 
                   onClick={hasItems ? handleSubmit : undefined} 
@@ -213,7 +260,7 @@ export const OrderForm = () => {
                   Fechar Nota
                 </Button>
               </Tooltip>
-              </>
+            </>
           )}
         
         <DeleteConfirmationDialog
@@ -223,7 +270,6 @@ export const OrderForm = () => {
           resourceName="venda"
         />
         
-        {/* Keyboard Help Modal */}
         <KeyboardShortcutsHelp
           open={showHelp}
           onClose={closeHelp}
@@ -235,5 +281,5 @@ export const OrderForm = () => {
         />
       </Box>
     </FormProvider>
-  )
-}
+  );
+};

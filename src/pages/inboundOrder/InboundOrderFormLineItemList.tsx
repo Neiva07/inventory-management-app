@@ -4,8 +4,6 @@ import { DataGrid, GridCellParams, GridColDef, GridDeleteIcon, GridRowIdGetter }
 import { useState } from "react"
 import { useFormContext } from "react-hook-form"
 import { InboundOrderItemDataInterface, InboundOrderFormDataInterface } from "./useInboundOrderForm"
-import { add, divide, integerDivide, multiply, subtract } from "lib/math"
-import { Product } from "model/products"
 import { DeleteConfirmationDialog } from "components/DeleteConfirmationDialog"
 
 export const InboundOrderFormLineItemList = ({ deleteLineItemFromForm }: { deleteLineItemFromForm: (item: InboundOrderItemDataInterface) => void  }) => {

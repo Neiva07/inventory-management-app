@@ -8,7 +8,12 @@ import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
 
 export const InboundOrderFormLineItemForm = ({ 
   productSelectRef,
+  variantRef,
+  quantityRef,
+  unitCostRef,
   products,
+  focusNextField,
+  focusPreviousField,
   // Form methods and business logic
   handleSelectProduct,
   handleSelectVariant,
@@ -19,7 +24,12 @@ export const InboundOrderFormLineItemForm = ({
   handleDialogClose,
 }: { 
   productSelectRef: React.RefObject<HTMLDivElement>,
+  variantRef: React.RefObject<HTMLDivElement>,
+  quantityRef: React.RefObject<HTMLInputElement>,
+  unitCostRef: React.RefObject<HTMLInputElement>,
   products: Array<Product>,
+  focusNextField: (currentRef: React.RefObject<HTMLElement>) => void,
+  focusPreviousField: (currentRef: React.RefObject<HTMLElement>) => void,
   // Form methods and business logic
   handleSelectProduct: (event: React.SyntheticEvent<Element, Event>, value: Product) => void,
   handleSelectVariant: (event: React.SyntheticEvent<Element, Event>, value: Variant) => void,
@@ -56,6 +66,8 @@ export const InboundOrderFormLineItemForm = ({
                 field.onChange(value);
                 handleSelectProduct(event, value);
               }}
+              onNextField={() => focusNextField(productSelectRef)}
+              onPreviousField={() => focusPreviousField(productSelectRef)}
               ref={productSelectRef}
             />
           )}
@@ -80,6 +92,9 @@ export const InboundOrderFormLineItemForm = ({
                 field.onChange(value);
                 handleSelectVariant(event, value);
               }}
+              onNextField={() => focusNextField(variantRef)}
+              onPreviousField={() => focusPreviousField(variantRef)}
+              ref={variantRef}
             />
           )}
         />
@@ -100,6 +115,7 @@ export const InboundOrderFormLineItemForm = ({
           render={({ field }) => (
             <TextField
               {...field}
+              ref={quantityRef}
               label="Quantidade"
               fullWidth
               variant="outlined"
@@ -116,6 +132,7 @@ export const InboundOrderFormLineItemForm = ({
           render={({ field }) => (
             <TextField
               {...field}
+              ref={unitCostRef}
               label="Custo Unitário"
               fullWidth
               variant="outlined"

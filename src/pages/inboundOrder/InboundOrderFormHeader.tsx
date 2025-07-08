@@ -1,7 +1,7 @@
 import { FormControl, Grid, Box } from "@mui/material"
 import { Supplier, getSuppliers } from "model/suppliers";
 import { SelectField } from "pages/product/useProductCreateForm";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Controller, useFormContext } from "react-hook-form"
 import { InboundOrderFormDataInterface } from "./useInboundOrderForm";
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -15,7 +15,22 @@ import { statuses } from './useInboundOrderForm';
 import { TotalCostDisplay } from 'components/TotalCostDisplay';
 import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
 
-export const InboundOrderFormHeader = ({ onDelete, inboundOrder, firstFieldRef, onShowHelp }: { onDelete?: () => void; inboundOrder?: InboundOrder; firstFieldRef?: React.RefObject<HTMLDivElement>; onShowHelp?: () => void  }) => {
+interface InboundOrderFormHeaderProps {
+  onDelete?: () => void;
+  inboundOrder?: InboundOrder;
+  firstFieldRef?: React.RefObject<HTMLDivElement>;
+  onShowHelp?: () => void;
+  focusNextField?: (currentRef: React.RefObject<HTMLElement>) => void;
+  focusPreviousField?: (currentRef: React.RefObject<HTMLElement>) => void;
+  headerRefs?: {
+    supplierRef: React.RefObject<HTMLDivElement>;
+    statusRef: React.RefObject<HTMLDivElement>;
+    orderDateRef: React.RefObject<HTMLInputElement>;
+    dueDateRef: React.RefObject<HTMLInputElement>;
+  };
+}
+
+export const InboundOrderFormHeader = ({ onDelete, inboundOrder, firstFieldRef, onShowHelp, focusNextField, focusPreviousField, headerRefs }: InboundOrderFormHeaderProps) => {
   const { user } = useAuth();
   const { inboundOrderID } = useParams();
   const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
@@ -58,6 +73,7 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder, firstFieldRef, 
             showDelete={!!inboundOrderID}
             onDelete={onDelete}
             onShowHelp={onShowHelp}
+            absolute={true}
           />
         </Box>
       </Box>
@@ -95,7 +111,9 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder, firstFieldRef, 
                       onChange={handleChange}
                       error={!!formMethods.formState.errors.supplier}
                       helperText={formMethods.formState.errors.supplier?.label?.message}
-                      ref={firstFieldRef}
+                      ref={firstFieldRef || headerRefs?.supplierRef}
+                      onNextField={() => focusNextField(headerRefs?.supplierRef!)}
+                      onPreviousField={() => focusPreviousField(headerRefs?.supplierRef!)}
                     />
                   </>
                 );
@@ -131,6 +149,9 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder, firstFieldRef, 
                         option.value === value.value
                       }
                       onChange={handleChange}
+                      ref={headerRefs?.statusRef}
+                      onNextField={() => focusNextField(headerRefs?.statusRef!)}
+                      onPreviousField={() => focusPreviousField(headerRefs?.statusRef!)}
                     />
                   </>
                 );
@@ -149,10 +170,11 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder, firstFieldRef, 
                   <DatePicker 
                     {...field} 
                     label="Data da Compra" 
+                    ref={headerRefs?.orderDateRef}
                     slotProps={{
                       textField: {
                         error: !!formMethods.formState.errors.orderDate,
-                        helperText: formMethods.formState.errors.orderDate?.message
+                        helperText: formMethods.formState.errors.orderDate?.message,
                       }
                     }}
                   />
@@ -174,7 +196,9 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder, firstFieldRef, 
                     slotProps={{
                       textField: {
                         error: !!formMethods.formState.errors.dueDate,
-                        helperText: formMethods.formState.errors.dueDate?.message
+                        helperText: formMethods.formState.errors.dueDate?.message,
+                        ref: headerRefs?.dueDateRef,
+                        onFocus: (e) => e.target.select(),
                       }
                     }}
                   />

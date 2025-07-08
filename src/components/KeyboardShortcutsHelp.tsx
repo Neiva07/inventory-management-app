@@ -60,7 +60,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
       }}
     >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">{title}</Typography>
+        {title}
         <Button onClick={onClose} size="small">
           <CloseIcon />
         </Button>

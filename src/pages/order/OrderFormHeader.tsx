@@ -36,7 +36,22 @@ export const paymentOptions = [
   }
 ]
 
-export const OrderFormHeader = ({ onDelete, order, firstFieldRef }: { onDelete?: () => void; order?: Order, firstFieldRef?: React.RefObject<HTMLDivElement> }) => {
+interface OrderFormHeaderProps {
+  onDelete?: () => void;
+  order?: Order;
+  firstFieldRef?: React.RefObject<HTMLDivElement>;
+  focusNextField?: (currentRef: React.RefObject<HTMLElement>) => void;
+  focusPreviousField?: (currentRef: React.RefObject<HTMLElement>) => void;
+  headerRefs?: {
+    customerRef: React.RefObject<HTMLDivElement>;
+    statusRef: React.RefObject<HTMLDivElement>;
+    paymentMethodRef: React.RefObject<HTMLDivElement>;
+    orderDateRef: React.RefObject<HTMLInputElement>;
+    dueDateRef: React.RefObject<HTMLInputElement>;
+  };
+}
+
+export const OrderFormHeader = ({ onDelete, order, firstFieldRef, focusNextField, focusPreviousField, headerRefs }: OrderFormHeaderProps) => {
   const { user } = useAuth();
   const { orderID } = useParams();
   const [customers, setCustomers] = useState<Array<Customer>>([]);
@@ -97,6 +112,7 @@ export const OrderFormHeader = ({ onDelete, order, firstFieldRef }: { onDelete?:
               });
               document.dispatchEvent(f1Event);
             }}
+            absolute={true}
           />
         </Box>
       </Box>
@@ -134,7 +150,9 @@ export const OrderFormHeader = ({ onDelete, order, firstFieldRef }: { onDelete?:
                       onChange={handleChange}
                       error={!!formMethods.formState.errors.customer}
                       helperText={formMethods.formState.errors.customer?.label?.message}
-                      ref={firstFieldRef}
+                      ref={firstFieldRef || headerRefs?.customerRef}
+                      onNextField={focusNextField ? () => focusNextField(headerRefs?.customerRef!) : undefined}
+                      onPreviousField={focusPreviousField ? () => focusPreviousField(headerRefs?.customerRef!) : undefined}
                     />
                   </>
                 );
@@ -170,6 +188,9 @@ export const OrderFormHeader = ({ onDelete, order, firstFieldRef }: { onDelete?:
                         option.value === value.value
                       }
                       onChange={handleChange}
+                      ref={headerRefs?.statusRef}
+                      onNextField={focusNextField ? () => focusNextField(headerRefs?.statusRef!) : undefined}
+                      onPreviousField={focusPreviousField ? () => focusPreviousField(headerRefs?.statusRef!) : undefined}
                     />
                   </>
                 );
@@ -208,6 +229,9 @@ export const OrderFormHeader = ({ onDelete, order, firstFieldRef }: { onDelete?:
                       onChange={handleChange}
                       error={!!formMethods.formState.errors.paymentMethod}
                       helperText={formMethods.formState.errors.paymentMethod?.message}
+                      ref={headerRefs?.paymentMethodRef}
+                      onNextField={focusNextField ? () => focusNextField(headerRefs?.paymentMethodRef!) : undefined}
+                      onPreviousField={focusPreviousField ? () => focusPreviousField(headerRefs?.paymentMethodRef!) : undefined}
                     />
                   </>
                 );
@@ -229,7 +253,9 @@ export const OrderFormHeader = ({ onDelete, order, firstFieldRef }: { onDelete?:
                     slotProps={{
                       textField: {
                         error: !!formMethods.formState.errors.orderDate,
-                        helperText: formMethods.formState.errors.orderDate?.message
+                        helperText: formMethods.formState.errors.orderDate?.message,
+                        ref: headerRefs?.orderDateRef,
+                        onFocus: (e) => e.target.select(),
                       }
                     }}
                   />
@@ -251,7 +277,9 @@ export const OrderFormHeader = ({ onDelete, order, firstFieldRef }: { onDelete?:
                     slotProps={{
                       textField: {
                         error: !!formMethods.formState.errors.dueDate,
-                        helperText: formMethods.formState.errors.dueDate?.message
+                        helperText: formMethods.formState.errors.dueDate?.message,
+                        ref: headerRefs?.dueDateRef,
+                        onFocus: (e) => e.target.select(),
                       }
                     }}
                   />

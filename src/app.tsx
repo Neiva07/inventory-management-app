@@ -258,6 +258,16 @@ const theme = createTheme({
           '& .MuiDataGrid-row:hover': {
             backgroundColor: 'rgba(0, 0, 0, 0.02)',
           },
+          //@ts-ignore: Advanced selector for DataGrid row selection highlight
+          '& .MuiDataGrid-row.Mui-selected': {
+            backgroundColor: 'primary.100', 
+            '&:hover': {
+              backgroundColor: 'primary.200',
+            },
+          },
+          '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
+            outline: 'none',
+          },
           '& .MuiDataGrid-columnHeaders': {
             minHeight: '52px !important',
           },

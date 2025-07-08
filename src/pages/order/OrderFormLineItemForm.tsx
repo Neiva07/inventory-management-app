@@ -9,6 +9,11 @@ import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
 
 export const OrderFormLineItemForm = ({ 
   productSelectRef,
+  variantRef,
+  quantityRef,
+  unitPriceRef,
+  discountRef,
+  commissionRef,
   products,
   // Form methods and business logic
   handleSelectProduct,
@@ -20,6 +25,11 @@ export const OrderFormLineItemForm = ({
   handleDialogClose,
 }: { 
   productSelectRef: React.RefObject<HTMLDivElement>,
+  variantRef: React.RefObject<HTMLDivElement>,
+  quantityRef: React.RefObject<HTMLInputElement>,
+  unitPriceRef: React.RefObject<HTMLInputElement>,
+  discountRef: React.RefObject<HTMLInputElement>,
+  commissionRef: React.RefObject<HTMLInputElement>,
   products: Array<Product>,
   // Form methods and business logic
   handleSelectProduct: (event: React.SyntheticEvent<Element, Event>, value: Product) => void,
@@ -81,6 +91,7 @@ export const OrderFormLineItemForm = ({
                 field.onChange(value);
                 handleSelectVariant(event, value);
               }}
+              ref={variantRef}
             />
           )}
         />
@@ -101,6 +112,7 @@ export const OrderFormLineItemForm = ({
           render={({ field }) => (
             <TextField
               {...field}
+              ref={quantityRef}
               label="Quantidade"
               fullWidth
               variant="outlined"
@@ -126,6 +138,7 @@ export const OrderFormLineItemForm = ({
           render={({ field }) => (
             <TextField
               {...field}
+              ref={unitPriceRef}
               label="Preço"
               fullWidth
               variant="outlined"
@@ -142,6 +155,7 @@ export const OrderFormLineItemForm = ({
           render={({ field }) => (
             <TextField
               {...field}
+              ref={discountRef}
               label="Desconto (%)"
               fullWidth
               variant="outlined"
@@ -158,6 +172,7 @@ export const OrderFormLineItemForm = ({
           render={({ field }) => (
             <TextField
               {...field}
+              ref={commissionRef}
               label="Comissão do Vendedor (%)"
               fullWidth
               variant="outlined"

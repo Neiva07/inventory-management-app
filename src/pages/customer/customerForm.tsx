@@ -8,7 +8,7 @@ import { states } from '../../model/region';
 import { PageTitle } from 'components/PageTitle';
 import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { useFormWrapper } from '../../hooks/useFormWrapper';
@@ -22,6 +22,18 @@ export const CustomerForm = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { form, customer, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, availableCities } = useCustomerCreateForm(customerID);
+
+  // Field navigation refs
+  const nameRef = useRef<HTMLInputElement>(null);
+  const cpfRef = useRef<HTMLInputElement>(null);
+  const rgRef = useRef<HTMLInputElement>(null);
+  const streetRef = useRef<HTMLInputElement>(null);
+  const postalCodeRef = useRef<HTMLInputElement>(null);
+  const regionRef = useRef<HTMLDivElement>(null);
+  const cityRef = useRef<HTMLDivElement>(null);
+  const companyPhoneRef = useRef<HTMLInputElement>(null);
+  const contactNameRef = useRef<HTMLInputElement>(null);
+  const contactPhoneRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async () => {
     if (customerID) {
@@ -64,12 +76,14 @@ export const CustomerForm = () => {
     setIsCreateMode(!isCreateMode);
   }
 
-  // Form wrapper with keyboard shortcuts
+  // Form wrapper with keyboard shortcuts and field navigation
   const {
     showHelp,
     closeHelp,
     formRef,
     firstFieldRef,
+    focusNextField,
+    focusPreviousField,
   } = useFormWrapper({
     onSubmit: handleSubmit,
     onCancel: () => navigate('/customers'),
@@ -80,6 +94,7 @@ export const CustomerForm = () => {
     onToggleCreateMode: handleToggleCreateMode,
     autoFocusField: 'name',
     helpTitle: 'Atalhos do Teclado - Cliente',
+    fieldRefs: [nameRef, cpfRef, rgRef, streetRef, postalCodeRef, regionRef, cityRef, companyPhoneRef, contactNameRef, contactPhoneRef],
   });
 
   return (
@@ -128,10 +143,13 @@ export const CustomerForm = () => {
                   return (
                     <TextField
                       {...field}
+                      ref={nameRef}
                       variant="outlined"
                       label="Nome"
                       error={!!form.formState.errors.name}
                       helperText={form.formState.errors.name?.message}
+                      autoFocus
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
@@ -154,6 +172,7 @@ export const CustomerForm = () => {
                       {() =>
                         <TextField
                           {...field}
+                          ref={cpfRef}
                           variant="outlined"
                           label="CPF"
                           error={!!form.formState.errors.cpf}
@@ -182,6 +201,7 @@ export const CustomerForm = () => {
                       {() =>
                         <TextField
                           {...field}
+                          ref={rgRef}
                           variant="outlined"
                           label="RG(Identidade)"
                           error={!!form.formState.errors.rg}
@@ -203,10 +223,12 @@ export const CustomerForm = () => {
                   return (
                     <TextField
                       {...field}
+                      ref={streetRef}
                       variant="outlined"
                       label="Endereço"
                       error={!!(form.formState.errors.address?.street)}
                       helperText={form.formState.errors.address?.street?.message}
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
@@ -229,6 +251,7 @@ export const CustomerForm = () => {
                       {() =>
                         <TextField
                           {...field}
+                          ref={postalCodeRef}
                           variant="outlined"
                           label="CEP"
                           error={!!form.formState.errors.address?.postalCode}
@@ -271,6 +294,9 @@ export const CustomerForm = () => {
                       value={region}
                       isOptionEqualToValue={(option: SelectField, value: SelectField) => option.value === value.value}
                       onChange={handleChange}
+                      onNextField={() => focusNextField(regionRef)}
+                      onPreviousField={() => focusPreviousField(regionRef)}
+                      ref={regionRef}
                     />
                   );
                 }}
@@ -305,6 +331,9 @@ export const CustomerForm = () => {
                       }
                       onChange={handleChange}
                       disabled={!availableCities || availableCities.length === 0}
+                      onNextField={() => focusNextField(cityRef)}
+                      onPreviousField={() => focusPreviousField(cityRef)}
+                      ref={cityRef}
                     />
                   );
                 }}
@@ -331,6 +360,7 @@ export const CustomerForm = () => {
 
                         <TextField
                           {...field}
+                          ref={companyPhoneRef}
                           variant="outlined"
                           label="Telefone da Empresa"
                           error={!!form.formState.errors.companyPhone}
@@ -352,10 +382,12 @@ export const CustomerForm = () => {
                   return (
                     <TextField
                       {...field}
+                      ref={contactNameRef}
                       variant="outlined"
                       label="Nome do contato"
                       error={!!form.formState.errors.contactName}
                       helperText={form.formState.errors.contactName?.message}
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
@@ -381,6 +413,7 @@ export const CustomerForm = () => {
 
                         <TextField
                           {...field}
+                          ref={contactPhoneRef}
                           variant="outlined"
                           label="Telefone do Contato"
                           error={!!form.formState.errors.contactPhone}
@@ -434,7 +467,6 @@ export const CustomerForm = () => {
           resourceName="cliente"
         />
         
-        {/* Keyboard Help Modal */}
         <KeyboardShortcutsHelp
           open={showHelp}
           onClose={closeHelp}
@@ -444,4 +476,4 @@ export const CustomerForm = () => {
       </Box>
     </FormProvider>
   );
-}
+};

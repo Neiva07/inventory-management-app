@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
 import DeleteIcon from '@mui/icons-material/Delete';
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
 import {
   FormPrice,
@@ -31,6 +31,10 @@ type VariantProps = {
   variant: FormVariant;
   formMethods: UseFormReturn<ProductFormDataInterface>;
   index: number;
+  focusNextField?: (currentRef: React.RefObject<HTMLElement>) => void;
+  focusPreviousField?: (currentRef: React.RefObject<HTMLElement>) => void;
+  registerVariantRef?: (key: string, ref: React.RefObject<HTMLElement>) => void;
+  unregisterVariantRef?: (key: string) => void;
 };
 
 type PriceProps = {
@@ -38,9 +42,36 @@ type PriceProps = {
   formMethods: UseFormReturn<ProductFormDataInterface>;
   index: number;
   parentIndex: number;
+  focusNextField?: (currentRef: React.RefObject<HTMLElement>) => void;
+  focusPreviousField?: (currentRef: React.RefObject<HTMLElement>) => void;
+  registerVariantRef?: (key: string, ref: React.RefObject<HTMLElement>) => void;
+  unregisterVariantRef?: (key: string) => void;
 };
 
-const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
+const Price = ({ formMethods, index, parentIndex, focusNextField, focusPreviousField, registerVariantRef, unregisterVariantRef }: PriceProps) => {
+  // Create refs for price fields
+  const paymentMethodRef = useRef<HTMLDivElement>(null);
+  const profitRef = useRef<HTMLInputElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+
+  // Register refs when component mounts
+  React.useEffect(() => {
+    if (registerVariantRef) {
+      registerVariantRef(`variant-${parentIndex}-price-${index}-paymentMethod`, paymentMethodRef);
+      registerVariantRef(`variant-${parentIndex}-price-${index}-profit`, profitRef);
+      registerVariantRef(`variant-${parentIndex}-price-${index}-price`, priceRef);
+    }
+
+    // Cleanup when component unmounts
+    return () => {
+      if (unregisterVariantRef) {
+        unregisterVariantRef(`variant-${parentIndex}-price-${index}-paymentMethod`);
+        unregisterVariantRef(`variant-${parentIndex}-price-${index}-profit`);
+        unregisterVariantRef(`variant-${parentIndex}-price-${index}-price`);
+      }
+    };
+  }, [parentIndex, index, registerVariantRef, unregisterVariantRef]);
+
   const handleRemovePrice = () => {
     const currentPrices = formMethods.getValues(`variants.${parentIndex}.prices`);
     const newPrices = currentPrices.filter((_, i) => i !== index);
@@ -55,7 +86,9 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
   const currentPrices = formMethods.watch(`variants.${parentIndex}.prices`) ?? [];
   
   React.useEffect(() => {
-    const usedPaymentMethodsIDs = currentPrices.map(price => price.paymentMethod?.value).filter(id => id !== undefined && id !== null);
+    const usedPaymentMethodsIDs = currentPrices
+      .map(price => price.paymentMethod?.value)
+      .filter(id => id !== undefined && id !== null && id !== "");
   
     const currentAvailablePaymentMethods = paymentMethods
       .filter(pm => !usedPaymentMethodsIDs.includes(pm.id))
@@ -99,7 +132,7 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
               render={({ field: { value: paymentMethod, ...props } }) => {
                 const handleChange = (
                   _: React.SyntheticEvent<Element, Event>,
-                  value: SelectField
+                  value: SelectField | null
                 ) => {
                   props.onChange(value);
                   console.log(value);
@@ -109,12 +142,15 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
                     {...props}
                     id={`variants.${parentIndex}.prices.${index}.paymentMethod`}
                     options={availablePaymentMethods}
-                    isOptionEqualToValue={(option: SelectField, value: SelectField) =>
-                      option.value === value.value
+                    isOptionEqualToValue={(option: SelectField, value: SelectField | null) =>
+                      option.value === value?.value
                     }
                     onChange={handleChange}
                     value={paymentMethod}
                     label="Método de Pagamento"
+                    ref={paymentMethodRef}
+                    onNextField={() => focusNextField(paymentMethodRef)}
+                    onPreviousField={() => focusPreviousField(paymentMethodRef)}
                   />
                 );
               }}
@@ -138,6 +174,7 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
               return (
                 <TextField
                   {...props}
+                  ref={profitRef}
                   variant="outlined"
                   label="Lucro %"
                   value={profit}
@@ -168,6 +205,7 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
               return (
                 <TextField
                   {...props}
+                  ref={priceRef}
                   onChange={onChange}
                   variant="outlined"
                   label="Preço"
@@ -193,7 +231,30 @@ const Price = ({ formMethods, index, parentIndex }: PriceProps) => {
   );
 };
 
-const VariantItem = ({ formMethods, index }: VariantProps) => {
+const VariantItem = ({ formMethods, index, focusNextField, focusPreviousField, registerVariantRef, unregisterVariantRef }: VariantProps) => {
+  // Create refs for variant fields
+  const unitRef = useRef<HTMLDivElement>(null);
+  const conversionRateRef = useRef<HTMLInputElement>(null);
+  const unitCostRef = useRef<HTMLInputElement>(null);
+
+  // Register refs when component mounts
+  React.useEffect(() => {
+    if (registerVariantRef) {
+      registerVariantRef(`variant-${index}-unit`, unitRef);
+      registerVariantRef(`variant-${index}-conversionRate`, conversionRateRef);
+      registerVariantRef(`variant-${index}-unitCost`, unitCostRef);
+    }
+
+    // Cleanup when component unmounts
+    return () => {
+      if (unregisterVariantRef) {
+        unregisterVariantRef(`variant-${index}-unit`);
+        unregisterVariantRef(`variant-${index}-conversionRate`);
+        unregisterVariantRef(`variant-${index}-unitCost`);
+      }
+    };
+  }, [index, registerVariantRef, unregisterVariantRef]);
+
   const handleAddPrice = () => {
     formMethods.setValue(`variants.${index}.prices`, [
       ...formMethods.getValues(`variants.${index}.prices`),
@@ -257,7 +318,7 @@ const VariantItem = ({ formMethods, index }: VariantProps) => {
               render={({ field: { value: unit, ...props } }) => {
                 const handleChange = (
                   _: React.SyntheticEvent<Element, Event>,
-                  value: SelectField
+                  value: SelectField | null
                 ) => {
                   props.onChange(value);
                   
@@ -276,12 +337,15 @@ const VariantItem = ({ formMethods, index }: VariantProps) => {
                         value: c.id,
                       } as SelectField;
                     })}
-                    isOptionEqualToValue={(option: SelectField, value: SelectField) =>
-                      option.value === value.value
+                    isOptionEqualToValue={(option: SelectField, value: SelectField | null) =>
+                      option.value === value?.value
                     }
                     onChange={handleChange}
                     value={unit}
                     label="Unidade"
+                    ref={unitRef}
+                    onNextField={focusNextField ? () => focusNextField(unitRef) : undefined}
+                    onPreviousField={focusPreviousField ? () => focusPreviousField(unitRef) : undefined}
                   />
                 );
               }}
@@ -297,6 +361,7 @@ const VariantItem = ({ formMethods, index }: VariantProps) => {
                 return (
                   <TextField 
                     {...props}
+                    ref={conversionRateRef}
                     variant="outlined"
                     label="Conversão"
                     onFocus={(e) => e.target.select()}
@@ -319,6 +384,7 @@ const VariantItem = ({ formMethods, index }: VariantProps) => {
                 return (
                   <TextField
                     {...props}
+                    ref={unitCostRef}
                     variant="outlined"
                     label="Custo da unidade"
                     onFocus={(e) => e.target.select()}
@@ -356,15 +422,17 @@ const VariantItem = ({ formMethods, index }: VariantProps) => {
                 >
                   {formControlProps.field.value.map((price, i) => {
                     return (
-                      <>
-                        <Price
-                          key={i}
-                          index={i}
-                          price={price}
-                          formMethods={formMethods}
-                          parentIndex={index}
-                        />
-                      </>
+                      <Price
+                        key={i}
+                        index={i}
+                        price={price}
+                        formMethods={formMethods}
+                        parentIndex={index}
+                        focusNextField={focusNextField}
+                        focusPreviousField={focusPreviousField}
+                        registerVariantRef={registerVariantRef}
+                        unregisterVariantRef={unregisterVariantRef}
+                      />
                     );
                   })}
                 </div>
@@ -381,9 +449,20 @@ const VariantItem = ({ formMethods, index }: VariantProps) => {
   );
 };
 
-export const Variants = (
-  formMethods: UseFormReturn<ProductFormDataInterface>
-) => {
+interface VariantsProps extends UseFormReturn<ProductFormDataInterface> {
+  focusNextField?: (currentRef: React.RefObject<HTMLElement>) => void;
+  focusPreviousField?: (currentRef: React.RefObject<HTMLElement>) => void;
+  registerVariantRef?: (key: string, ref: React.RefObject<HTMLElement>) => void;
+  unregisterVariantRef?: (key: string) => void;
+}
+
+export const Variants = ({
+  focusNextField,
+  focusPreviousField,
+  registerVariantRef,
+  unregisterVariantRef,
+  ...formMethods
+}: VariantsProps) => {
   // Listen for keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -442,6 +521,10 @@ export const Variants = (
                       index={index}
                       variant={v}
                       formMethods={formMethods}
+                      focusNextField={focusNextField}
+                      focusPreviousField={focusPreviousField}
+                      registerVariantRef={registerVariantRef}
+                      unregisterVariantRef={unregisterVariantRef}
                     />
                   );
                 })}

@@ -24,7 +24,7 @@ import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
-import { useFormKeyboardShortcuts } from 'hooks/useFormKeyboardShortcuts';
+import { useFormWrapper } from 'hooks/useFormWrapper';
 import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
 import { KeyboardShortcutsHelp } from 'components/KeyboardShortcutsHelp';
 
@@ -41,7 +41,6 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
   const navigate = useNavigate();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [helpModalOpen, setHelpModalOpen] = useState(false);
   
   // Use prop productID if provided (for modal), otherwise use param (for page)
   const productID = propProductID ?? paramProductID;
@@ -118,12 +117,6 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
   const handleReset = () => {
     if (window.confirm('Tem certeza que deseja resetar o formulário? Todas as alterações serão perdidas.')) {
       formMethods.reset();
-      if (!productID) {
-        // Auto-focus first field after reset for new products
-        setTimeout(() => {
-          titleRef.current?.focus();
-        }, 100);
-      }
     }
   }
 
@@ -135,12 +128,6 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
   const handleAddPrice = () => {
     // This will be handled by the Variants component
     // We'll pass this function down to trigger price addition
-  }
-
-
-
-  const handleShowHelp = () => {
-    setHelpModalOpen(true);
   }
 
   const handleToggleCreateMode = () => {
@@ -159,48 +146,37 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
   const costRef = useRef<HTMLInputElement>(null);
   const weightRef = useRef<HTMLInputElement>(null);
 
-  // Field navigation functions
-  const focusNextField = (currentRef: React.RefObject<HTMLElement>) => {
-    const fields = [titleRef, categoryRef, descriptionRef, commissionRef, suppliersRef, baseUnitRef, inventoryRef, minInventoryRef, costRef, weightRef];
-    const currentIndex = fields.findIndex(ref => ref === currentRef);
-    const nextIndex = (currentIndex + 1) % fields.length;
-    const nextField = fields[nextIndex];
-    
-    if (nextField.current) {
-      if (nextField.current.tagName === 'INPUT') {
-        (nextField.current as HTMLInputElement).focus();
-      } else {
-        const input = nextField.current.querySelector('input');
-        input?.focus();
-      }
-    }
-  };
+    // Centralized ref registry for dynamic variants
+    const [variantRefs, setVariantRefs] = useState<Map<string, React.RefObject<HTMLElement>>>(new Map());
 
-  const focusPreviousField = (currentRef: React.RefObject<HTMLElement>) => {
-    const fields = [titleRef, categoryRef, descriptionRef, commissionRef, suppliersRef, baseUnitRef, inventoryRef, minInventoryRef, costRef, weightRef];
-    const currentIndex = fields.findIndex(ref => ref === currentRef);
-    const prevIndex = currentIndex === 0 ? fields.length - 1 : currentIndex - 1;
-    const prevField = fields[prevIndex];
-    
-    if (prevField.current) {
-      if (prevField.current.tagName === 'INPUT') {
-        (prevField.current as HTMLInputElement).focus();
-      } else {
-        const input = prevField.current.querySelector('input');
-        input?.focus();
-      }
-    }
-  };
+    const registerVariantRef = (key: string, ref: React.RefObject<HTMLElement>) => {
+      setVariantRefs(prev => new Map(prev.set(key, ref)));
+    };
+  
+    const unregisterVariantRef = (key: string) => {
+      setVariantRefs(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(key);
+        return newMap;
+      });
+    };
 
-  // Auto-focus first field on form load for new products
-  useEffect(() => {
-    if (!productID && titleRef.current) {
-      titleRef.current.focus();
-    }
-  }, [productID]);
+  // Create a memoized version of getAllFieldRefs that updates when variantRefs changes
+  const allFieldRefs = React.useMemo(() => {
+    const baseRefs = [titleRef, categoryRef, descriptionRef, commissionRef, suppliersRef, baseUnitRef, inventoryRef, minInventoryRef, costRef, weightRef];
+    const variantRefsArray = Array.from(variantRefs.values());
+    return [...baseRefs, ...variantRefsArray];
+  }, [variantRefs]);
 
-  // Keyboard shortcuts
-  useFormKeyboardShortcuts({
+  // Form wrapper with keyboard shortcuts and field navigation
+  const {
+    showHelp,
+    closeHelp,
+    formRef,
+    firstFieldRef,
+    focusNextField,
+    focusPreviousField,
+  } = useFormWrapper({
     onSubmit: handleSubmit,
     onCancel: handleCancel,
     onDelete: productID ? handleDelete : undefined,
@@ -208,16 +184,18 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
     onActivate: product && product.status === 'inactive' ? onActivateProduct : undefined,
     onReset: handleReset,
     onToggleCreateMode: handleToggleCreateMode,
-    onShowHelp: handleShowHelp,
+    autoFocusField: !productID ? 'title' : undefined,
+    helpTitle: 'Atalhos do Teclado - Produto',
     customShortcuts: {
       'Ctrl/Cmd + O': handleAddVariant,
       'Ctrl/Cmd + P': handleAddPrice,
     },
+    fieldRefs: allFieldRefs,
   });
 
   return (
     <FormProvider register={register} {...formMethods}>
-      <Box sx={{ position: 'relative', pt: 8 }}>
+      <Box component="form" ref={formRef} sx={{ position: 'relative', pt: 8 }}>
         <FormActions
           showDelete={!!productID}
           showInactivate={!!product && product.status === 'active'}
@@ -237,7 +215,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
             });
             document.dispatchEvent(f1Event);
           }}
-          absolute
+          absolute={true}
         />
         <Grid container spacing={1}>
           <Grid item xs={12}>
@@ -260,12 +238,11 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                   return (
                     <TextField
                       {...field}
-                      ref={titleRef}
+                      ref={firstFieldRef || titleRef}
                       variant="outlined"
                       label="Nome do produto"
                       error={!!formMethods.formState.errors.title}
                       helperText={formMethods.formState.errors.title?.message}
-                      autoFocus
                       onFocus={(e) => e.target.select()}
                     />
                   );
@@ -307,6 +284,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                       helperText={formMethods.formState.errors.productCategory?.label?.message}
                       onNextField={() => focusNextField(categoryRef)}
                       onPreviousField={() => focusPreviousField(categoryRef)}
+                      ref={categoryRef}
                     />
                   );
                 }}
@@ -332,6 +310,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                       onChange={onChange}
                       error={!!formMethods.formState.errors.description}
                       helperText={formMethods.formState.errors.description?.message}
+                      onFocus={(e) => e.target.select()}
                     />
                   );
                 }}
@@ -363,7 +342,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
             <FormControl fullWidth>
               <Controller
                 control={formMethods.control}
-                render={({ field: { value, ...props } }) => {
+                render={({ field: { value: suppliersSelected, ...props } }) => {
                   const handleChange = (
                     _: React.SyntheticEvent<Element, Event>,
                     value: SelectField[]
@@ -382,11 +361,12 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                       isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value?.value
                       }
-                      value={value}
+                      value={suppliersSelected}
                       label="Fornecedores"
                       onNextField={() => focusNextField(suppliersRef)}
                       onPreviousField={() => focusPreviousField(suppliersRef)}
                       onChange={handleChange}
+                      ref={suppliersRef}
                       renderTags={(list: SelectField[]) => {
                         const displayList = list
                           .map((item) => item.label)
@@ -438,6 +418,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                       helperText={formMethods.formState.errors.baseUnit?.label?.message}
                       onNextField={() => focusNextField(baseUnitRef)}
                       onPreviousField={() => focusPreviousField(baseUnitRef)}
+                      ref={baseUnitRef}
                     />
                   );
                 }}
@@ -523,7 +504,11 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
         </Grid>
         <Divider style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }} />
         <Variants 
-          {...formMethods} 
+          {...formMethods}
+          focusNextField={focusNextField}
+          focusPreviousField={focusPreviousField}
+          registerVariantRef={registerVariantRef}
+          unregisterVariantRef={unregisterVariantRef}
         />
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, marginTop: "12px" }}>
           {productID ? (
@@ -555,8 +540,8 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
           resourceName="produto"
         />
         <KeyboardShortcutsHelp
-          open={helpModalOpen}
-          onClose={() => setHelpModalOpen(false)}
+          open={showHelp}
+          onClose={closeHelp}
           title="Atalhos do Teclado - Produto"
           showVariants={true}
         />

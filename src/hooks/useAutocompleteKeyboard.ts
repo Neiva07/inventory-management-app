@@ -32,7 +32,14 @@ export const useAutocompleteKeyboard = <T,>(options: AutocompleteKeyboardOptions
       return;
     }
 
- 
+      // Tab: Move to next field
+      if (event.key === 'Tab' && !options.isOpen && !event.shiftKey) {
+        event.preventDefault();
+        setTimeout(() => {
+          options.onNextField?.();
+        }, 50);
+        return;
+      }
 
     // Escape: Close dropdown without selection
     if (event.key === 'Escape' && options.isOpen) {
