@@ -277,6 +277,7 @@ export const InboundOrderForm = () => {
     onDelete: inboundOrderID ? handleDelete : undefined,
     onReset: handleReset,
     onToggleCreateMode: handleToggleCreateMode,
+    onBack: () => navigate(-1),
     autoFocusField: 'supplier',
     helpTitle: 'Atalhos do Teclado - Compra',
     customShortcuts: {
@@ -316,6 +317,7 @@ export const InboundOrderForm = () => {
       <Box component="form" ref={formRef}>
         <InboundOrderFormHeader 
           onDelete={handleDelete} 
+          onBack={() => navigate(-1)}
           inboundOrder={inboundOrder} 
           firstFieldRef={firstFieldRef}
           onShowHelp={handleShowHelp}

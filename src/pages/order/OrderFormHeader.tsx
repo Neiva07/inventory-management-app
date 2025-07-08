@@ -38,6 +38,7 @@ export const paymentOptions = [
 
 interface OrderFormHeaderProps {
   onDelete?: () => void;
+  onBack?: () => void;
   order?: Order;
   firstFieldRef?: React.RefObject<HTMLDivElement>;
   focusNextField?: (currentRef: React.RefObject<HTMLElement>) => void;
@@ -51,7 +52,7 @@ interface OrderFormHeaderProps {
   };
 }
 
-export const OrderFormHeader = ({ onDelete, order, firstFieldRef, focusNextField, focusPreviousField, headerRefs }: OrderFormHeaderProps) => {
+export const OrderFormHeader = ({ onDelete, onBack, order, firstFieldRef, focusNextField, focusPreviousField, headerRefs }: OrderFormHeaderProps) => {
   const { user } = useAuth();
   const { orderID } = useParams();
   const [customers, setCustomers] = useState<Array<Customer>>([]);
@@ -100,6 +101,7 @@ export const OrderFormHeader = ({ onDelete, order, firstFieldRef, focusNextField
           <FormActions
             showDelete={!!orderID}
             onDelete={onDelete}
+            onBack={onBack}
             onShowHelp={() => {
               // Trigger F1 key programmatically to show help
               const f1Event = new KeyboardEvent('keydown', {

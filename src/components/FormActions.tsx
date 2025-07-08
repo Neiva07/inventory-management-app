@@ -4,16 +4,19 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HelpIcon from '@mui/icons-material/Help';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 interface FormActionsProps {
   onDelete?: () => void;
   onInactivate?: () => void;
   onActivate?: () => void;
   onShowHelp?: () => void;
+  onBack?: () => void;
   showDelete?: boolean;
   showInactivate?: boolean;
   showActivate?: boolean;
   showHelp?: boolean;
+  showBack?: boolean;
   absolute?: boolean;
 }
 
@@ -22,16 +25,25 @@ export const FormActions: React.FC<FormActionsProps> = ({
   onInactivate,
   onActivate,
   onShowHelp,
+  onBack,
   showDelete,
   showInactivate,
   showActivate,
   showHelp = true,
+  showBack = true,
   absolute = false,
 }) => {
-  if (!showDelete && !showInactivate && !showActivate && !showHelp) return null;
+  if (!showDelete && !showInactivate && !showActivate && !showHelp && !showBack) return null;
   return (
     <Box sx={absolute ? { position: 'absolute', top: 24, right: 24, zIndex: 10 } : { display: 'flex', alignItems: 'center' }}>
       <Stack direction="row" spacing={2}>
+        {showBack && onBack && (
+          <Tooltip title="Voltar (Ctrl/Cmd + ←)" placement="top">
+            <IconButton onClick={onBack} color="primary" size="large">
+              <ArrowBackIcon />
+            </IconButton>
+          </Tooltip>
+        )}
         {showDelete && (
           <Tooltip title="Ctrl/Cmd + D" placement="top">
             <Button

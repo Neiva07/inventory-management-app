@@ -174,19 +174,16 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
     focusPreviousField,
   } = useFormWrapper({
     onSubmit: handleSubmit,
-    onCancel: handleCancel,
+    onCancel: () => navigate('/products'),
     onDelete: productID ? handleDelete : undefined,
     onInactivate: product && product.status === 'active' ? onDeactiveProduct : undefined,
     onActivate: product && product.status === 'inactive' ? onActivateProduct : undefined,
     onReset: handleReset,
     onToggleCreateMode: handleToggleCreateMode,
-    autoFocusField: !productID ? 'title' : undefined,
+    onBack: () => navigate(-1),
+    autoFocusField: 'name',
     helpTitle: 'Atalhos do Teclado - Produto',
-    customShortcuts: {
-      'Ctrl/Cmd + O': handleAddVariant,
-      'Ctrl/Cmd + P': handleAddPrice,
-    },
-    fieldRefs: allFieldRefs,
+    fieldRefs: [titleRef, descriptionRef, categoryRef, suppliersRef, baseUnitRef],
   });
 
   return (
@@ -199,6 +196,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
           onDelete={handleDelete}
           onInactivate={onDeactiveProduct}
           onActivate={onActivateProduct}
+          onBack={() => navigate(-1)}
           onShowHelp={() => {
             // Trigger F1 key programmatically to show help
             const f1Event = new KeyboardEvent('keydown', {

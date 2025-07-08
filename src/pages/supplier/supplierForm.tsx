@@ -108,6 +108,7 @@ export const SupplierForm = () => {
     onActivate: supplier && supplier.status === 'inactive' ? onActivate : undefined,
     onReset: handleReset,
     onToggleCreateMode: handleToggleCreateMode,
+    onBack: () => navigate(-1),
     autoFocusField: 'tradeName',
     helpTitle: 'Atalhos do Teclado - Fornecedor',
     fieldRefs: [tradeNameRef, legalNameRef, entityIDRef, streetRef, postalCodeRef, regionRef, cityRef, companyPhoneRef, contactNameRef, contactPhoneRef, creditTermRef, productCategoriesRef],
@@ -123,6 +124,7 @@ export const SupplierForm = () => {
           onDelete={handleDelete}
           onInactivate={onDeactivate}
           onActivate={onActivate}
+          onBack={() => navigate(-1)}
           onShowHelp={() => {
             // Trigger F1 key programmatically to show help
             const f1Event = new KeyboardEvent('keydown', {

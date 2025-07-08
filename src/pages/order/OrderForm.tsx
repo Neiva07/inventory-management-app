@@ -150,6 +150,7 @@ export const OrderForm = () => {
     onDelete: orderID ? handleDelete : undefined,
     onReset: handleReset,
     onToggleCreateMode: handleToggleCreateMode,
+    onBack: () => navigate(-1),
     autoFocusField: 'customer',
     helpTitle: 'Atalhos do Teclado - Venda',
     customShortcuts: {
@@ -191,6 +192,7 @@ export const OrderForm = () => {
       <Box component="form" ref={formRef}>
         <OrderFormHeader 
           onDelete={handleDelete} 
+          onBack={() => navigate(-1)}
           order={order} 
           firstFieldRef={firstFieldRef}
           focusNextField={focusNextField}

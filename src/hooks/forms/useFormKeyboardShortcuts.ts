@@ -10,6 +10,7 @@ interface FormKeyboardHandlers {
   onFocusSearch?: () => void;
   onShowHelp?: () => void;
   onToggleCreateMode?: () => void;
+  onBack?: () => void;
   // Form-specific shortcuts
   customShortcuts?: {
     [key: string]: () => void;
@@ -22,6 +23,13 @@ export const useFormKeyboardShortcuts = (handlers: FormKeyboardHandlers) => {
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
       event.preventDefault();
       handlers.onSubmit();
+      return;
+    }
+
+    // Ctrl/Cmd + ←: Go back
+    if ((event.ctrlKey || event.metaKey) && event.key === 'ArrowLeft') {
+      event.preventDefault();
+      handlers.onBack?.();
       return;
     }
 

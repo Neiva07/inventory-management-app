@@ -104,6 +104,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
             <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
               Navegação
             </Typography>
+            <ShortcutItem shortcut="Ctrl/Cmd + ←" description="Voltar à página anterior" />
             <ShortcutItem shortcut="Tab" description="Próximo campo / Selecionar opção no dropdown" />
             <ShortcutItem shortcut="Shift + Tab" description="Campo anterior" />
             <ShortcutItem shortcut="Setas" description="Navegar opções do dropdown" />

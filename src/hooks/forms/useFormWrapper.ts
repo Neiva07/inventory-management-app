@@ -10,6 +10,7 @@ interface FormWrapperOptions {
   onReset?: () => void;
   onFocusSearch?: () => void;
   onToggleCreateMode?: () => void;
+  onBack?: () => void;
   customShortcuts?: {
     [key: string]: () => void;
   };
@@ -87,6 +88,7 @@ export const useFormWrapper = (options: FormWrapperOptions) => {
     onFocusSearch: options.onFocusSearch,
     onToggleCreateMode: options.onToggleCreateMode,
     onShowHelp: () => setShowHelp(true),
+    onBack: options.onBack,
     customShortcuts: options.customShortcuts,
   });
 

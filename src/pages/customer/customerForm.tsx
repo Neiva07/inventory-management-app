@@ -14,10 +14,12 @@ import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { useFormWrapper } from '../../hooks/forms/useFormWrapper';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { EnhancedAutocomplete } from '../../components/EnhancedAutocomplete';
+import { useAuth } from 'context/auth';
 
 export const CustomerForm = () => {
   const { customerID } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -92,6 +94,7 @@ export const CustomerForm = () => {
     onActivate: customer && customer.status === 'inactive' ? onActivate : undefined,
     onReset: handleReset,
     onToggleCreateMode: handleToggleCreateMode,
+    onBack: () => navigate(-1),
     autoFocusField: 'name',
     helpTitle: 'Atalhos do Teclado - Cliente',
     fieldRefs: [nameRef, cpfRef, rgRef, streetRef, postalCodeRef, regionRef, cityRef, companyPhoneRef, contactNameRef, contactPhoneRef],
@@ -107,6 +110,7 @@ export const CustomerForm = () => {
           onDelete={handleDelete}
           onInactivate={onDeactivate}
           onActivate={onActivate}
+          onBack={() => navigate(-1)}
           onShowHelp={() => {
             // Trigger F1 key programmatically to show help
             const f1Event = new KeyboardEvent('keydown', {

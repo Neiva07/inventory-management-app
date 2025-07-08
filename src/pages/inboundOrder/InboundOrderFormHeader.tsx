@@ -17,6 +17,7 @@ import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
 
 interface InboundOrderFormHeaderProps {
   onDelete?: () => void;
+  onBack?: () => void;
   inboundOrder?: InboundOrder;
   firstFieldRef?: React.RefObject<HTMLDivElement>;
   onShowHelp?: () => void;
@@ -30,7 +31,7 @@ interface InboundOrderFormHeaderProps {
   };
 }
 
-export const InboundOrderFormHeader = ({ onDelete, inboundOrder, firstFieldRef, onShowHelp, focusNextField, focusPreviousField, headerRefs }: InboundOrderFormHeaderProps) => {
+export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFieldRef, onShowHelp, focusNextField, focusPreviousField, headerRefs }: InboundOrderFormHeaderProps) => {
   const { user } = useAuth();
   const { inboundOrderID } = useParams();
   const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
@@ -72,6 +73,7 @@ export const InboundOrderFormHeader = ({ onDelete, inboundOrder, firstFieldRef, 
           <FormActions
             showDelete={!!inboundOrderID}
             onDelete={onDelete}
+            onBack={onBack}
             onShowHelp={onShowHelp}
             absolute={true}
           />
