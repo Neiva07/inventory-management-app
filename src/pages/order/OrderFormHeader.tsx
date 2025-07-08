@@ -250,11 +250,11 @@ export const OrderFormHeader = ({ onDelete, order, firstFieldRef, focusNextField
                   <DatePicker 
                     {...field} 
                     label="Data da Venda" 
+                    ref={headerRefs?.orderDateRef}
                     slotProps={{
                       textField: {
                         error: !!formMethods.formState.errors.orderDate,
                         helperText: formMethods.formState.errors.orderDate?.message,
-                        ref: headerRefs?.orderDateRef,
                         onFocus: (e) => e.target.select(),
                       }
                     }}
@@ -274,11 +274,11 @@ export const OrderFormHeader = ({ onDelete, order, firstFieldRef, focusNextField
                   <DatePicker 
                     {...field} 
                     label="Data de Vencimento" 
+                    ref={headerRefs?.dueDateRef}
                     slotProps={{
                       textField: {
                         error: !!formMethods.formState.errors.dueDate,
                         helperText: formMethods.formState.errors.dueDate?.message,
-                        ref: headerRefs?.dueDateRef,
                         onFocus: (e) => e.target.select(),
                       }
                     }}

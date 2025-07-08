@@ -1,16 +1,20 @@
 import * as React from 'react';
-import { DataGrid, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
-import { Autocomplete, Button, Grid, InputAdornment, TextField } from '@mui/material';
+import { GridSearchIcon } from '@mui/x-data-grid';
+import { Button, Grid, InputAdornment, TextField, Tooltip } from '@mui/material';
 import { ProductCategory, getProductCategories } from 'model/productCategories';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
-import { Supplier, getSuppliers, deactiveSupplier, deleteSupplier } from 'model/suppliers';
+import { Supplier, getSuppliers, deactiveSupplier, deleteSupplier, activeSupplier } from 'model/suppliers';
 import { useAuth } from 'context/auth';
-import { ptBR } from '@mui/x-data-grid/locales';
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
+import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
+import { KeyboardListPageKeyboardHelp } from 'components/KeyboardListPageKeyboardHelp';
+import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable';
+import { ColumnDefinition } from 'components/CustomDataTable/types';
 
-const columns: GridColDef[] = [
+const columns: ColumnDefinition<Supplier>[] = [
   { 
     field: 'publicId', 
     headerName: 'ID', 
@@ -23,8 +27,7 @@ const columns: GridColDef[] = [
   {
     field: 'status',
     headerName: 'Status',
-    type: 'string',
-    flex: 1,
+    width: 100,
   }
 ];
 
@@ -45,6 +48,7 @@ const statuses = [
 
 export const SupplierList = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [suppliers, setSuppliers] = React.useState<Array<Supplier>>([]);
   const [count, setCount] = React.useState<number>();
@@ -52,15 +56,20 @@ export const SupplierList = () => {
   const [selectedRowID, setSelectedRowID] = React.useState<string>();
   const [loading, setLoading] = React.useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [showHelp, setShowHelp] = React.useState(false);
 
   const [categories, setCategories] = React.useState<Array<ProductCategory>>([]);
-  const [categorySelected, setCategorySelected] = React.useState<ProductCategory>();
-  const [statusSelected, setStatusSelected] = React.useState<SelectField<string>>();
+  const [categorySelected, setCategorySelected] = React.useState<ProductCategory | null>(null);
+  const [statusSelected, setStatusSelected] = React.useState<SelectField<string> | null>(null);
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [page, setPage] = React.useState<number>(0);
   const [currentCursor, setCurrentCursor] = React.useState<Supplier | undefined>();
 
-  const navigate = useNavigate();
+  // Refs for focus navigation
+  const searchFieldRef = React.useRef<HTMLDivElement>(null);
+  const categoryFilterRef = React.useRef<HTMLDivElement>(null);
+  const statusFilterRef = React.useRef<HTMLDivElement>(null);
+  const tableRef = React.useRef<CustomDataTableRef>(null);
 
   React.useEffect(() => {
     getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
@@ -106,51 +115,152 @@ export const SupplierList = () => {
   const handleCategorySelect = (event: React.SyntheticEvent<Element, Event>, value: ProductCategory) => {
     setCategorySelected(value)
   }
-  const handleStatusSelection = (event: React.SyntheticEvent<Element, Event>, value: SelectField) => {
+
+  const handleStatusSelection = (event: React.SyntheticEvent<Element, Event>, value: SelectField<string>) => {
     setStatusSelected(value)
   }
 
-  const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPage(model.page);
-    setPageSize(model.pageSize);
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   }
-  const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
-    if (rowSelection && rowSelection[0]) {
-      const id = String(rowSelection[0])
-      if (id === selectedRowID) {
-        setSelectedRowID(null);
-      } else {
-        setSelectedRowID(id);
-      }
-    }
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
   }
-  const handleDeactivateSupplier = () => {
-    deactiveSupplier(selectedRowID)
+
+  const handleRowSelectionChange = (rowId: string | null) => {
+    setSelectedRowID(rowId || undefined);
+  }
+
+  const handleActivateSupplier = () => {
+    if (!selectedRowID) return;
+    activeSupplier(selectedRowID);
     querySuppliers();
   }
+
+  const handleDeactivateSupplier = () => {
+    if (!selectedRowID) return;
+    deactiveSupplier(selectedRowID);
+    querySuppliers();
+  }
+
+  const handleToggleStatus = () => {
+    if (!selectedRowID) return;
+    
+    const selectedSupplier = suppliers.find(s => s.id === selectedRowID);
+    if (!selectedSupplier) return;
+    
+    if (selectedSupplier.status === 'active') {
+      handleDeactivateSupplier();
+    } else {
+      handleActivateSupplier();
+    }
+  }
+
   const handleDeleteSupplier = () => {
     setDeleteDialogOpen(true);
   }
 
   const handleConfirmDelete = () => {
-    deleteSupplier(selectedRowID)
+    deleteSupplier(selectedRowID);
     querySuppliers();
     setDeleteDialogOpen(false);
   }
 
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
-  }
+  };
 
-  console.log({page, pageSize, count, tamanho:suppliers.length, currentCursor, statusSelected, categorySelected, searchTitle})
+  const handleDialogClosed = () => {
+    // Restore focus to the selected row in the table
+    if (tableRef.current && selectedRowID) {
+      tableRef.current.restoreFocusToSelectedRow();
+    }
+  };
+
+  // Keyboard shortcuts handlers
+  const handleFocusSearch = () => {
+    if (searchFieldRef.current) {
+      const inputElement = searchFieldRef.current.querySelector('input');
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select(); // Also select the text for easy replacement
+      }
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSearchTitle('');
+    setCategorySelected(null);
+    setStatusSelected(null);
+    setTimeout(() => searchFieldRef.current?.focus(), 100);
+  };
+
+  const handleEditSelected = () => {
+    if (selectedRowID) {
+      navigate(`/suppliers/${selectedRowID}`);
+    }
+  };
+
+  const handleCreateNew = () => {
+    navigate('/suppliers/create');
+  };
+
+  const handleRefresh = () => {
+    querySuppliers();
+  };
+
+  const handlePreviousPage = () => {
+    if (page > 0) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (count && (page + 1) * pageSize < count) {
+      setPage(page + 1);
+    }
+  };
+
+  // Set up focus navigation
+  const { focusNavigation } = useListPageFocusNavigation({
+    fieldRefs: [searchFieldRef, categoryFilterRef, statusFilterRef],
+    tableRef,
+    tableData: suppliers,
+    onTableRowSelect: setSelectedRowID,
+    getRowId: (supplier: Supplier) => supplier.id,
+    onFocusSearch: handleFocusSearch,
+    onClearFilters: handleClearFilters,
+    onEditSelected: handleEditSelected,
+    onDeleteSelected: handleDeleteSupplier,
+    onToggleStatus: handleToggleStatus,
+    onCreateNew: handleCreateNew,
+    onRefresh: handleRefresh,
+    onPreviousPage: handlePreviousPage,
+    onNextPage: handleNextPage,
+    onShowHelp: () => setShowHelp(true),
+    hasSelectedItem: !!selectedRowID,
+    canToggleStatus: true,
+    hasNextPage: count ? (page + 1) * pageSize < count : false,
+    hasPreviousPage: page > 0,
+  });
 
   return (
     <>
-      <PageTitle>Fornecedores</PageTitle>
-      <Grid spacing={2} container>
+      <PageTitle 
+        showKeyboardHelp={true}
+        keyboardHelpTitle="Atalhos do Teclado - Fornecedores"
+        showInactivate={true}
+        helpOpen={showHelp}
+        onHelpOpenChange={setShowHelp}
+      >
+        Fornecedores
+      </PageTitle>
+      <Grid spacing={1} container>
 
         <Grid item xs={4}>
           <TextField
+            ref={searchFieldRef}
             value={searchTitle}
             fullWidth
             onChange={handleSearchTitle}
@@ -166,82 +276,110 @@ export const SupplierList = () => {
           />
         </Grid>
         <Grid item xs={4}>
-          <Autocomplete
+          <EnhancedAutocomplete
+            ref={categoryFilterRef}
             id="category-filter"
             options={categories}
-            getOptionLabel={(option) => option.name}
-            fullWidth
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                variant="outlined"
-                label="Categoria"
-              />
-            )}
-            isOptionEqualToValue={(option, value) =>
-              option.id === value.id
+            getOptionLabel={(option: ProductCategory) => option.name}
+            label="Categoria"
+            isOptionEqualToValue={(option: ProductCategory, value: ProductCategory) =>
+              option?.id === value?.id
             }
             onChange={handleCategorySelect}
+            onNextField={() => focusNavigation.focusNextField(categoryFilterRef)}
+            onPreviousField={() => focusNavigation.focusPreviousField(categoryFilterRef)}
+            value={categorySelected}
           />
         </Grid>
         <Grid item xs={4}>
-          <Autocomplete
+          <EnhancedAutocomplete
+            ref={statusFilterRef}
             id="status-filter"
             options={statuses}
-            getOptionLabel={(option) => option.label}
-            fullWidth
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                variant="outlined"
-                label="Status"
-              />
-            )}
-            isOptionEqualToValue={(option, value) =>
-              option.value === value.value
+            getOptionLabel={(option: SelectField<string>) => option.label}
+            label="Status"
+            isOptionEqualToValue={(option: SelectField<string>, value: SelectField<string>) =>
+              option?.value === value?.value
             }
             onChange={handleStatusSelection}
+            onNextField={focusNavigation.focusFirstTableRow}
+            onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
+            value={statusSelected}
           />
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth disabled={!selectedRowID} onClick={() => navigate(`/suppliers/${selectedRowID}`)}
-          > Editar Fornecedor </Button>
+          <Tooltip title="Ctrl/Cmd + E" placement="top">
+            <Button 
+              fullWidth 
+              disabled={!selectedRowID} 
+              onClick={() => navigate(`/suppliers/${selectedRowID}`)}
+              tabIndex={-1}
+            > 
+              Editar Fornecedor 
+            </Button>
+          </Tooltip>
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth disabled={!selectedRowID} onClick={handleDeleteSupplier}
-          > Deletar Fornecedor </Button>
+          <Tooltip title="Ctrl/Cmd + D" placement="top">
+            <Button 
+              fullWidth 
+              disabled={!selectedRowID} 
+              onClick={handleDeleteSupplier}
+              tabIndex={-1}
+            > 
+              Deletar Fornecedor 
+            </Button>
+          </Tooltip>
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth disabled={!selectedRowID} onClick={handleDeactivateSupplier}
-          > Desativar Fornecedor </Button>
+          <Tooltip title="Ctrl/Cmd + I" placement="top">
+            <Button 
+              fullWidth 
+              disabled={!selectedRowID} 
+              onClick={handleDeactivateSupplier}
+              tabIndex={-1}
+            > 
+              Desativar Fornecedor 
+            </Button>
+          </Tooltip>
         </Grid>
-
         <Grid item xs={3}>
-          <Button fullWidth onClick={() => navigate(`/suppliers/create`)}
-          > Cadastrar Fornecedor </Button>
+          <Tooltip title="Ctrl/Cmd + N" placement="top">
+            <Button 
+              fullWidth 
+              onClick={() => navigate(`/suppliers/create`)}
+              tabIndex={-1}
+            > 
+              Cadastrar Fornecedor 
+            </Button>
+          </Tooltip>
         </Grid>
 
-
-        <Grid xs={12} item marginTop="20px">
-          <div style={{ height: '100%', minHeight: 400 }}>
-            <DataGrid
-              rows={suppliers}
-              columns={columns}
-              pageSizeOptions={[5,10, 20]}
-              paginationModel={{ page, pageSize }}
-              onRowSelectionModelChange={handleRowSelection}
-              onPaginationModelChange={handlePaginationModelChange}
-              onRowDoubleClick={(params) => navigate(`/suppliers/${params.row.id}`)}
-              hideFooterSelectedRowCount
-              rowCount={count ?? 0}
-              rowSelectionModel={[selectedRowID]}
-              paginationMode="server"
-              loading={loading}
-              localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
-            />
-          </div>
+        <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
+          <CustomDataTable
+            data={suppliers}
+            columns={columns}
+            totalCount={count}
+            loading={loading}
+            selectedRowId={selectedRowID}
+            onRowSelectionChange={handleRowSelectionChange}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            onRowDoubleClick={(supplier) => navigate(`/suppliers/${supplier.id}`)}
+            onNavigateToNextField={() => {
+              // Navigate to next component after table (could be action buttons)
+            }}
+            onNavigateToPreviousField={() => {
+              // Navigate back to status filter
+              focusNavigation.focusLastFieldBeforeTable();
+            }}
+            getRowId={(supplier) => supplier.id}
+            onEditSelected={handleEditSelected}
+            onDeleteSelected={handleDeleteSupplier}
+            ref={tableRef}
+          />
         </Grid>
       </Grid>
       <DeleteConfirmationDialog
@@ -249,6 +387,13 @@ export const SupplierList = () => {
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         resourceName="fornecedor"
+        onDialogClosed={handleDialogClosed}
+      />
+      <KeyboardListPageKeyboardHelp
+        open={showHelp}
+        onClose={() => setShowHelp(false)}
+        title="Atalhos do Teclado - Fornecedores"
+        showInactivate={true}
       />
     </>
   );

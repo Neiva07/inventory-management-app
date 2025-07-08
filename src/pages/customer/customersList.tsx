@@ -1,15 +1,19 @@
 import * as React from 'react';
-import { DataGrid, GridColDef, GridPaginationModel, GridRowSelectionModel, GridSearchIcon } from '@mui/x-data-grid';
-import { Autocomplete, Button, Grid, InputAdornment, TextField} from '@mui/material';
+import { GridSearchIcon } from '@mui/x-data-grid';
+import { Button, Grid, InputAdornment, TextField, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
-import { Customer, deactiveCustomer, deleteCustomer, getCustomers } from 'model/customer';
+import { Customer, deactiveCustomer, deleteCustomer, getCustomers, activeCustomer } from 'model/customer';
 import { useAuth } from 'context/auth';
-import { ptBR } from '@mui/x-data-grid/locales';
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
+import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
+import { KeyboardListPageKeyboardHelp } from 'components/KeyboardListPageKeyboardHelp';
+import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable';
+import { ColumnDefinition } from 'components/CustomDataTable/types';
 
-const columns: GridColDef[] = [
+const columns: ColumnDefinition<Customer>[] = [
   { 
     field: 'publicId', 
     headerName: 'ID', 
@@ -22,8 +26,7 @@ const columns: GridColDef[] = [
   {
     field: 'status',
     headerName: 'Status',
-    type: 'string',
-    flex: 1,
+    width: 100,
   }
 ];
 
@@ -44,6 +47,7 @@ const statuses = [
 
 export const CustomerList = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [customers, setCustomers] = React.useState<Array<Customer>>([]);
   const [count, setCount] = React.useState<number>();
@@ -51,13 +55,17 @@ export const CustomerList = () => {
   const [selectedRowID, setSelectedRowID] = React.useState<string>();
   const [loading, setLoading] = React.useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [showHelp, setShowHelp] = React.useState(false);
 
-  const [statusSelected, setStatusSelected] = React.useState<SelectField<string>>();
+  const [statusSelected, setStatusSelected] = React.useState<SelectField<string> | null>(null);
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [page, setPage] = React.useState<number>(0);
   const [currentCursor, setCurrentCursor] = React.useState<Customer | undefined>();
 
-  const navigate = useNavigate();
+  // Refs for focus navigation
+  const searchFieldRef = React.useRef<HTMLDivElement>(null);
+  const statusFilterRef = React.useRef<HTMLDivElement>(null);
+  const tableRef = React.useRef<CustomDataTableRef>(null);
 
   const queryCustomers = () => {
     setLoading(true);
@@ -95,51 +103,150 @@ export const CustomerList = () => {
     setSearchName(e.target.value)
   }
 
-  const handleStatusSelection = (event: React.SyntheticEvent<Element, Event>, value: SelectField) => {
+  const handleStatusSelection = (event: React.SyntheticEvent<Element, Event>, value: SelectField<string>) => {
     setStatusSelected(value)
   }
 
-  const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPage(model.page);
-    setPageSize(model.pageSize);
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   }
-  const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
-    if (rowSelection && rowSelection[0]) {
-      const id = String(rowSelection[0])
-      if (id === selectedRowID) {
-        setSelectedRowID(null);
-      } else {
-        setSelectedRowID(id);
-      }
-    }
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
   }
-  const handleDeactiveCustomer = () => {
-    deactiveCustomer(selectedRowID)
+
+  const handleRowSelectionChange = (rowId: string | null) => {
+    setSelectedRowID(rowId || undefined);
+  }
+
+  const handleActivateCustomer = () => {
+    if (!selectedRowID) return;
+    activeCustomer(selectedRowID);
     queryCustomers();
   }
+
+  const handleDeactiveCustomer = () => {
+    if (!selectedRowID) return;
+    deactiveCustomer(selectedRowID);
+    queryCustomers();
+  }
+
+  const handleToggleStatus = () => {
+    if (!selectedRowID) return;
+    
+    const selectedCustomer = customers.find(c => c.id === selectedRowID);
+    if (!selectedCustomer) return;
+    
+    if (selectedCustomer.status === 'active') {
+      handleDeactiveCustomer();
+    } else {
+      handleActivateCustomer();
+    }
+  }
+
   const handleDeleteCustomer = () => {
     setDeleteDialogOpen(true);
   }
 
   const handleConfirmDelete = () => {
-    deleteCustomer(selectedRowID)
+    deleteCustomer(selectedRowID);
     queryCustomers();
     setDeleteDialogOpen(false);
   }
 
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
-  }
+  };
 
-  console.log(page, pageSize, count, customers.length, currentCursor, statusSelected, searchName)
+  const handleDialogClosed = () => {
+    // Restore focus to the selected row in the table
+    if (tableRef.current && selectedRowID) {
+      tableRef.current.restoreFocusToSelectedRow();
+    }
+  };
+
+  // Keyboard shortcuts handlers
+  const handleFocusSearch = () => {
+    if (searchFieldRef.current) {
+      const inputElement = searchFieldRef.current.querySelector('input');
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select(); // Also select the text for easy replacement
+      }
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSearchName('');
+    setStatusSelected(null);
+    setTimeout(() => searchFieldRef.current?.focus(), 100);
+  };
+
+  const handleEditSelected = () => {
+    if (selectedRowID) {
+      navigate(`/customers/${selectedRowID}`);
+    }
+  };
+
+  const handleCreateNew = () => {
+    navigate('/customers/create');
+  };
+
+  const handleRefresh = () => {
+    queryCustomers();
+  };
+
+  const handlePreviousPage = () => {
+    if (page > 0) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (count && (page + 1) * pageSize < count) {
+      setPage(page + 1);
+    }
+  };
+
+  // Set up focus navigation
+  const { focusNavigation } = useListPageFocusNavigation({
+    fieldRefs: [searchFieldRef, statusFilterRef],
+    tableRef,
+    tableData: customers,
+    onTableRowSelect: setSelectedRowID,
+    getRowId: (customer: Customer) => customer.id,
+    onFocusSearch: handleFocusSearch,
+    onClearFilters: handleClearFilters,
+    onEditSelected: handleEditSelected,
+    onDeleteSelected: handleDeleteCustomer,
+    onToggleStatus: handleToggleStatus,
+    onCreateNew: handleCreateNew,
+    onRefresh: handleRefresh,
+    onPreviousPage: handlePreviousPage,
+    onNextPage: handleNextPage,
+    onShowHelp: () => setShowHelp(true),
+    hasSelectedItem: !!selectedRowID,
+    canToggleStatus: true,
+    hasNextPage: count ? (page + 1) * pageSize < count : false,
+    hasPreviousPage: page > 0,
+  });
 
   return (
     <>
-      <PageTitle>Clientes</PageTitle>
-      <Grid spacing={2} container>
+      <PageTitle 
+        showKeyboardHelp={true}
+        keyboardHelpTitle="Atalhos do Teclado - Clientes"
+        showInactivate={true}
+        helpOpen={showHelp}
+        onHelpOpenChange={setShowHelp}
+      >
+        Clientes
+      </PageTitle>
+      <Grid spacing={1} container>
 
         <Grid item xs={6}>
           <TextField
+            ref={searchFieldRef}
             value={searchName}
             fullWidth
             onChange={handleSearchName}
@@ -155,60 +262,94 @@ export const CustomerList = () => {
           />
         </Grid>
         <Grid item xs={6}>
-          <Autocomplete
+          <EnhancedAutocomplete
+            ref={statusFilterRef}
             id="status-filter"
             options={statuses}
-            getOptionLabel={(option) => option.label}
-            fullWidth
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                variant="outlined"
-                label="Status"
-              />
-            )}
-            isOptionEqualToValue={(option, value) =>
-              option.value === value.value
+            getOptionLabel={(option: SelectField<string>) => option.label}
+            label="Status"
+            isOptionEqualToValue={(option: SelectField<string>, value: SelectField<string>) =>
+              option.value === value?.value
             }
             onChange={handleStatusSelection}
+            onNextField={focusNavigation.focusFirstTableRow}
+            onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
+            value={statusSelected}
           />
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth disabled={!selectedRowID} onClick={() => navigate(`/customers/${selectedRowID}`)}
-          > Editar Cliente </Button>
+          <Tooltip title="Ctrl/Cmd + E" placement="top">
+            <Button 
+              fullWidth 
+              disabled={!selectedRowID} 
+              onClick={() => navigate(`/customers/${selectedRowID}`)}
+              tabIndex={-1}
+            > 
+              Editar Cliente 
+            </Button>
+          </Tooltip>
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth disabled={!selectedRowID} onClick={handleDeleteCustomer}
-          > Deletar Cliente </Button>
+          <Tooltip title="Ctrl/Cmd + D" placement="top">
+            <Button 
+              fullWidth 
+              disabled={!selectedRowID} 
+              onClick={handleDeleteCustomer}
+              tabIndex={-1}
+            > 
+              Deletar Cliente 
+            </Button>
+          </Tooltip>
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth disabled={!selectedRowID} onClick={handleDeactiveCustomer}
-          > Desativar Cliente </Button>
+          <Tooltip title="Ctrl/Cmd + I" placement="top">
+            <Button 
+              fullWidth 
+              disabled={!selectedRowID} 
+              onClick={handleDeactiveCustomer}
+              tabIndex={-1}
+            > 
+              Desativar Cliente 
+            </Button>
+          </Tooltip>
         </Grid>
         <Grid item xs={3}>
-          <Button fullWidth onClick={() => navigate(`/customers/create`)}
-          > Cadastrar Cliente </Button>
+          <Tooltip title="Ctrl/Cmd + N" placement="top">
+            <Button 
+              fullWidth 
+              onClick={() => navigate(`/customers/create`)}
+              tabIndex={-1}
+            > 
+              Cadastrar Cliente 
+            </Button>
+          </Tooltip>
         </Grid>
 
-        <Grid xs={12} item marginTop="20px">
-          <div style={{ height: '100%', minHeight: 400 }}>
-            <DataGrid
-              rows={customers}
-              columns={columns}
-              pageSizeOptions={[10, 20]}
-              paginationModel={{ page, pageSize }}
-              onRowSelectionModelChange={handleRowSelection}
-              onPaginationModelChange={handlePaginationModelChange}
-              onRowDoubleClick={(params) => navigate(`/customers/${params.row.id}`)}
-              hideFooterSelectedRowCount
-              rowCount={count || 0}
-              rowSelectionModel={[selectedRowID]}
-              paginationMode="server"
-              loading={loading}
-              localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
-            />
-          </div>
+        <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
+          <CustomDataTable
+            data={customers}
+            columns={columns}
+            totalCount={count}
+            loading={loading}
+            selectedRowId={selectedRowID}
+            onRowSelectionChange={handleRowSelectionChange}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            onRowDoubleClick={(customer) => navigate(`/customers/${customer.id}`)}
+            onNavigateToNextField={() => {
+              // Navigate to next component after table (could be action buttons)
+            }}
+            onNavigateToPreviousField={() => {
+              // Navigate back to status filter
+              focusNavigation.focusLastFieldBeforeTable();
+            }}
+            getRowId={(customer) => customer.id}
+            onEditSelected={handleEditSelected}
+            onDeleteSelected={handleDeleteCustomer}
+            ref={tableRef}
+          />
         </Grid>
       </Grid>
       <DeleteConfirmationDialog
@@ -216,6 +357,13 @@ export const CustomerList = () => {
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         resourceName="cliente"
+        onDialogClosed={handleDialogClosed}
+      />
+      <KeyboardListPageKeyboardHelp
+        open={showHelp}
+        onClose={() => setShowHelp(false)}
+        title="Atalhos do Teclado - Clientes"
+        showInactivate={true}
       />
     </>
   );

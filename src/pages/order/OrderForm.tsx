@@ -219,6 +219,8 @@ export const OrderForm = () => {
             showDuplicateDialog={showDuplicateDialog}
             handleDialogOverride={handleDialogOverride}
             handleDialogClose={handleDialogClose}
+            focusNextField={focusNextField}
+            focusPreviousField={focusPreviousField}
           />
         </Box>
 

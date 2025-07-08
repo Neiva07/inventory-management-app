@@ -318,7 +318,7 @@ export const ProductList = () => {
             getOptionLabel={(option: ProductCategory) => option.name}
             label="Categoria"
             isOptionEqualToValue={(option: ProductCategory, value: ProductCategory) =>
-              option.id === value.id
+              option.id === value?.id
             }
             onChange={handleCategorySelect}
             onNextField={() => focusNavigation.focusNextField(categoryFilterRef)}
@@ -334,7 +334,7 @@ export const ProductList = () => {
             getOptionLabel={(option: SelectField<string>) => option.label}
             label="Status"
             isOptionEqualToValue={(option: SelectField<string>, value: SelectField<string>) =>
-              option.value === value.value
+              option.value === value?.value
             }
             onChange={handleStatusSelection}
             onNextField={focusNavigation.focusFirstTableRow}

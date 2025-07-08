@@ -23,6 +23,8 @@ export const OrderFormLineItemForm = ({
   showDuplicateDialog,
   handleDialogOverride,
   handleDialogClose,
+  focusNextField,
+  focusPreviousField,
 }: { 
   productSelectRef: React.RefObject<HTMLDivElement>,
   variantRef: React.RefObject<HTMLDivElement>,
@@ -39,6 +41,8 @@ export const OrderFormLineItemForm = ({
   showDuplicateDialog: boolean,
   handleDialogOverride: () => void,
   handleDialogClose: () => void,
+  focusNextField: (currentRef: React.RefObject<HTMLElement>) => void,
+  focusPreviousField: (currentRef: React.RefObject<HTMLElement>) => void,
 }) => {
   const formMethods = useFormContext<OrderFormDataInterface>();
 
@@ -68,6 +72,8 @@ export const OrderFormLineItemForm = ({
                 handleSelectProduct(event, value);
               }}
               ref={productSelectRef}
+              onNextField={() => focusNextField(productSelectRef)}
+              onPreviousField={() => focusPreviousField(productSelectRef)}
             />
           )}
         />
@@ -92,6 +98,8 @@ export const OrderFormLineItemForm = ({
                 handleSelectVariant(event, value);
               }}
               ref={variantRef}
+              onNextField={() => focusNextField(variantRef)}
+              onPreviousField={() => focusPreviousField(variantRef)}
             />
           )}
         />

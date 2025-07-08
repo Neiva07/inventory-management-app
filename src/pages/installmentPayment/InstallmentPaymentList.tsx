@@ -1,12 +1,10 @@
 import * as React from 'react';
-import { DataGrid, GridColDef, GridPaginationModel, GridRowSelectionModel } from '@mui/x-data-grid';
-import { Grid, TextField, Box, Autocomplete, IconButton, Tooltip } from '@mui/material';
+import { Grid, TextField, Box, IconButton, Tooltip } from '@mui/material';
 import { Payment, Visibility, Refresh } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { InstallmentPayment, getInstallmentPayments, InstallmentPaymentStatus } from '../../model/installmentPayment';
 import { useAuth } from '../../context/auth';
-import { ptBR } from '@mui/x-data-grid/locales';
 import { PageTitle } from '../../components/PageTitle';
 import { DeleteConfirmationDialog } from '../../components/DeleteConfirmationDialog';
 import { PaymentModal } from '../../components/PaymentModal';
@@ -14,6 +12,11 @@ import { formatCurrency } from 'lib/math';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useOverdueCheck } from '../../lib/overdueCheck';
 import { getDateStartTimestamp, getDateEndTimestamp } from '../../lib/date';
+import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
+import { KeyboardListPageKeyboardHelp } from 'components/KeyboardListPageKeyboardHelp';
+import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable';
+import { ColumnDefinition } from 'components/CustomDataTable/types';
 
 const statuses = [
   {
@@ -56,47 +59,49 @@ export const InstallmentPaymentList = () => {
   const [endDate, setEndDate] = React.useState<Date | null>(null);
   const [page, setPage] = React.useState<number>(0);
   const [currentCursor, setCurrentCursor] = React.useState<InstallmentPayment | undefined>();
+  const [showHelp, setShowHelp] = React.useState(false);
+
+  // Refs for focus navigation
+  const startDateRef = React.useRef<HTMLDivElement>(null);
+  const endDateRef = React.useRef<HTMLDivElement>(null);
+  const statusFilterRef = React.useRef<HTMLDivElement>(null);
+  const tableRef = React.useRef<CustomDataTableRef>(null);
+
   // Define columns inside component to access navigate function
-  const columns: GridColDef[] = [
+  const columns: ColumnDefinition<InstallmentPayment>[] = [
     { 
       field: 'publicId', 
       headerName: 'ID', 
       width: 180,
-      minWidth: 150,
     },
     { 
       field: 'installmentNumber', 
       headerName: '# Parcela', 
       width: 80,
-      minWidth: 80,
     },
     { 
       field: 'amount', 
       headerName: 'Valor a Pagar', 
       width: 120,
-      minWidth: 100,
-      valueFormatter: (params) => formatCurrency(params.value),
+      valueGetter: (row: InstallmentPayment) => formatCurrency(row.amount),
     },
     { 
       field: 'paymentMethod.label', 
       headerName: 'Forma de Pagamento', 
       width: 160,
-      minWidth: 140,
-      valueGetter: (params) => params.row.paymentMethod?.label || '',
+      valueGetter: (row: InstallmentPayment) => row.paymentMethod?.label || '',
     },
     {
       field: 'dueDate',
       headerName: 'Vencimento',
       width: 120,
-      minWidth: 100,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString('pt-BR'),
+      valueGetter: (row: InstallmentPayment) => new Date(row.dueDate).toLocaleDateString('pt-BR'),
     },
     {
       field: 'status',
       headerName: 'Status',
       width: 100,
-      minWidth: 90,
-      renderCell: (params) => {
+      valueGetter: (row: InstallmentPayment) => {
         const statusColors = {
           pending: '#ff9800',
           paid: '#2e7d32',
@@ -109,18 +114,28 @@ export const InstallmentPaymentList = () => {
           overdue: 'Vencido',
           cancelled: 'Cancelado',
         };
+        return {
+          label: statusLabels[row.status as keyof typeof statusLabels] || row.status,
+          color: statusColors[row.status as keyof typeof statusColors] || '#757575'
+        };
+      },
+      renderCell: (value) => {
+        const statusInfo = value as { label: string; color: string };
         return (
           <Box
             sx={{
-              backgroundColor: statusColors[params.value as keyof typeof statusColors] || '#757575',
+              backgroundColor: statusInfo.color,
               color: 'white',
               padding: '4px 8px',
               borderRadius: '4px',
               fontSize: '0.75rem',
               fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            {statusLabels[params.value as keyof typeof statusLabels] || params.value}
+            {statusInfo.label}
           </Box>
         );
       },
@@ -129,24 +144,21 @@ export const InstallmentPaymentList = () => {
       field: 'paidAmount',
       headerName: 'Valor Pago',
       width: 120,
-      minWidth: 100,
-      valueFormatter: (params) => params.value ? formatCurrency(params.value) : '-',
+      valueGetter: (row: InstallmentPayment) => row.paidAmount ? formatCurrency(row.paidAmount) : '-',
     },
     {
       field: 'paidAt',
       headerName: 'Data do Pagamento',
       width: 130,
-      minWidth: 110,
-      valueFormatter: (params) => params.value ? new Date(params.value).toLocaleDateString('pt-BR') : '-',
+      valueGetter: (row: InstallmentPayment) => row.paidAt ? new Date(row.paidAt).toLocaleDateString('pt-BR') : '-',
     },
     {
       field: 'actions',
       headerName: 'Ações',
       width: 100,
-      minWidth: 90,
-      sortable: false,
-      renderCell: (params) => {
-        const installment = params.row as InstallmentPayment;
+      valueGetter: (row: InstallmentPayment) => row,
+      renderCell: (value) => {
+        const installment = value as InstallmentPayment;
         const canPay = installment.status === 'pending' || installment.status === 'overdue';
         
         return (
@@ -219,21 +231,17 @@ export const InstallmentPaymentList = () => {
     setStatusSelected(value);
   };
 
-  const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPage(model.page);
-    setPageSize(model.pageSize);
-  };
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  }
 
-  const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
-    if (rowSelection && rowSelection[0]) {
-      const id = String(rowSelection[0]);
-      if (id === selectedRowID) {
-        setSelectedRowID(null);
-      } else {
-        setSelectedRowID(id);
-      }
-    }
-  };
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+  }
+
+  const handleRowSelectionChange = (rowId: string | null) => {
+    setSelectedRowID(rowId || undefined);
+  }
 
   const handleDeleteInstallmentPayment = () => {
     setDeleteDialogOpen(true);
@@ -249,8 +257,11 @@ export const InstallmentPaymentList = () => {
     setDeleteDialogOpen(false);
   };
 
-  const handleRowDoubleClick = (params: any) => {
-    navigate(`/installment-payments/${params.row.id}`);
+  const handleDialogClosed = () => {
+    // Restore focus to the selected row in the table
+    if (tableRef.current && selectedRowID) {
+      tableRef.current.restoreFocusToSelectedRow();
+    }
   };
 
   const handlePaymentRecorded = () => {
@@ -267,12 +278,83 @@ export const InstallmentPaymentList = () => {
     queryInstallmentPayments();
   };
 
-  console.log(page, pageSize, count, installmentPayments.length, currentCursor, statusSelected, startDate, endDate)
+  // Keyboard shortcuts handlers
+  const handleFocusSearch = () => {
+    if (startDateRef.current) {
+      const inputElement = startDateRef.current.querySelector('input');
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select(); // Also select the text for easy replacement
+      }
+    }
+  };
+
+  const handleClearFilters = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setStatusSelected(statuses[1]);
+    setTimeout(() => startDateRef.current?.focus(), 100);
+  };
+
+  const handleEditSelected = () => {
+    if (selectedRowID) {
+      navigate(`/installment-payments/${selectedRowID}`);
+    }
+  };
+
+  const handleCreateNew = () => {
+    navigate('/installment-payments/create');
+  };
+
+  const handleRefresh = () => {
+    queryInstallmentPayments();
+  };
+
+  const handlePreviousPage = () => {
+    if (page > 0) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (count && (page + 1) * pageSize < count) {
+      setPage(page + 1);
+    }
+  };
+
+  // Set up focus navigation
+  const { focusNavigation } = useListPageFocusNavigation({
+    fieldRefs: [startDateRef, endDateRef, statusFilterRef],
+    tableRef,
+    tableData: installmentPayments,
+    onTableRowSelect: setSelectedRowID,
+    getRowId: (installmentPayment: InstallmentPayment) => installmentPayment.id,
+    onFocusSearch: handleFocusSearch,
+    onClearFilters: handleClearFilters,
+    onEditSelected: handleEditSelected,
+    onDeleteSelected: handleDeleteInstallmentPayment,
+    onCreateNew: handleCreateNew,
+    onRefresh: handleRefresh,
+    onPreviousPage: handlePreviousPage,
+    onNextPage: handleNextPage,
+    onShowHelp: () => setShowHelp(true),
+    hasSelectedItem: !!selectedRowID,
+    canToggleStatus: false, // Installment payments don't have status toggle
+    hasNextPage: count ? (page + 1) * pageSize < count : false,
+    hasPreviousPage: page > 0,
+  });
 
   return (
-    <Box sx={{ height: 'calc(100vh - 200px)', width: '100%' }}>
+    <>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <PageTitle>Parcelas</PageTitle>
+        <PageTitle 
+          showKeyboardHelp={true}
+          keyboardHelpTitle="Atalhos do Teclado - Parcelas"
+          helpOpen={showHelp}
+          onHelpOpenChange={setShowHelp}
+        >
+          Parcelas
+        </PageTitle>
         <Tooltip title="Verificar vencimentos">
           <IconButton onClick={handleRefreshOverdue} color="primary">
             <Refresh />
@@ -280,13 +362,18 @@ export const InstallmentPaymentList = () => {
         </Tooltip>
       </Box>
       
-      <Grid container spacing={2} sx={{ mb: 2 }}>
+      <Grid container spacing={1} sx={{ mb: 2 }}>
         <Grid item xs={6} md={3}>
           <DatePicker
             label="Data início"
             value={startDate}
             onChange={setStartDate}
-            slotProps={{ textField: { fullWidth: true } }}
+            ref={startDateRef}
+            slotProps={{ 
+              textField: { 
+                fullWidth: true,
+              } 
+            }}
           />
         </Grid>
         <Grid item xs={6} md={3}>
@@ -294,51 +381,58 @@ export const InstallmentPaymentList = () => {
             label="Data fim"
             value={endDate}
             onChange={setEndDate}
-            slotProps={{ textField: { fullWidth: true } }}
+            ref={endDateRef}
+            slotProps={{ 
+              textField: { 
+                fullWidth: true,
+              } 
+            }}
           />
         </Grid>
         <Grid item xs={12} md={6}>
-          <Autocomplete
+          <EnhancedAutocomplete
+            ref={statusFilterRef}
             id="status-filter"
             options={statuses}
-            getOptionLabel={(option) => option.label}
+            getOptionLabel={(option: SelectField<InstallmentPaymentStatus | "">) => option.label}
+            label="Status"
+            isOptionEqualToValue={(option: SelectField<InstallmentPaymentStatus | "">, value: SelectField<InstallmentPaymentStatus | "">) =>
+              option.value === value?.value
+            }
+            onChange={handleStatusSelection}
+            onNextField={focusNavigation.focusFirstTableRow}
+            onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
             value={statusSelected}
-            onChange={(_, value) => {
-              setStatusSelected(value);
-            }}
-            isOptionEqualToValue={(option, value) => option.value === value.value}
-            renderInput={(params) => (
-              <TextField {...params} label="Status" fullWidth variant="outlined" />
-            )}
           />
         </Grid>
       </Grid>
 
-      <DataGrid
-        rows={installmentPayments}
-        columns={columns}
-        rowCount={count ?? 0}
-        paginationModel={{ page, pageSize }}
-        onPaginationModelChange={handlePaginationModelChange}
-        pageSizeOptions={[10, 25, 50]}
-        rowSelectionModel={selectedRowID ? [selectedRowID] : []}
-        onRowSelectionModelChange={handleRowSelection}
-        onRowDoubleClick={handleRowDoubleClick}
-        loading={loading}
-        localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
-        disableRowSelectionOnClick
-        paginationMode="server"
-        getRowId={(row) => row.id}
-        sx={{
-          '& .MuiDataGrid-cell': {
-            fontSize: '0.875rem',
-          },
-          '& .MuiDataGrid-columnHeader': {
-            fontSize: '0.875rem',
-            fontWeight: 600,
-          },
-        }}
-      />
+      <Grid xs={12} item style={{ minHeight: 400 }}>
+        <CustomDataTable
+          data={installmentPayments}
+          columns={columns}
+          totalCount={count}
+          loading={loading}
+          selectedRowId={selectedRowID}
+          onRowSelectionChange={handleRowSelectionChange}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          onRowDoubleClick={(installmentPayment) => navigate(`/installment-payments/${installmentPayment.id}`)}
+          onNavigateToNextField={() => {
+            // Navigate to next component after table (could be action buttons)
+          }}
+          onNavigateToPreviousField={() => {
+            // Navigate back to status filter
+            focusNavigation.focusLastFieldBeforeTable();
+          }}
+          getRowId={(installmentPayment) => installmentPayment.id}
+          onEditSelected={handleEditSelected}
+          onDeleteSelected={handleDeleteInstallmentPayment}
+          ref={tableRef}
+        />
+      </Grid>
 
       <PaymentModal
         open={paymentModalOpen}
@@ -352,7 +446,14 @@ export const InstallmentPaymentList = () => {
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         resourceName="parcela"
+        onDialogClosed={handleDialogClosed}
       />
-    </Box>
+      <KeyboardListPageKeyboardHelp
+        open={showHelp}
+        onClose={() => setShowHelp(false)}
+        title="Atalhos do Teclado - Parcelas"
+        showInactivate={false}
+      />
+    </>
   );
 }; 

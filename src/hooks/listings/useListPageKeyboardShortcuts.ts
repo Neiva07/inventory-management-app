@@ -26,6 +26,20 @@ export const useListPageKeyboardShortcuts = (options: ListPageKeyboardOptions) =
       target.tagName === 'TEXTAREA' ||
       target.contentEditable === 'true'
     );
+    
+    // Allow F1 (help) and Escape (clear filters) even in text inputs
+    if (event.key === 'F1') {
+      event.preventDefault();
+      options.onShowHelp();
+      return;
+    }
+    
+    if (event.key === 'Escape' && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      options.onClearFilters();
+      return;
+    }
+    
     // Allow global shortcuts (with Ctrl/Cmd) even in non-text inputs (like Autocomplete, Select, etc.)
     if (isTextInput && !(event.ctrlKey || event.metaKey)) {
       return;
@@ -105,21 +119,6 @@ export const useListPageKeyboardShortcuts = (options: ListPageKeyboardOptions) =
       options.onFocusFirstTableRow();
       return;
     }
-
-    // Escape: Clear filters and focus search
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      options.onClearFilters();
-      return;
-    }
-
-    // F1: Show help
-    if (event.key === 'F1') {
-      event.preventDefault();
-      options.onShowHelp();
-      return;
-    }
-
 
   }, [options]);
 

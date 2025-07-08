@@ -1,19 +1,22 @@
 import * as React from 'react';
-import { DataGrid, GridColDef, GridPaginationModel, GridRowSelectionModel } from '@mui/x-data-grid';
-import { Button, Grid, TextField, Box, Autocomplete } from '@mui/material';
+import { Button, Grid, TextField, Box, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { SupplierBill, getSupplierBills, SupplierBillStatus } from '../../model/supplierBill';
 import { Supplier, getSuppliers } from 'model/suppliers';
 import { useAuth } from '../../context/auth';
-import { ptBR } from '@mui/x-data-grid/locales';
 import { PageTitle } from '../../components/PageTitle';
 import { DeleteConfirmationDialog } from '../../components/DeleteConfirmationDialog';
 import { formatCurrency } from 'lib/math';
 import { DatePicker } from '@mui/x-date-pickers';
 import { getDateStartTimestamp, getDateEndTimestamp } from '../../lib/date';
+import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
+import { KeyboardListPageKeyboardHelp } from 'components/KeyboardListPageKeyboardHelp';
+import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable';
+import { ColumnDefinition } from 'components/CustomDataTable/types';
 
-const columns: GridColDef[] = [
+const columns: ColumnDefinition<SupplierBill>[] = [
   { 
     field: 'publicId', 
     headerName: 'ID', 
@@ -23,37 +26,37 @@ const columns: GridColDef[] = [
     field: 'supplier.supplierName', 
     headerName: 'Fornecedor', 
     flex: 1,
-    valueGetter: (params) => params.row.supplier?.supplierName ?? '',
+    valueGetter: (row) => row.supplier?.supplierName ?? '',
   },
   { 
     field: 'inboundOrder.publicId', 
     headerName: 'Pedido', 
     width: 150,
-    valueGetter: (params) => params.row.inboundOrder?.publicId ?? '',
+    valueGetter: (row) => row.inboundOrder?.publicId ?? '',
   },
   { 
     field: 'totalValue', 
     headerName: 'Valor Total', 
     width: 150,
-    valueFormatter: (params) => formatCurrency(params.value),
+    valueGetter: (row) => formatCurrency(row.totalValue),
   },
   { 
     field: 'initialCashInstallment', 
     headerName: 'Entrada', 
     width: 120,
-    valueFormatter: (params) => formatCurrency(params.value),
+    valueGetter: (row) => formatCurrency(row.initialCashInstallment),
   },
   { 
     field: 'remainingValue', 
     headerName: 'Restante', 
     width: 120,
-    valueFormatter: (params) => formatCurrency(params.value),
+    valueGetter: (row) => formatCurrency(row.remainingValue),
   },
   {
     field: 'status',
     headerName: 'Status',
     width: 120,
-    renderCell: (params) => {
+    valueGetter: (row) => {
       const statusColors = {
         active: '#1976d2',
         paid: '#2e7d32',
@@ -66,18 +69,28 @@ const columns: GridColDef[] = [
         overdue: 'Vencido',
         cancelled: 'Cancelado',
       };
+      return {
+        label: statusLabels[row.status as keyof typeof statusLabels] ?? row.status,
+        color: statusColors[row.status as keyof typeof statusColors] ?? '#757575'
+      };
+    },
+    renderCell: (value) => {
+      const statusInfo = value as { label: string; color: string };
       return (
         <Box
           sx={{
-            backgroundColor: statusColors[params.value as keyof typeof statusColors] ?? '#757575',
+            backgroundColor: statusInfo.color,
             color: 'white',
             padding: '4px 8px',
             borderRadius: '4px',
             fontSize: '0.75rem',
             fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          {statusLabels[params.value as keyof typeof statusLabels] ?? params.value}
+          {statusInfo.label}
         </Box>
       );
     },
@@ -86,7 +99,7 @@ const columns: GridColDef[] = [
     field: 'createdAt',
     headerName: 'Data de Criação',
     width: 150,
-    valueFormatter: (params) => new Date(params.value).toLocaleDateString('pt-BR'),
+    valueGetter: (row: SupplierBill) => new Date(row.createdAt).toLocaleDateString('pt-BR'),
   },
 ];
 
@@ -119,9 +132,9 @@ export const SupplierBillList = () => {
 
   const [supplierBills, setSupplierBills] = React.useState<Array<SupplierBill>>([]);
   const [count, setCount] = React.useState<number>();
-  const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier>();
+  const [selectedSupplier, setSelectedSupplier] = React.useState<Supplier | null>(null);
   const [suppliers, setSuppliers] = React.useState<Array<Supplier>>([]);
-  const [selectedRowID, setSelectedRowID] = React.useState<string>();
+  const [selectedRowID, setSelectedRowID] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [statusSelected, setStatusSelected] = React.useState<SelectField<SupplierBillStatus | ""> | null>(statuses[0]);
@@ -130,12 +143,18 @@ export const SupplierBillList = () => {
   const [currentCursor, setCurrentCursor] = React.useState<SupplierBill | undefined>();
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [endDate, setEndDate] = React.useState<Date | null>(null);
+  const [showHelp, setShowHelp] = React.useState(false);
+
+  // Refs for focus navigation
+  const supplierFilterRef = React.useRef<HTMLDivElement>(null);
+  const startDateRef = React.useRef<HTMLDivElement>(null);
+  const endDateRef = React.useRef<HTMLDivElement>(null);
+  const statusFilterRef = React.useRef<HTMLDivElement>(null);
+  const tableRef = React.useRef<CustomDataTableRef>(null);
 
   React.useEffect(() => {
     getSuppliers({ pageSize: 10000, userID: user.id }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
   }, [user]);
-
-  console.log(statusSelected, supplierBills);
 
   const querySupplierBills = () => {
     setLoading(true);
@@ -181,21 +200,17 @@ export const SupplierBillList = () => {
     setStatusSelected(value);
   };
 
-  const handlePaginationModelChange = (model: GridPaginationModel) => {
-    setPage(model.page);
-    setPageSize(model.pageSize);
-  };
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  }
 
-  const handleRowSelection = (rowSelection: GridRowSelectionModel) => {
-    if (rowSelection && rowSelection[0]) {
-      const id = String(rowSelection[0]);
-      if (id === selectedRowID) {
-        setSelectedRowID(null);
-      } else {
-        setSelectedRowID(id);
-      }
-    }
-  };
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+  }
+
+  const handleRowSelectionChange = (rowId: string | null) => {
+    setSelectedRowID(rowId || undefined);
+  }
 
   const handleDeleteSupplierBill = () => {
     setDeleteDialogOpen(true);
@@ -211,36 +226,107 @@ export const SupplierBillList = () => {
     setDeleteDialogOpen(false);
   };
 
-  console.log(page, pageSize, count, supplierBills.length, currentCursor, statusSelected, selectedSupplier, startDate, endDate)
-
-  const handleRowDoubleClick = (params: any) => {
-    navigate(`/supplier-bills/${params.row.id}`);
+  const handleDialogClosed = () => {
+    // Restore focus to the selected row in the table
+    if (tableRef.current && selectedRowID) {
+      tableRef.current.restoreFocusToSelectedRow();
+    }
   };
 
+  // Keyboard shortcuts handlers
+  const handleFocusSearch = () => {
+    if (supplierFilterRef.current) {
+      const inputElement = supplierFilterRef.current.querySelector('input');
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select(); // Also select the text for easy replacement
+      }
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSelectedSupplier(null);
+    setStartDate(null);
+    setEndDate(null);
+    setStatusSelected(statuses[0]);
+    setTimeout(() => supplierFilterRef.current?.focus(), 100);
+  };
+
+  const handleEditSelected = () => {
+    if (selectedRowID) {
+      navigate(`/supplier-bills/${selectedRowID}`);
+    }
+  };
+
+  const handleCreateNew = () => {
+    navigate('/supplier-bills/create');
+  };
+
+  const handleRefresh = () => {
+    querySupplierBills();
+  };
+
+  const handlePreviousPage = () => {
+    if (page > 0) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (count && (page + 1) * pageSize < count) {
+      setPage(page + 1);
+    }
+  };
+
+  // Set up focus navigation
+  const { focusNavigation } = useListPageFocusNavigation({
+    fieldRefs: [supplierFilterRef, startDateRef, endDateRef, statusFilterRef],
+    tableRef,
+    tableData: supplierBills,
+    onTableRowSelect: setSelectedRowID,
+    getRowId: (supplierBill: SupplierBill) => supplierBill.id,
+    onFocusSearch: handleFocusSearch,
+    onClearFilters: handleClearFilters,
+    onEditSelected: handleEditSelected,
+    onDeleteSelected: handleDeleteSupplierBill,
+    onCreateNew: handleCreateNew,
+    onRefresh: handleRefresh,
+    onPreviousPage: handlePreviousPage,
+    onNextPage: handleNextPage,
+    onShowHelp: () => setShowHelp(true),
+    hasSelectedItem: !!selectedRowID,
+    canToggleStatus: false, // Supplier bills don't have status toggle
+    hasNextPage: count ? (page + 1) * pageSize < count : false,
+    hasPreviousPage: page > 0,
+  });
+
   return (
-    <Box sx={{ height: 600, width: '100%' }}>
-      <PageTitle>Contas a Pagar</PageTitle>
+    <>
+      <PageTitle 
+        showKeyboardHelp={true}
+        keyboardHelpTitle="Atalhos do Teclado - Contas a Pagar"
+        helpOpen={showHelp}
+        onHelpOpenChange={setShowHelp}
+      >
+        Contas a Pagar
+      </PageTitle>
       
-      <Grid container spacing={2} sx={{ mb: 2 }}>
+      <Grid container spacing={1} sx={{ mb: 2 }}>
         <Grid item xs={12} md={4}>
-          <Autocomplete
+          <EnhancedAutocomplete
+            ref={supplierFilterRef}
             id="supplier-filter"
             options={suppliers}
-            getOptionLabel={(option) => option.tradeName}
-            fullWidth
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                fullWidth
-                variant="outlined"
-                label="Fornecedor"
-                autoFocus
-              />
-            )}
-            isOptionEqualToValue={(option, value) =>
-              option.id === value.id
+            getOptionLabel={(option: Supplier) => option.tradeName}
+            label="Fornecedor"
+            isOptionEqualToValue={(option: Supplier, value: Supplier) =>
+              option.id === value?.id
             }
             onChange={handleSupplierSelection}
+            onNextField={() => focusNavigation.focusNextField(supplierFilterRef)}
+            onPreviousField={() => focusNavigation.focusPreviousField(supplierFilterRef)}
+            value={selectedSupplier}
+            autoFocus
           />
         </Grid>
         <Grid item xs={6} md={2}>
@@ -248,7 +334,12 @@ export const SupplierBillList = () => {
             label="Data início"
             value={startDate}
             onChange={setStartDate}
-            slotProps={{ textField: { fullWidth: true } }}
+            ref={startDateRef}
+            slotProps={{ 
+              textField: { 
+                fullWidth: true,
+              } 
+            }}
           />
         </Grid>
         <Grid item xs={6} md={2}>
@@ -256,47 +347,72 @@ export const SupplierBillList = () => {
             label="Data fim"
             value={endDate}
             onChange={setEndDate}
-            slotProps={{ textField: { fullWidth: true } }}
+            ref={endDateRef}
+            slotProps={{ 
+              textField: { 
+                fullWidth: true,
+              } 
+            }}
           />
         </Grid>
         <Grid item xs={12} md={4}>
-          <Autocomplete
+          <EnhancedAutocomplete
+            ref={statusFilterRef}
             id="status-filter"
             options={statuses}
-            getOptionLabel={(option) => option.label}
+            getOptionLabel={(option: SelectField<SupplierBillStatus | "">) => option.label}
+            label="Status"
+            isOptionEqualToValue={(option: SelectField<SupplierBillStatus | "">, value: SelectField<SupplierBillStatus | "">) =>
+              option.value === value?.value
+            }
+            onChange={handleStatusSelection}
+            onNextField={focusNavigation.focusFirstTableRow}
+            onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
             value={statusSelected}
-            onChange={(_, value) => setStatusSelected(value)}
-            isOptionEqualToValue={(option, value) => option.value === value.value}
-            renderInput={(params) => (
-              <TextField {...params} label="Status" fullWidth variant="outlined" />
-            )}
           />
         </Grid>
       </Grid>
 
-      <DataGrid
-        rows={supplierBills}
-        columns={columns}
-        rowCount={count ?? 0}
-        paginationModel={{ page, pageSize }}
-        onPaginationModelChange={handlePaginationModelChange}
-        pageSizeOptions={[10, 25, 50]}
-        rowSelectionModel={selectedRowID ? [selectedRowID] : []}
-        onRowSelectionModelChange={handleRowSelection}
-        onRowDoubleClick={handleRowDoubleClick}
-        loading={loading}
-        localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
-        disableRowSelectionOnClick
-        paginationMode="server"
-        getRowId={(row) => row.id}
-      />
+      <Grid xs={12} item style={{ minHeight: 400 }}>
+        <CustomDataTable
+          data={supplierBills}
+          columns={columns}
+          totalCount={count}
+          loading={loading}
+          selectedRowId={selectedRowID}
+          onRowSelectionChange={handleRowSelectionChange}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          onRowDoubleClick={(supplierBill) => navigate(`/supplier-bills/${supplierBill.id}`)}
+          onNavigateToNextField={() => {
+            // Navigate to next component after table (could be action buttons)
+          }}
+          onNavigateToPreviousField={() => {
+            // Navigate back to status filter
+            focusNavigation.focusLastFieldBeforeTable();
+          }}
+          getRowId={(supplierBill) => supplierBill.id}
+          onEditSelected={handleEditSelected}
+          onDeleteSelected={handleDeleteSupplierBill}
+          ref={tableRef}
+        />
+      </Grid>
 
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         resourceName="conta a pagar"
+        onDialogClosed={handleDialogClosed}
       />
-    </Box>
+      <KeyboardListPageKeyboardHelp
+        open={showHelp}
+        onClose={() => setShowHelp(false)}
+        title="Atalhos do Teclado - Contas a Pagar"
+        showInactivate={false}
+      />
+    </>
   );
 }; 

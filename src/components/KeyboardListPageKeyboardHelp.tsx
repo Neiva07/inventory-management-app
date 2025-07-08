@@ -74,7 +74,7 @@ export const KeyboardListPageKeyboardHelp: React.FC<KeyboardListPageKeyboardHelp
             <ShortcutItem shortcut="Ctrl/Cmd + F" description="Focar campo de busca" />
             <ShortcutItem shortcut="Tab" description="Próximo campo / botão" />
             <ShortcutItem shortcut="Shift + Tab" description="Campo anterior" />
-            <ShortcutItem shortcut="Escape" description="Limpar filtros e focar busca" />
+            <ShortcutItem shortcut="Ctrl/Cmd + Escape" description="Limpar filtros e focar busca" />
           </Grid>
           
           <Grid item xs={12} md={6}>
