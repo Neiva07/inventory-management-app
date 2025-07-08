@@ -118,6 +118,29 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
             </Typography>
             <ShortcutItem shortcut="F1" description="Mostrar esta ajuda" />
           </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="h6" gutterBottom sx={{ color: 'secondary.main', fontWeight: 'bold', mt: 2 }}>
+              Atalhos Globais
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <ShortcutItem shortcut="F1" description="Mostrar ajuda global" />
+                <ShortcutItem shortcut="Ctrl/Cmd + ," description="Ir para Configurações" />
+                <ShortcutItem shortcut="Ctrl/Cmd + H" description="Ir para o Painel de Controle" />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <ShortcutItem shortcut="Ctrl/Cmd + 1" description="Lista de Produtos" />
+                <ShortcutItem shortcut="Ctrl/Cmd + 2" description="Criar Produto" />
+                <ShortcutItem shortcut="Ctrl/Cmd + 3" description="Lista de Vendas" />
+                <ShortcutItem shortcut="Ctrl/Cmd + 4" description="Criar Venda" />
+                <ShortcutItem shortcut="Ctrl/Cmd + 5" description="Lista de Compras" />
+                <ShortcutItem shortcut="Ctrl/Cmd + 6" description="Criar Compra" />
+                <ShortcutItem shortcut="Ctrl/Cmd + 7" description="Contas a Pagar" />
+                <ShortcutItem shortcut="Ctrl/Cmd + 8" description="Parcelas" />
+              </Grid>
+            </Grid>
+          </Grid>
         </Grid>
         
         <Box sx={{ mt: 3, p: 2, backgroundColor: 'grey.100', borderRadius: 1 }}>

@@ -2,10 +2,11 @@ import * as React from 'react';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
-import { Button, CardActionArea, CardActions, Grid, Container, Box } from '@mui/material';
+import { Button, CardActionArea, CardActions, Grid, Container, Box, IconButton, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
+import HelpIcon from '@mui/icons-material/Help';
 
 type GuideProps = {
   title: string;
@@ -101,26 +102,53 @@ const GuideCard = (props: GuideProps) => {
 }
 
 export const Home = () => {
+  const navigate = useNavigate();
+
+  const handleShowHelp = () => {
+    // Since home page doesn't have page-specific help, F1 will show global help
+    const f1Event = new KeyboardEvent('keydown', {
+      key: 'F1',
+      code: 'F1',
+      keyCode: 112,
+      which: 112,
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(f1Event);
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          sx={{ 
-            fontWeight: 700,
-            color: 'primary.main',
-            mb: 1
-          }}
-        >
-          Painel de Controle
-        </Typography>
-        <Typography 
-          variant="subtitle1" 
-          color="text.secondary"
-        >
-          Gerencie seu inventário de forma eficiente
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <Box>
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            sx={{ 
+              fontWeight: 700,
+              color: 'primary.main',
+              mb: 1
+            }}
+          >
+            Painel de Controle
+          </Typography>
+          <Typography 
+            variant="subtitle1" 
+            color="text.secondary"
+          >
+            Gerencie seu inventário de forma eficiente
+          </Typography>
+        </Box>
+        <Tooltip title="Atalhos do Teclado (F1)" placement="top">
+          <IconButton
+            onClick={handleShowHelp}
+            size="medium"
+            color="primary"
+            sx={{ ml: 1 }}
+          >
+            <HelpIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6} md={4}>

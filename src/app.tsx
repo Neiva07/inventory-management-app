@@ -39,6 +39,8 @@ import { SupplierBillDetail } from "pages/supplierBill/SupplierBillDetail";
 import { InstallmentPaymentList } from "pages/installmentPayment/InstallmentPaymentList";
 import { InstallmentPaymentDetail } from "pages/installmentPayment/InstallmentPaymentDetail";
 import { useOverdueCheck } from "./lib/overdueCheck";
+import { useGlobalKeyboardShortcuts } from "./hooks/useGlobalKeyboardShortcuts";
+import { GlobalKeyboardHelp } from "./components/GlobalKeyboardHelp";
 
 declare module '@mui/material/styles' {
   interface Components {
@@ -312,11 +314,17 @@ const theme = createTheme({
 const App = () => {
   const { layout } = useUI();
   const { checkOverdue } = useOverdueCheck();
+  const [showGlobalHelp, setShowGlobalHelp] = React.useState(false);
   
   // Check for overdue installments when app loads
   React.useEffect(() => {
     checkOverdue();
   }, [checkOverdue]);
+
+  // Set up global keyboard shortcuts
+  useGlobalKeyboardShortcuts({
+    onShowGlobalHelp: () => setShowGlobalHelp(true),
+  });
   
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -352,6 +360,12 @@ const App = () => {
         />
         <UpdateNotification />
         <Outlet />
+        
+        {/* Global Keyboard Help Modal */}
+        <GlobalKeyboardHelp
+          open={showGlobalHelp}
+          onClose={() => setShowGlobalHelp(false)}
+        />
       </Box>
     </Box>
   );
