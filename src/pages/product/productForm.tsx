@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Button from "@mui/material/Button";
 import { Box } from "@mui/material";
 
@@ -146,26 +146,22 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
   const costRef = useRef<HTMLInputElement>(null);
   const weightRef = useRef<HTMLInputElement>(null);
 
-    // Centralized ref registry for dynamic variants
-    const [variantRefs, setVariantRefs] = useState<Map<string, React.RefObject<HTMLElement>>>(new Map());
 
-    const registerVariantRef = (key: string, ref: React.RefObject<HTMLElement>) => {
-      setVariantRefs(prev => new Map(prev.set(key, ref)));
-    };
-  
-    const unregisterVariantRef = (key: string) => {
-      setVariantRefs(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(key);
-        return newMap;
-      });
-    };
+  // Centralized ref registry for dynamic variants using array for better performance
+  const [variantRefs, setVariantRefs] = useState<React.RefObject<HTMLElement>[]>([]);
 
-  // Create a memoized version of getAllFieldRefs that updates when variantRefs changes
+  const registerVariantRef = useCallback((ref: React.RefObject<HTMLElement>) => {
+    setVariantRefs(prev => [...prev, ref]);
+  }, []);
+
+  const unregisterVariantRef = useCallback((ref: React.RefObject<HTMLElement>) => {
+    setVariantRefs(prev => prev.filter(r => r !== ref));
+  }, []);
+
+  // Create a memoized version of allFieldRefs that updates when variantRefs changes
   const allFieldRefs = React.useMemo(() => {
     const baseRefs = [titleRef, categoryRef, descriptionRef, commissionRef, suppliersRef, baseUnitRef, inventoryRef, minInventoryRef, costRef, weightRef];
-    const variantRefsArray = Array.from(variantRefs.values());
-    return [...baseRefs, ...variantRefsArray];
+    return [...baseRefs, ...variantRefs];
   }, [variantRefs]);
 
   // Form wrapper with keyboard shortcuts and field navigation
