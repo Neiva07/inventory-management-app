@@ -9,9 +9,9 @@ import { useAuth } from 'context/auth';
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
-import { useListPageKeyboardShortcuts } from 'hooks/useListPageKeyboardShortcuts';
-import { ListPageKeyboardHelp } from 'components/ListPageKeyboardHelp';
-import { CustomDataTable } from 'components/CustomDataTable';
+import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
+import { KeyboardListPageKeyboardHelp } from 'components/KeyboardListPageKeyboardHelp';
+import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable';
 import { ColumnDefinition } from 'components/CustomDataTable/types';
 
 const columns: ColumnDefinition<Product>[] = [
@@ -83,7 +83,7 @@ export const ProductList = () => {
   const [products, setProducts] = React.useState<Array<Product>>([]);
   const [count, setCount] = React.useState<number>();
   const [searchTitle, setSearchTitle] = React.useState<string>('');
-  const [selectedRowID, setSelectedRowID] = React.useState<string>();
+  const [selectedRowID, setSelectedRowID] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
@@ -101,6 +101,7 @@ export const ProductList = () => {
   const searchFieldRef = React.useRef<HTMLInputElement>(null);
   const categoryFilterRef = React.useRef<HTMLDivElement>(null);
   const statusFilterRef = React.useRef<HTMLDivElement>(null);
+  const tableRef = React.useRef<CustomDataTableRef>(null);
 
   React.useEffect(() => {
     getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
@@ -133,7 +134,7 @@ export const ProductList = () => {
   React.useEffect(() => {
     setCurrentCursor(undefined);
     setPage(0);
-    setSelectedRowID(undefined);
+    setSelectedRowID(null);
   }, [user, searchTitle, categorySelected, statusSelected]);
 
   React.useEffect(() => {
@@ -154,17 +155,17 @@ export const ProductList = () => {
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    setSelectedRowID(undefined);
+    setSelectedRowID(null);
   }
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize);
     setPage(0);
-    setSelectedRowID(undefined);
+    setSelectedRowID(null);
   }
 
   const handleRowSelectionChange = (rowId: string | null) => {
-    setSelectedRowID(rowId || undefined);
+    setSelectedRowID(rowId);
   }
   const handleDeactivateProduct = () => {
     deactiveProduct(selectedRowID)
@@ -200,7 +201,14 @@ export const ProductList = () => {
 
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
-  }
+  };
+
+  const handleDialogClosed = () => {
+    // Restore focus to the selected row in the table
+    if (tableRef.current && selectedRowID) {
+      tableRef.current.restoreFocusToSelectedRow();
+    }
+  };
 
   // Keyboard shortcuts handlers
   const handleFocusSearch = () => {
@@ -246,72 +254,14 @@ export const ProductList = () => {
     }
   };
 
-  const handleShowHelp = () => {
-    setShowHelp(true);
-  };
 
-  const handleCloseHelp = () => {
-    setShowHelp(false);
-  };
-
-
-  // Focus navigation functions
-  const focusNextField = (currentRef: React.RefObject<HTMLElement>) => {
-    const fields = [searchFieldRef, categoryFilterRef, statusFilterRef];
-    const currentIndex = fields.findIndex(ref => ref === currentRef);
-    const nextIndex = (currentIndex + 1) % fields.length;
-    const nextField = fields[nextIndex];
-    
-    if (nextField.current) {
-      if (nextField.current.tagName === 'INPUT') {
-        (nextField.current as HTMLInputElement).focus();
-      } else {
-        const input = nextField.current.querySelector('input');
-        input?.focus();
-      }
-    }
-  };
-
-  // Focus the first row of the DataGrid
-  const focusFirstDataGridRow = () => {
-    // Blur the status filter
-    if (statusFilterRef.current) {
-      if (statusFilterRef.current.tagName === 'INPUT') {
-        (statusFilterRef.current as HTMLInputElement).blur();
-      } else {
-        const input = statusFilterRef.current.querySelector('input');
-        input?.blur();
-      }
-    }
-
-    // Focus the first row of the table
-    if (products.length > 0) {
-      const firstRow = document.querySelector('[data-row-index="0"]');
-      if (firstRow) {
-        (firstRow as HTMLElement).focus();
-        setSelectedRowID(products[0].id);
-      }
-    }
-  };
-
-  const focusPreviousField = (currentRef: React.RefObject<HTMLElement>) => {
-    const fields = [searchFieldRef, categoryFilterRef, statusFilterRef];
-    const currentIndex = fields.findIndex(ref => ref === currentRef);
-    const prevIndex = currentIndex === 0 ? fields.length - 1 : currentIndex - 1;
-    const prevField = fields[prevIndex];
-    
-    if (prevField.current) {
-      if (prevField.current.tagName === 'INPUT') {
-        (prevField.current as HTMLInputElement).focus();
-      } else {
-        const input = prevField.current.querySelector('input');
-        input?.focus();
-      }
-    }
-  };
-
-  // Keyboard shortcuts
-  useListPageKeyboardShortcuts({
+  // Set up focus navigation
+  const { focusNavigation } = useListPageFocusNavigation({
+    fieldRefs: [searchFieldRef, categoryFilterRef, statusFilterRef],
+    tableRef,
+    tableData: products,
+    onTableRowSelect: setSelectedRowID,
+    getRowId: (product: Product) => product.id,
     onFocusSearch: handleFocusSearch,
     onClearFilters: handleClearFilters,
     onEditSelected: handleEditSelected,
@@ -321,7 +271,7 @@ export const ProductList = () => {
     onRefresh: handleRefresh,
     onPreviousPage: handlePreviousPage,
     onNextPage: handleNextPage,
-    onShowHelp: handleShowHelp,
+    onShowHelp: () => setShowHelp(true),
     hasSelectedItem: !!selectedRowID,
     canToggleStatus: true,
     hasNextPage: count ? (page + 1) * pageSize < count : false,
@@ -332,7 +282,15 @@ export const ProductList = () => {
 
   return (
     <>
-      <PageTitle>Produtos</PageTitle>
+      <PageTitle 
+        showKeyboardHelp={true}
+        keyboardHelpTitle="Atalhos do Teclado - Produtos"
+        showInactivate={true}
+        helpOpen={showHelp}
+        onHelpOpenChange={setShowHelp}
+      >
+        Produtos
+      </PageTitle>
       <Grid spacing={1} container>
 
         <Grid item xs={4}>
@@ -363,8 +321,8 @@ export const ProductList = () => {
               option.id === value.id
             }
             onChange={handleCategorySelect}
-            onNextField={() => focusNextField(categoryFilterRef)}
-            onPreviousField={() => focusPreviousField(categoryFilterRef)}
+            onNextField={() => focusNavigation.focusNextField(categoryFilterRef)}
+            onPreviousField={() => focusNavigation.focusPreviousField(categoryFilterRef)}
             value={categorySelected}
           />
         </Grid>
@@ -379,8 +337,8 @@ export const ProductList = () => {
               option.value === value.value
             }
             onChange={handleStatusSelection}
-            onNextField={focusFirstDataGridRow}
-            onPreviousField={() => focusPreviousField(statusFilterRef)}
+            onNextField={focusNavigation.focusFirstTableRow}
+            onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
             value={statusSelected}
           />
         </Grid>
@@ -450,14 +408,12 @@ export const ProductList = () => {
             }}
             onNavigateToPreviousField={() => {
               // Navigate back to status filter
-              if (statusFilterRef.current) {
-                const input = statusFilterRef.current.querySelector('input');
-                input?.focus();
-              }
+              focusNavigation.focusLastFieldBeforeTable();
             }}
             getRowId={(product) => product.id}
             onEditSelected={handleEditSelected}
             onDeleteSelected={handleDeleteProduct}
+            ref={tableRef}
           />
         </Grid>
       </Grid>
@@ -466,14 +422,15 @@ export const ProductList = () => {
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         resourceName="produto"
+        onDialogClosed={handleDialogClosed}
       />
-      
-      <ListPageKeyboardHelp
+      <KeyboardListPageKeyboardHelp
         open={showHelp}
-        onClose={handleCloseHelp}
+        onClose={() => setShowHelp(false)}
         title="Atalhos do Teclado - Produtos"
         showInactivate={true}
       />
+
     </>
   );
 }

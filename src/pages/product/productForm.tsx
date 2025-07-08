@@ -24,9 +24,9 @@ import { FormActions } from 'components/FormActions';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
-import { useFormWrapper } from 'hooks/useFormWrapper';
+import { useFormWrapper } from 'hooks/forms/useFormWrapper';
 import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
-import { KeyboardShortcutsHelp } from 'components/KeyboardShortcutsHelp';
+import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 
 interface ProductFormProps {
   productID?: string;

@@ -8,14 +8,16 @@ import {
   Grid,
   Typography,
   Box,
+  Chip,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface ShortcutItem {
   shortcut: string;
   description: string;
 }
 
-interface ListPageKeyboardHelpProps {
+interface KeyboardListPageKeyboardHelpProps {
   open: boolean;
   onClose: () => void;
   title?: string;
@@ -25,26 +27,22 @@ interface ListPageKeyboardHelpProps {
 
 const ShortcutItem: React.FC<{ shortcut: string; description: string }> = ({ shortcut, description }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-    <Typography
-      variant="body2"
-      sx={{
-        backgroundColor: 'grey.200',
-        padding: '2px 8px',
-        borderRadius: 1,
+    <Chip 
+      label={shortcut} 
+      size="small" 
+      sx={{ 
+        mr: 2, 
         fontFamily: 'monospace',
-        fontWeight: 'bold',
-        minWidth: 120,
-        textAlign: 'center',
-        mr: 2,
-      }}
-    >
-      {shortcut}
-    </Typography>
+        backgroundColor: 'primary.main',
+        color: 'white',
+        fontWeight: 'bold'
+      }} 
+    />
     <Typography variant="body2">{description}</Typography>
   </Box>
 );
 
-export const ListPageKeyboardHelp: React.FC<ListPageKeyboardHelpProps> = ({
+export const KeyboardListPageKeyboardHelp: React.FC<KeyboardListPageKeyboardHelpProps> = ({
   open,
   onClose,
   title = "Atalhos do Teclado - Listagem",
@@ -52,8 +50,21 @@ export const ListPageKeyboardHelp: React.FC<ListPageKeyboardHelpProps> = ({
   showInactivate = false,
 }) => {
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="md" 
+      fullWidth
+      PaperProps={{
+        sx: { minHeight: '400px' }
+      }}
+    >
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {title}
+        <Button onClick={onClose} size="small">
+          <CloseIcon />
+        </Button>
+      </DialogTitle>
       <DialogContent>
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
@@ -77,6 +88,7 @@ export const ListPageKeyboardHelp: React.FC<ListPageKeyboardHelpProps> = ({
               <ShortcutItem shortcut="Ctrl/Cmd + I" description="Alternar status (ativar/inativar) do item selecionado" />
             )}
             <ShortcutItem shortcut="Ctrl/Cmd + R" description="Atualizar dados" />
+            <ShortcutItem shortcut="Ctrl/Cmd + T" description="Focar primeira linha da tabela" />
           </Grid>
           
           <Grid item xs={12} md={6}>

@@ -11,8 +11,8 @@ import { CreateModeToggle } from 'components/CreateModeToggle';
 import { useState, useRef } from 'react';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
-import { useFormWrapper } from '../../hooks/useFormWrapper';
-import { KeyboardShortcutsHelp } from 'components/KeyboardShortcutsHelp';
+import { useFormWrapper } from '../../hooks/forms/useFormWrapper';
+import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { EnhancedAutocomplete } from '../../components/EnhancedAutocomplete';
 
 export const CustomerForm = () => {

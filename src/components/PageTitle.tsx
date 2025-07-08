@@ -1,11 +1,29 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { ListPageKeyboardHelperIcon } from './KeyboardListHelperIcon';
 
 interface PageTitleProps {
   children: React.ReactNode;
+  showKeyboardHelp?: boolean;
+  keyboardHelpTitle?: string;
+  showInactivate?: boolean;
+  customShortcuts?: Array<{
+    shortcut: string;
+    description: string;
+  }>;
+  helpOpen?: boolean;
+  onHelpOpenChange?: (open: boolean) => void;
 }
 
-export const PageTitle: React.FC<PageTitleProps> = ({ children }) => (
+export const PageTitle: React.FC<PageTitleProps> = ({ 
+  children, 
+  showKeyboardHelp = false,
+  keyboardHelpTitle,
+  showInactivate = false,
+  customShortcuts = [],
+  helpOpen,
+  onHelpOpenChange,
+}) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
     <Box sx={{ width: 6, height: 36, bgcolor: 'primary.main', borderRadius: 2, mr: 2 }} />
     <Typography
@@ -20,5 +38,14 @@ export const PageTitle: React.FC<PageTitleProps> = ({ children }) => (
     >
       {children}
     </Typography>
+    {showKeyboardHelp && (
+      <ListPageKeyboardHelperIcon
+        title={keyboardHelpTitle}
+        showInactivate={showInactivate}
+        customShortcuts={customShortcuts}
+        open={helpOpen}
+        onOpenChange={onHelpOpenChange}
+      />
+    )}
   </Box>
 ); 

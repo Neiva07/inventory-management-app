@@ -13,6 +13,7 @@ interface DeleteConfirmationDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   resourceName: string;
+  onDialogClosed?: () => void;
 }
 
 export const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
@@ -20,11 +21,30 @@ export const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> =
   onClose,
   onConfirm,
   resourceName,
+  onDialogClosed,
 }) => {
+  const handleClose = () => {
+    onClose();
+    if (onDialogClosed) {
+      setTimeout(() => {
+        onDialogClosed();
+      }, 100);
+    }
+  };
+
+  const handleConfirm = () => {
+    onConfirm();
+    if (onDialogClosed) {
+      setTimeout(() => {
+        onDialogClosed();
+      }, 100);
+    }
+  };
+
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       aria-labelledby="delete-confirmation-dialog-title"
       aria-describedby="delete-confirmation-dialog-description"
       disableRestoreFocus
@@ -39,7 +59,7 @@ export const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> =
       </DialogContent>
       <DialogActions>
         <Button 
-          onClick={onClose} 
+          onClick={handleClose} 
           autoFocus
           variant="outlined"
           sx={{
@@ -57,7 +77,7 @@ export const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> =
         >
           Cancelar
         </Button>
-        <Button onClick={onConfirm} color="error" variant="contained">
+        <Button onClick={handleConfirm} color="error" variant="contained">
           Deletar
         </Button>
       </DialogActions>

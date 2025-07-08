@@ -15,6 +15,7 @@ interface ListPageKeyboardOptions {
   canToggleStatus?: boolean;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
+  onFocusFirstTableRow: () => void;
 }
 
 export const useListPageKeyboardShortcuts = (options: ListPageKeyboardOptions) => {
@@ -98,6 +99,13 @@ export const useListPageKeyboardShortcuts = (options: ListPageKeyboardOptions) =
       return;
     }
 
+    // Ctrl/Cmd + T: Focus first table row
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 't') {
+      event.preventDefault();
+      options.onFocusFirstTableRow();
+      return;
+    }
+
     // Escape: Clear filters and focus search
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -111,6 +119,8 @@ export const useListPageKeyboardShortcuts = (options: ListPageKeyboardOptions) =
       options.onShowHelp();
       return;
     }
+
+
   }, [options]);
 
   useEffect(() => {

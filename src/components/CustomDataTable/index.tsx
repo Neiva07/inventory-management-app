@@ -17,7 +17,11 @@ import { CustomDataTableProps, ColumnDefinition } from './types';
 import { useTableNavigation } from './useTableNavigation';
 import { useTableSelection } from './useTableSelection';
 
-export const CustomDataTable = forwardRef<HTMLDivElement, CustomDataTableProps<any>>((props, ref) => {
+export interface CustomDataTableRef {
+  restoreFocusToSelectedRow: () => void;
+}
+
+export const CustomDataTable = forwardRef<CustomDataTableRef, CustomDataTableProps<any>>((props, ref) => {
   const {
     data,
     columns,
@@ -51,9 +55,6 @@ export const CustomDataTable = forwardRef<HTMLDivElement, CustomDataTableProps<a
   const theme = useTheme();
   const tableRef = useRef<HTMLDivElement>(null);
 
-  // Expose ref methods
-  useImperativeHandle(ref, () => tableRef.current!);
-
   // Get row ID function
   const getRowIdValue = (row: any) => getRowId(row);
 
@@ -76,6 +77,21 @@ export const CustomDataTable = forwardRef<HTMLDivElement, CustomDataTableProps<a
     onRowDoubleClick,
     selectionMode
   });
+
+  // Method to restore focus to selected row
+  const restoreFocusToSelectedRow = () => {
+    if (selectedRowId) {
+      const rowIndex = data.findIndex(row => getRowIdValue(row) === selectedRowId);
+      if (rowIndex !== -1) {
+        focusRow(rowIndex);
+      }
+    }
+  };
+
+  // Expose ref methods
+  useImperativeHandle(ref, () => ({
+    restoreFocusToSelectedRow
+  }));
 
   // Handle row selection change
   useEffect(() => {
@@ -121,7 +137,7 @@ export const CustomDataTable = forwardRef<HTMLDivElement, CustomDataTableProps<a
         focusRow(rowIndex);
       }
     }
-  }, [data, selectedRowId]);
+  }, [data, selectedRowId, focusRow, getRowIdValue]);
 
   const renderCell = (column: ColumnDefinition, row: any) => {
     const value = column.valueGetter ? column.valueGetter(row) : row[column.field];
@@ -216,13 +232,6 @@ export const CustomDataTable = forwardRef<HTMLDivElement, CustomDataTableProps<a
                     onDoubleClick={() => handleRowDoubleClick(row, rowId)}
                     onFocus={() => {
                       onRowSelectionChange?.(rowId);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleRowClick(row, rowId);
-                        onRowSelectionChange?.(rowId);
-                      }
                     }}
                     sx={{
                       cursor: 'pointer',
