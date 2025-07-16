@@ -150,6 +150,16 @@ export interface NFEICMS00 {
   vBC: number;           // BC value
   pICMS: number;         // ICMS rate
   vICMS: number;         // ICMS value
+  vICMSDeson?: number;   // Discharged ICMS value
+  vFCP?: number;         // FCP value
+  vBCST?: number;        // ST BC value
+  vST?: number;          // ST value
+  vFCPST?: number;       // ST FCP value
+  vFCPSTRet?: number;    // Retained ST FCP value
+  vII?: number;          // Import tax value
+  vIPI?: number;         // IPI value
+  vIPIDevol?: number;    // Devolved IPI value
+  vOutro?: number;       // Other values
 }
 
 export interface NFEIPI {

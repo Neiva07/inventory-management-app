@@ -22,4 +22,7 @@ export { validateNFE, type NFEValidationResult } from './validators/nfeValidator
 export { generateXML } from './utils/xmlUtils';
 
 // Adapters
-export { adaptOrderToNFE, type OrderToNFEAdapterConfig } from './adapters/orderAdapter'; 
+export { adaptOrderToNFE, type OrderToNFEAdapterConfig } from './adapters/orderAdapter';
+
+// SEFAZ Services
+export { SEFAZClient, type SEFAZConfig, type SEFAZResponse, type SEFAZStatusResponse } from './services/sefazClient'; 

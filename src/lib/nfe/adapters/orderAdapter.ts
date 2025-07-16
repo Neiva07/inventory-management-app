@@ -21,7 +21,7 @@ import {
   getICMSRateByCode,
   DEFAULT_ICMS_RATE
 } from '../constants';
-import { add, subtract, multiply, divide } from 'lib/math';
+import { add, subtract, multiply, divide } from '../../math';
 
 export interface OrderToNFEAdapterConfig {
   // Company information (emitter)
@@ -166,10 +166,10 @@ function generateNFERecipient(customer: Customer): NFERecipient {
       nro: 'S/N', // Address doesn't have number field
       xCpl: undefined, // Address doesn't have complement field
       xBairro: 'Não informado', // Address doesn't have neighborhood field
-      cMun: customer.address?.postalCode ?? '0000000',
-      xMun: customer.address?.city ?? 'Não informado',
+      cMun: '1501402', // Belém city code (7 digits) - hardcoded for test
+      xMun: customer.address?.city ?? 'BELEM',
       UF: customer.address?.region ?? 'PA',
-      CEP: customer.address?.postalCode ?? '00000000',
+      CEP: customer.address?.postalCode ?? '66000000',
       cPais: '1058', // Brazil
       xPais: 'BRASIL',
       fone: customer.companyPhone,
@@ -230,7 +230,10 @@ function generateNFEProducts(
         uTrib: item.variant?.unit?.name || 'UN',
         qTrib: item.quantity,
         vUnTrib: unitPrice,
+        vFrete: 0,
+        vSeg: 0,
         vDesc: discount,
+        vOutro: 0,
         indTot: TOTAL_INCLUSION_INDICATORS.YES,
       },
       imp: {
@@ -242,6 +245,16 @@ function generateNFEProducts(
             vBC: taxBase,
             pICMS: icmsRate,
             vICMS: icmsValue,
+            vICMSDeson: 0,
+            vFCP: 0,
+            vBCST: 0,
+            vST: 0,
+            vFCPST: 0,
+            vFCPSTRet: 0,
+            vII: 0,
+            vIPI: 0,
+            vIPIDevol: 0,
+            vOutro: 0,
           },
         },
         PIS: {

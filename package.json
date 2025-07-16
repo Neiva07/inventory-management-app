@@ -12,7 +12,8 @@
     "prepublish": "rimraf out dist",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "update-db": "ts-node scripts/updateDb.ts"
+    "update-db": "ts-node scripts/updateDb.ts",
+    "test:nfe": "NODE_OPTIONS='--openssl-legacy-provider' ts-node scripts/testNfeSefaz.ts"
   },
   "keywords": [],
   "author": "lucasneiva",
@@ -53,7 +54,9 @@
     "@mui/material": "^5.13.3",
     "@mui/x-data-grid": "^6.10.0",
     "@mui/x-date-pickers": "^6.12.0",
+    "@types/soap": "^0.21.0",
     "@types/uuid": "^9.0.1",
+    "@types/xml2js": "^0.4.14",
     "axios": "^1.7.9",
     "babel-plugin-module-resolver": "^5.0.0",
     "date-fns": "^2.30.0",
@@ -70,8 +73,11 @@
     "react-router-dom": "^6.11.2",
     "react-text-mask": "^5.5.0",
     "react-toastify": "^9.1.3",
+    "soap": "^1.1.12",
     "update-electron-app": "^3.1.1",
     "uuid": "^9.0.0",
+    "xml-crypto": "^6.1.2",
+    "xml2js": "^0.6.2",
     "yup": "^1.2.0"
   },
   "devContentSecurityPolicy": "default-src * self blob: data: gap:; style-src * self 'unsafe-inline' blob: data: gap:; script-src * 'self' 'unsafe-eval' 'unsafe-inline' blob: data: gap:; object-src * 'self' blob: data: gap:; img-src * self 'unsafe-inline' blob: data: gap:; connect-src self * 'unsafe-inline' blob: data: gap:; frame-src * self blob: data: gap:;",

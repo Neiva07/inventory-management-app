@@ -94,10 +94,45 @@ const config = {
 ## Next Steps
 
 1. **Complete the constants files** - Add all the missing constant files
-2. **Implement digital signature** - Add XML digital signature functionality
-3. **SEFAZ integration** - Add web service communication
+2. **Implement digital signature** - Add XML digital signature functionality (currently placeholder)
+3. **SEFAZ integration** - Add web service communication ✅ (implemented for Pará)
 4. **UI integration** - Add NFE generation buttons to order forms
 5. **Configuration management** - Add company settings management
+
+## Testing SEFAZ Integration
+
+### Run SEFAZ-PA Homologation Test
+
+```bash
+# Test NFE generation and SEFAZ integration
+yarn test:nfe
+```
+
+This will:
+1. Test ICMS rate calculation for Pará (19%)
+2. Generate a test NFE locally
+3. Attempt to send to SEFAZ-PA homologation (requires proper certificate)
+
+### Test Data Used
+
+- **Test CNPJ/IE**: `99999999000191` / `999999999`
+- **State**: Pará (PA) - Code `15`
+- **ICMS Rate**: 19%
+- **Environment**: Homologation (test)
+
+### Expected Results
+
+- ✅ Local NFE generation will work
+- ❌ SEFAZ authorization will fail (expected without proper A1 certificate)
+- ✅ Service status check may work if SEFAZ is accessible
+
+### For Production Use
+
+1. **Get A1 Certificate**: Obtain a valid ICP-Brasil A1 certificate
+2. **Update Certificate Path**: Configure the certificate in `SEFAZConfig`
+3. **Implement Digital Signature**: Complete the XML signing implementation
+4. **Test in Homologation**: Verify with SEFAZ test environment
+5. **Move to Production**: Switch to production endpoints
 
 ## Manual Reference
 

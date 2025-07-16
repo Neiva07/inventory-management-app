@@ -318,15 +318,15 @@ function validateProductTaxes(imp: any, prefix: string, errors: string[], warnin
       errors.push(`${prefix}: ICMS00 modBC must be 0, 1, 2, or 3`);
     }
     
-    if (!icmsData.vBC || icmsData.vBC <= 0) {
+    if (icmsData.vBC === undefined || icmsData.vBC === null || icmsData.vBC <= 0) {
       errors.push(`${prefix}: ICMS00 vBC must be greater than 0`);
     }
     
-    if (!icmsData.pICMS || icmsData.pICMS < 0) {
+    if (icmsData.pICMS === undefined || icmsData.pICMS === null || icmsData.pICMS < 0) {
       errors.push(`${prefix}: ICMS00 pICMS must be 0 or greater`);
     }
     
-    if (!icmsData.vICMS || icmsData.vICMS < 0) {
+    if (icmsData.vICMS === undefined || icmsData.vICMS === null || icmsData.vICMS < 0) {
       errors.push(`${prefix}: ICMS00 vICMS must be 0 or greater`);
     }
   }
@@ -337,7 +337,7 @@ function validateProductTaxes(imp: any, prefix: string, errors: string[], warnin
       errors.push(`${prefix}: PIS CST is required`);
     }
     
-    if (!imp.PIS.vPIS || imp.PIS.vPIS < 0) {
+    if (imp.PIS.vPIS === undefined || imp.PIS.vPIS === null || imp.PIS.vPIS < 0) {
       errors.push(`${prefix}: PIS value must be 0 or greater`);
     }
   }
@@ -348,7 +348,7 @@ function validateProductTaxes(imp: any, prefix: string, errors: string[], warnin
       errors.push(`${prefix}: COFINS CST is required`);
     }
     
-    if (!imp.COFINS.vCOFINS || imp.COFINS.vCOFINS < 0) {
+    if (imp.COFINS.vCOFINS === undefined || imp.COFINS.vCOFINS === null || imp.COFINS.vCOFINS < 0) {
       errors.push(`${prefix}: COFINS value must be 0 or greater`);
     }
   }
@@ -362,79 +362,79 @@ function validateTotals(total: any, errors: string[], warnings: string[]): void 
   
   const icmsTot = total.ICMSTot;
   
-  if (!icmsTot.vBC || icmsTot.vBC < 0) {
+  if (icmsTot.vBC === undefined || icmsTot.vBC === null || icmsTot.vBC < 0) {
     errors.push('ICMS BC value must be 0 or greater');
   }
   
-  if (!icmsTot.vICMS || icmsTot.vICMS < 0) {
+  if (icmsTot.vICMS === undefined || icmsTot.vICMS === null || icmsTot.vICMS < 0) {
     errors.push('ICMS value must be 0 or greater');
   }
   
-  if (!icmsTot.vICMSDeson || icmsTot.vICMSDeson < 0) {
+  if (icmsTot.vICMSDeson === undefined || icmsTot.vICMSDeson === null || icmsTot.vICMSDeson < 0) {
     errors.push('ICMS discharged value must be 0 or greater');
   }
   
-  if (!icmsTot.vFCP || icmsTot.vFCP < 0) {
+  if (icmsTot.vFCP === undefined || icmsTot.vFCP === null || icmsTot.vFCP < 0) {
     errors.push('FCP value must be 0 or greater');
   }
   
-  if (!icmsTot.vBCST || icmsTot.vBCST < 0) {
+  if (icmsTot.vBCST === undefined || icmsTot.vBCST === null || icmsTot.vBCST < 0) {
     errors.push('ST BC value must be 0 or greater');
   }
   
-  if (!icmsTot.vST || icmsTot.vST < 0) {
+  if (icmsTot.vST === undefined || icmsTot.vST === null || icmsTot.vST < 0) {
     errors.push('ST value must be 0 or greater');
   }
   
-  if (!icmsTot.vFCPST || icmsTot.vFCPST < 0) {
+  if (icmsTot.vFCPST === undefined || icmsTot.vFCPST === null || icmsTot.vFCPST < 0) {
     errors.push('ST FCP value must be 0 or greater');
   }
   
-  if (!icmsTot.vFCPSTRet || icmsTot.vFCPSTRet < 0) {
+  if (icmsTot.vFCPSTRet === undefined || icmsTot.vFCPSTRet === null || icmsTot.vFCPSTRet < 0) {
     errors.push('Retained ST FCP value must be 0 or greater');
   }
   
-  if (!icmsTot.vProd || icmsTot.vProd <= 0) {
+  if (icmsTot.vProd === undefined || icmsTot.vProd === null || icmsTot.vProd <= 0) {
     errors.push('Product total value must be greater than 0');
   }
   
-  if (!icmsTot.vFrete || icmsTot.vFrete < 0) {
+  if (icmsTot.vFrete === undefined || icmsTot.vFrete === null || icmsTot.vFrete < 0) {
     errors.push('Freight value must be 0 or greater');
   }
   
-  if (!icmsTot.vSeg || icmsTot.vSeg < 0) {
+  if (icmsTot.vSeg === undefined || icmsTot.vSeg === null || icmsTot.vSeg < 0) {
     errors.push('Insurance value must be 0 or greater');
   }
   
-  if (!icmsTot.vDesc || icmsTot.vDesc < 0) {
+  if (icmsTot.vDesc === undefined || icmsTot.vDesc === null || icmsTot.vDesc < 0) {
     errors.push('Discount value must be 0 or greater');
   }
   
-  if (!icmsTot.vII || icmsTot.vII < 0) {
+  if (icmsTot.vII === undefined || icmsTot.vII === null || icmsTot.vII < 0) {
     errors.push('Import tax value must be 0 or greater');
   }
   
-  if (!icmsTot.vIPI || icmsTot.vIPI < 0) {
+  if (icmsTot.vIPI === undefined || icmsTot.vIPI === null || icmsTot.vIPI < 0) {
     errors.push('IPI value must be 0 or greater');
   }
   
-  if (!icmsTot.vIPIDevol || icmsTot.vIPIDevol < 0) {
+  if (icmsTot.vIPIDevol === undefined || icmsTot.vIPIDevol === null || icmsTot.vIPIDevol < 0) {
     errors.push('Devolved IPI value must be 0 or greater');
   }
   
-  if (!icmsTot.vPIS || icmsTot.vPIS < 0) {
+  if (icmsTot.vPIS === undefined || icmsTot.vPIS === null || icmsTot.vPIS < 0) {
     errors.push('PIS value must be 0 or greater');
   }
   
-  if (!icmsTot.vCOFINS || icmsTot.vCOFINS < 0) {
+  if (icmsTot.vCOFINS === undefined || icmsTot.vCOFINS === null || icmsTot.vCOFINS < 0) {
     errors.push('COFINS value must be 0 or greater');
   }
   
-  if (!icmsTot.vOutro || icmsTot.vOutro < 0) {
+  if (icmsTot.vOutro === undefined || icmsTot.vOutro === null || icmsTot.vOutro < 0) {
     errors.push('Other values must be 0 or greater');
   }
   
-  if (!icmsTot.vNF || icmsTot.vNF <= 0) {
+  if (icmsTot.vNF === undefined || icmsTot.vNF === null || icmsTot.vNF <= 0) {
     errors.push('Document total value must be greater than 0');
   }
 }
