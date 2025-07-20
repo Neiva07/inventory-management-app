@@ -8,7 +8,12 @@ export type CollectionName =
   | 'inbound_orders'
   | 'units'
   | 'supplier_bills'
-  | 'installment_payments';
+  | 'installment_payments'
+  | 'organizations'
+  | 'user_memberships'
+  | 'onboarding_sessions'
+  | 'invitation_codes'
+  | 'join_requests';
 
 // Export collection names as constants for consistency
 export const COLLECTION_NAMES = {

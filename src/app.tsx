@@ -19,6 +19,7 @@ import { CustomerForm } from "./pages/customer/customerForm";
 import { CustomerList } from "./pages/customer/customersList";
 import { ToastContainer } from "react-toastify";
 import { AuthContextProvider, useAuth } from "./context/auth";
+import { OnboardingProvider } from "./context/onboarding";
 import { Login } from "pages/auth/Login";
 import { OrderForm } from "pages/order/OrderForm";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -41,6 +42,7 @@ import { InstallmentPaymentDetail } from "pages/installmentPayment/InstallmentPa
 import { useOverdueCheck } from "./lib/overdueCheck";
 import { useGlobalKeyboardShortcuts } from "./hooks/useGlobalKeyboardShortcuts";
 import { GlobalKeyboardHelp } from "./components/GlobalKeyboardHelp";
+import { OnboardingRouter } from "./pages/onboarding/OnboardingRouter";
 
 declare module '@mui/material/styles' {
   interface Components {
@@ -446,7 +448,11 @@ function render() {
         <ThemeProvider theme={theme}>
           <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBRDateFns}>
             <UIContextProvider>
-              <AppRouter />
+              <OnboardingProvider>
+                <OnboardingRouter>
+                  <AppRouter />
+                </OnboardingRouter>
+              </OnboardingProvider>
             </UIContextProvider>
           </LocalizationProvider>
         </ThemeProvider>

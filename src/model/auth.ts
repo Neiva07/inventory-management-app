@@ -1,16 +1,15 @@
-// No more GoogleAuthProvider or signInWithPopup imports.
-import { signOut } from "firebase/auth";
 import {
-  collection,
-  addDoc,
   getDoc,
   doc,
   setDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
+
+
 export interface User {
   id: string;
+  organizationId?: string; // NEW: Links user to organization
   fullName: string;
   firstName: string;
   lastName: string;
@@ -55,6 +54,7 @@ export const upsertUserFromSession = async (session: Session): Promise<User> => 
       isDeleted: false,
     },
   };
+  
   if (!dbUser.exists()) {
     await setDoc(userRef, userData);
     return userData;
@@ -62,5 +62,4 @@ export const upsertUserFromSession = async (session: Session): Promise<User> => 
     await setDoc(userRef, { ...dbUser.data(), ...userData, updatedAt: Date.now() });
     return { ...dbUser.data(), ...userData, updatedAt: Date.now() } as User;
   }
-
 };

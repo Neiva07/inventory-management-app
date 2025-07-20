@@ -22,6 +22,11 @@ export async function generatePublicId(collectionName: CollectionName): Promise<
     'inbound_orders': 'iord',
     'supplier_bills': 'supb',
     'installment_payments': 'inst',
+    'organizations': 'orgs',
+    'user_memberships': 'userm',
+    'onboarding_sessions': 'onbs',
+    'invitation_codes': 'invc',
+    'join_requests': 'joinr',
   };
   
   const resourceType = resourceTypeMap[collectionName] ?? collectionName.slice(0, 4).padEnd(4, ' ');
