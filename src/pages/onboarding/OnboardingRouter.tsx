@@ -3,7 +3,6 @@ import { useAuth } from '../../context/auth';
 import { useOnboarding } from '../../context/onboarding';
 import { OnboardingFlow } from './OnboardingFlow';
 import { OrganizationSelection } from './OrganizationSelection';
-import { createOnboardingSession, getActiveOnboardingSession, OrganizationOnboardingSession } from 'model/organizationOnboardingSession';
 import { CircularProgress } from '@mui/material';
 
 interface OnboardingRouterProps {
@@ -12,7 +11,7 @@ interface OnboardingRouterProps {
 
 export const OnboardingRouter: React.FC<OnboardingRouterProps> = ({ children }) => {
   const { user, organization, isAuthLoading } = useAuth();
-  const { onboardingSession, isLoading } = useOnboarding();
+  const { onboardingSession, isLoading, startOnboardingSession } = useOnboarding();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
 
@@ -56,9 +55,9 @@ export const OnboardingRouter: React.FC<OnboardingRouterProps> = ({ children }) 
         setShowOnboarding(false);
     };
 
-    const handleCreateNewOrganization = () => {
-      createOnboardingSession(user?.id);
-      setShowOnboarding(true);
+    const handleCreateNewOrganization = async () => {
+      const session = await startOnboardingSession();
+      setShowOnboarding(!!session);
     };
 
     return (

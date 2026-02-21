@@ -6,7 +6,6 @@ import {
   Grid,
   Card,
   CardContent,
-  FormHelperText,
   Button,
   Alert
 } from '@mui/material';
@@ -19,8 +18,12 @@ import {
 import { useOnboarding } from '../../context/onboarding';
 
 export const TaxDataSetup: React.FC = () => {
-  const { onboardingData, updateData } = useOnboarding();
+  const { onboardingData, updateData, setStepValidation } = useOnboarding();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  React.useEffect(() => {
+    setStepValidation(4, true);
+  }, [setStepValidation]);
 
   const handleTaxDataChange = (field: string, value: string) => {
     // Clear error when user starts typing

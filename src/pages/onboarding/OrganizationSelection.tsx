@@ -10,12 +10,10 @@ import {
   Tab,
   Alert,
   CircularProgress,
-  Chip,
   List,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  IconButton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -23,13 +21,13 @@ import {
   Group as GroupIcon,
   Business as BusinessIcon,
 } from '@mui/icons-material';
-import { 
-  searchOrganizations, 
+import { getOrganization, Organization } from '../../model/organization';
+import {
+  searchOrganizations,
   createJoinRequest,
-  markInvitationCodeAsUsed, 
-  getOrganization
-} from '../../model/organization';
-import { validateInvitationCode } from '../../model/organizationInvite';
+  validateInvitationCode,
+  useInvitationCode,
+} from '../../model/organizationInvite';
 import { createUserMembership } from '../../model/userMembership';
 import { useAuth } from '../../context/auth';
 import { useOnboarding } from '../../context/onboarding';
@@ -66,11 +64,11 @@ export const OrganizationSelection: React.FC<OrganizationSelectionProps> = ({
   onCreateNewOrganization,
 }) => {
   const { user } = useAuth();
-  const { updateData, onboardingSession } = useOnboarding();
+  const { updateData } = useOnboarding();
   const [tabValue, setTabValue] = useState(0);
   const [invitationCode, setInvitationCode] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Organization[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,24 +92,28 @@ export const OrganizationSelection: React.FC<OrganizationSelectionProps> = ({
     setError(null);
 
     try {
-      const invitationCodeRecord = await validateInvitationCode(invitationCode.trim());
-      const organization = await getOrganization(invitationCodeRecord.organizationId);
-      if (invitationCodeRecord && organization) {
-        // Create user membership
-        await createUserMembership({
-          userID: user.id,
-          organizationId: organization.id,
-          role: invitationCodeRecord.role, // Default role for invited users
-        });
-
-        // Mark invitation code as used
-        await markInvitationCodeAsUsed(invitationCode.trim());
-
-        setSuccess(`Convite aceito! Bem-vindo à ${organization.name}`);
-        onOrganizationSelected();
-      } else {
+      const invitationCodeRecord = await validateInvitationCode(invitationCode.trim().toUpperCase());
+      if (!invitationCodeRecord) {
         setError('Código de convite inválido ou expirado');
+        return;
       }
+
+      const organization = await getOrganization(invitationCodeRecord.organizationId);
+      if (!organization) {
+        setError('Organização do convite não encontrada');
+        return;
+      }
+
+      await createUserMembership({
+        userID: user.id,
+        organizationId: organization.id,
+        role: invitationCodeRecord.role,
+      });
+
+      await useInvitationCode(invitationCodeRecord.id);
+
+      setSuccess(`Convite aceito! Bem-vindo à ${organization.name}`);
+      onOrganizationSelected();
     } catch (error) {
       setError('Erro ao validar código de convite');
     } finally {
@@ -146,12 +148,21 @@ export const OrganizationSelection: React.FC<OrganizationSelectionProps> = ({
 
   const handleJoinRequest = async (organizationId: string, organizationName: string) => {
     if (!user?.id) return;
+    if (!user.email) {
+      setError('Não foi possível identificar seu email para enviar a solicitação.');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
 
     try {
-      await createJoinRequest(organizationId, user.id, `Solicitação de entrada em ${organizationName}`);
+      await createJoinRequest(
+        organizationId,
+        user.id,
+        user.email,
+        `Solicitação de entrada em ${organizationName}`
+      );
       setSuccess(`Solicitação enviada para ${organizationName}. Aguarde a aprovação.`);
     } catch (error) {
       setError('Erro ao enviar solicitação');

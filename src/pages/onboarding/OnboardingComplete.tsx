@@ -348,20 +348,6 @@ export const OnboardingComplete: React.FC = () => {
         </Card>
       )}
 
-      {/* Debug info - remove this later */}
-      {process.env.NODE_ENV === 'development' && (
-        <Card sx={{ mb: 4, borderRadius: 2, border: '1px dashed #ccc' }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Debug Info (Development Only)
-            </Typography>
-            <Typography variant="body2" component="pre" sx={{ fontSize: '12px', overflow: 'auto' }}>
-              {JSON.stringify(onboardingData, null, 2)}
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Success Message */}
       <Alert severity="success" sx={{ borderRadius: 2 }}>
         <Typography variant="body1" sx={{ fontWeight: 500 }}>

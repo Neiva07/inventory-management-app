@@ -51,31 +51,62 @@ export interface CreateOrganizationData {
   email: string;
 }
 
+export interface OrganizationJoinRequest {
+  id: string;
+  organizationId: string;
+  userID: string;
+  message: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: number;
+  updatedAt?: number;
+}
+
 const ORGANIZATIONS_COLLECTION = "organizations";
+
+const removeUndefinedDeep = <T>(value: T): T => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => removeUndefinedDeep(item))
+      .filter((item) => item !== undefined) as unknown as T;
+  }
+
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter((entry) => entry[1] !== undefined)
+      .map(([key, entryValue]) => [key, removeUndefinedDeep(entryValue)]);
+
+    return Object.fromEntries(entries) as T;
+  }
+
+  return value;
+};
 
 export const createOrganization = async (data: CreateOrganizationData): Promise<Organization> => {
   const organizationId = uuidv4();
   const now = Date.now();
   
+  const settings = {
+    timezone: 'America/Sao_Paulo',
+    currency: 'BRL',
+    language: 'pt-BR',
+    ...(data.settings ?? {}),
+  };
+
   const organizationData: Organization = {
     ...data,
     id: organizationId,
-    settings: {
-      timezone: 'America/Sao_Paulo',
-      currency: 'BRL',
-      language: 'pt-BR',
-      logo: data.settings?.logo,
-      ...data.settings,
-    },
+    settings,
     createdAt: now,
     updatedAt: now,
   
   };
 
+  const cleanOrganizationData = removeUndefinedDeep(organizationData);
+
   const orgRef = doc(db, ORGANIZATIONS_COLLECTION, organizationId);
-  await setDoc(orgRef, organizationData);
+  await setDoc(orgRef, cleanOrganizationData);
   
-  return organizationData;
+  return cleanOrganizationData as Organization;
 };
 
 export const getOrganization = async (orgId: string): Promise<Organization | null> => {
@@ -91,12 +122,12 @@ export const getOrganization = async (orgId: string): Promise<Organization | nul
 
 export const updateOrganization = async (orgId: string, data: Partial<Organization>): Promise<Organization> => {
   const orgRef = doc(db, ORGANIZATIONS_COLLECTION, orgId);
-  const updateData = {
+  const updateData = removeUndefinedDeep({
     ...data,
     updatedAt: Date.now(),
-  };
+  });
   
-  await updateDoc(orgRef, updateData);
+  await updateDoc(orgRef, updateData as Partial<Organization>);
   
   const updatedOrg = await getOrganization(orgId);
   if (!updatedOrg) {
@@ -175,7 +206,7 @@ export const createJoinRequest = async (organizationId: string, userID: string, 
   });
 };
 
-export const getJoinRequests = async (organizationId: string): Promise<any[]> => {
+export const getJoinRequests = async (organizationId: string): Promise<OrganizationJoinRequest[]> => {
   const q = query(
     collection(db, 'join_requests'),
     where('organizationId', '==', organizationId),
@@ -183,7 +214,7 @@ export const getJoinRequests = async (organizationId: string): Promise<any[]> =>
   );
   
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => doc.data());
+  return querySnapshot.docs.map(doc => doc.data() as OrganizationJoinRequest);
 };
 
 export const updateJoinRequest = async (requestId: string, status: 'approved' | 'rejected'): Promise<void> => {

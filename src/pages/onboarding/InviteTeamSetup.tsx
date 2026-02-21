@@ -14,8 +14,8 @@ import {
   CardContent,
   Grid,
   Paper,
-  Divider,
-  Avatar
+  Avatar,
+  ChipProps,
 } from '@mui/material';
 import { 
   Add as AddIcon, 
@@ -29,14 +29,8 @@ import {
 import { useOnboarding } from '../../context/onboarding';
 import { isValidEmail } from '../../lib/email';
 
-interface TeamMember {
-  email: string;
-  role: string;
-  name: string;
-}
-
 export const InviteTeamSetup: React.FC = () => {
-  const { onboardingData, updateData, onboardingSession } = useOnboarding();
+  const { onboardingData, updateData, setStepValidation } = useOnboarding();
   const [newEmail, setNewEmail] = useState('');
   const [newName, setNewName] = useState('');
   const [newRole, setNewRole] = useState('operator');
@@ -44,6 +38,10 @@ export const InviteTeamSetup: React.FC = () => {
   const [nameError, setNameError] = useState('');
 
   const teamMembers = onboardingData.invitations || [];
+
+  React.useEffect(() => {
+    setStepValidation(5, true);
+  }, [setStepValidation]);
 
   const addTeamMember = () => {
     // Validate name
@@ -110,7 +108,7 @@ export const InviteTeamSetup: React.FC = () => {
     }
   };
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: string): ChipProps['color'] => {
     switch (role) {
       case 'manager':
         return 'error';
@@ -273,7 +271,7 @@ export const InviteTeamSetup: React.FC = () => {
                           {getRoleIcon(member.role)}
                           <Chip
                             label={getRoleLabel(member.role)}
-                            color={getRoleColor(member.role) as any}
+                            color={getRoleColor(member.role)}
                             size="small"
                             variant="outlined"
                           />

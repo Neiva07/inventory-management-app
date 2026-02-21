@@ -5,6 +5,11 @@ export type UILayout = 'navbar' | 'sidebar';
 export interface AppSettings {
   user_id: string;
   layout: UILayout;
+  theme?: 'light' | 'dark';
+  language?: string;
+  timezone?: string;
+  notifications?: boolean;
+  keyboardShortcuts?: boolean;
 }
 
 const COLLECTION = 'app_settings';

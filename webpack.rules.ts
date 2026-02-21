@@ -1,5 +1,9 @@
 import type { ModuleOptions } from 'webpack';
 
+const nodeMajor = Number(process.versions.node.split('.')[0]);
+const shouldUseForkTsChecker =
+  process.env.USE_FORK_TS_CHECKER !== 'false' && Number.isFinite(nodeMajor) && nodeMajor < 22;
+
 export const rules: Required<ModuleOptions>['rules'] = [
   // Add support for native node modules
   {
@@ -24,7 +28,7 @@ export const rules: Required<ModuleOptions>['rules'] = [
     use: {
       loader: 'ts-loader',
       options: {
-        transpileOnly: true,
+        transpileOnly: shouldUseForkTsChecker,
       },
     },
   },

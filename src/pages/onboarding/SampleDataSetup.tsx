@@ -9,7 +9,8 @@ import {
   CardContent, 
   Grid, 
   Chip,
-  Paper
+  Paper,
+  ChipProps,
 } from '@mui/material';
 import {
   DataObject as DataIcon,
@@ -23,7 +24,11 @@ import {
 import { useOnboarding } from '../../context/onboarding';
 
 export const SampleDataSetup: React.FC = () => {
-  const { onboardingData, updateData, onboardingSession } = useOnboarding();
+  const { onboardingData, updateData, setStepValidation } = useOnboarding();
+
+  React.useEffect(() => {
+    setStepValidation(3, true);
+  }, [setStepValidation]);
 
   const handleSetupChange = (field: string, value: boolean) => {
     updateData({
@@ -40,28 +45,28 @@ export const SampleDataSetup: React.FC = () => {
       title: 'Produtos',
       count: '10 produtos',
       description: 'Produtos de exemplo com variações e categorias',
-      color: 'primary'
+      color: 'primary' as ChipProps['color']
     },
     {
       icon: <CustomerIcon sx={{ fontSize: 32, color: 'success.main' }} />,
       title: 'Clientes',
       count: '5 clientes',
       description: 'Clientes de exemplo com dados completos',
-      color: 'success'
+      color: 'success' as ChipProps['color']
     },
     {
       icon: <SupplierIcon sx={{ fontSize: 32, color: 'warning.main' }} />,
       title: 'Fornecedores',
       count: '3 fornecedores',
       description: 'Fornecedores de exemplo com informações de contato',
-      color: 'warning'
+      color: 'warning' as ChipProps['color']
     },
     {
       icon: <CategoryIcon sx={{ fontSize: 32, color: 'info.main' }} />,
       title: 'Categorias',
       count: 'Categorias e Unidades',
       description: 'Categorias de produtos e unidades de medida',
-      color: 'info'
+      color: 'info' as ChipProps['color']
     }
   ];
 
@@ -159,9 +164,9 @@ export const SampleDataSetup: React.FC = () => {
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                     {item.title}
                   </Typography>
-                  <Chip 
-                    label={item.count} 
-                    color={item.color as any}
+                  <Chip
+                    label={item.count}
+                    color={item.color}
                     variant="outlined"
                     sx={{ mb: 1 }}
                   />

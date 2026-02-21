@@ -29,7 +29,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Home } from "home";
 import ptBRDateFns from 'date-fns/locale/pt-BR';
 import { UpdateNotification } from './components/UpdateNotification';
-import { Settings } from "pages/routes/settings";
+import { SettingsRouter } from "pages/routes/settings/index";
 import { UIContextProvider, useUI } from './context/ui';
 import { Sidebar } from './pages/routes/Sidebar';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -422,7 +422,7 @@ const AppRouter = () => {
             <Route path="customers" element={<CustomerList />} />
             <Route path="orders" element={<OrderList />} />
 
-            <Route path="settings" element={<Settings />} />
+            <Route path="settings" element={<SettingsRouter />} />
 
             <Route path="*" element={<p>Página não encontrada! 404!</p>} />
           </Route>

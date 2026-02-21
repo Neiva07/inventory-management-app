@@ -59,6 +59,8 @@ const config: ForgeConfig = {
       },
     },
     new WebpackPlugin({
+      port: 3026,
+      loggerPort: 9026,
       mainConfig,
       devContentSecurityPolicy: "connect-src 'self' * 'unsafe-eval'",
       renderer: {

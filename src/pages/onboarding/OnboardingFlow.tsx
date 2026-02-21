@@ -31,7 +31,6 @@ export const OnboardingFlow: React.FC<{ onShowOnboarding: (show: boolean) => voi
     stepValidation,
     onboardingData,
     deleteOnboardingSession,
-    onboardingSession,
   } = useOnboarding();
   
   const [showExitDialog, setShowExitDialog] = useState(false);
@@ -59,8 +58,11 @@ export const OnboardingFlow: React.FC<{ onShowOnboarding: (show: boolean) => voi
     
     // Check setup data
     if (setup) {
-      const setupFields = Object.values(setup).filter(value => value !== undefined);
-      if (setupFields.length > 0) return true;
+      const hasEnabledSetupOption =
+        Boolean(setup.importSampleData) ||
+        Boolean(setup.enableNotifications) ||
+        Boolean(setup.enableAnalytics);
+      if (hasEnabledSetupOption) return true;
     }
     
     // Check invitations
@@ -132,7 +134,7 @@ export const OnboardingFlow: React.FC<{ onShowOnboarding: (show: boolean) => voi
         />
 
         <Stepper activeStep={currentStep - 1} sx={{ mb: 4 }}>
-          {getStepLabels().map((label, index) => (
+          {getStepLabels().map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
             </Step>

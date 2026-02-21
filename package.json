@@ -12,7 +12,8 @@
     "prepublish": "rimraf out dist",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "update-db": "ts-node scripts/updateDb.ts"
+    "update-db": "ts-node scripts/updateDb.ts",
+    "delete-onboarding-sessions": "ts-node scripts/deleteOnboardingSessions.ts"
   },
   "keywords": [],
   "author": "lucasneiva",
