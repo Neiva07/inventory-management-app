@@ -127,7 +127,7 @@ const statuses = [
 ] as SelectField<SupplierBillStatus | "">[];
 
 export const SupplierBillList = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const navigate = useNavigate();
 
   const [supplierBills, setSupplierBills] = React.useState<Array<SupplierBill>>([]);
@@ -153,13 +153,14 @@ export const SupplierBillList = () => {
   const tableRef = React.useRef<CustomDataTableRef>(null);
 
   React.useEffect(() => {
-    getSuppliers({ pageSize: 10000, userID: user.id }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
-  }, [user]);
+    getSuppliers({ pageSize: 10000, userID: user.id, organizationId: organization?.id }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
+  }, [organization?.id, user.id]);
 
   const querySupplierBills = () => {
     setLoading(true);
     getSupplierBills({
       userID: user.id,
+      organizationId: organization?.id,
       pageSize,
       supplierID: selectedSupplier?.id ?? undefined,
       status: statusSelected?.value || undefined,
@@ -186,11 +187,11 @@ export const SupplierBillList = () => {
   React.useEffect(() => {
     setCurrentCursor(undefined);
     setPage(0);
-  }, [user, selectedSupplier, statusSelected, startDate, endDate]);
+  }, [organization?.id, selectedSupplier, startDate, endDate, statusSelected, user.id]);
 
   React.useEffect(() => {
     querySupplierBills();
-  }, [user, selectedSupplier, pageSize, statusSelected, startDate, endDate, page]);
+  }, [organization?.id, page, pageSize, selectedSupplier, startDate, endDate, statusSelected, user.id]);
 
   const handleSupplierSelection = (_: React.SyntheticEvent<Element, Event>, value: Supplier) => {
     setSelectedSupplier(value);

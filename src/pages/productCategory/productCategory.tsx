@@ -12,7 +12,7 @@ import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 
 export const ProductCategories = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
 
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -51,7 +51,7 @@ export const ProductCategories = () => {
 
   useEffect(() => {
     setLoading(true);
-    getProductCategories(user.id)
+    getProductCategories(user.id, '', organization?.id)
       .then(queryResult => {
         const categories = queryResult.docs.map(r => r.data() as ProductCategory);
         setProductCategories(categories);
@@ -117,14 +117,14 @@ export const ProductCategories = () => {
 
     try {
       if (editingCategory) {
-        updateProductCategory(editingCategory.id, { name, description, userID: user.id })
+        updateProductCategory(editingCategory.id, { name, description, userID: user.id, organizationId: organization?.id })
           .catch((err: Error) => {
             console.error(err);
             toast.error('Erro ao atualizar categoria');
           });
           toast.success('Categoria atualizada com sucesso');
       } else {
-        createProductCategories({ name, description, userID: user.id })
+        createProductCategories({ name, description, userID: user.id, organizationId: organization?.id })
           .catch((err: Error) => {
             console.error(err);
             toast.error('Erro ao criar categoria');
@@ -141,7 +141,7 @@ export const ProductCategories = () => {
 
   const refreshCategories = () => {
     setLoading(true);
-    getProductCategories(user.id)
+    getProductCategories(user.id, '', organization?.id)
       .then(queryResult => {
         const categories = queryResult.docs.map(r => r.data() as ProductCategory);
         setProductCategories(categories);

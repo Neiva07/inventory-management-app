@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { existsSync } from 'fs';
 import * as dotenv from 'dotenv';
 import {updateElectronApp, IUpdateDialogStrings, makeUserNotifier} from 'update-electron-app';
 
@@ -25,10 +26,12 @@ if (require('electron-squirrel-startup')) {
 
 let mainWindow: BrowserWindow | null = null;
 
-// Prevent multiple instances of the app
-const gotTheLock = app.requestSingleInstanceLock();
+// In development we allow multiple instances to avoid false exits while iterating.
+const shouldEnforceSingleInstance = app.isPackaged || process.env.ENFORCE_SINGLE_INSTANCE === 'true';
+const gotTheLock = shouldEnforceSingleInstance ? app.requestSingleInstanceLock() : true;
 
 if (!gotTheLock) {
+  console.warn('Another Stockify instance is already running; exiting this process.');
   app.quit();
 } else {
   app.on('second-instance', (event, commandLine) => {
@@ -143,15 +146,44 @@ updateElectronApp({
   onNotifyUser: customNotifier
 })
 
-const createWindow = (): void => {
+const waitForPreloadBundle = async (): Promise<void> => {
+  if (app.isPackaged) {
+    return;
+  }
+
+  const preloadPath = MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY;
+
+  if (!preloadPath || preloadPath.startsWith('http')) {
+    return;
+  }
+
+  const maxAttempts = 300;
+  const retryMs = 200;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    if (existsSync(preloadPath)) {
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, retryMs));
+  }
+
+  console.warn(`Preload bundle not found after waiting: ${preloadPath}`);
+};
+
+const createWindow = async (): Promise<void> => {
+  await waitForPreloadBundle();
+
+  const useNodeInRenderer = true;
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
     height: 800,
     width: 1400,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-      contextIsolation: true, // 👈 keep enabled for security
-      nodeIntegration: false, // 👈 must be false in production
+      contextIsolation: !useNodeInRenderer,
+      nodeIntegration: useNodeInRenderer,
     },
   }); 
 
@@ -167,7 +199,9 @@ const createWindow = (): void => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', () => {
+  void createWindow();
+});
 
 
 app.setAsDefaultProtocolClient("inventarum");
@@ -190,7 +224,7 @@ app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    void createWindow();
   }
 });
 

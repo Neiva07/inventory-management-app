@@ -35,7 +35,7 @@ interface ProductFormProps {
 }
 
 export const ProductForm = ({ productID: propProductID, onProductUpdated, isModal = false }: ProductFormProps = {}) => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
 
   const { productID: paramProductID } = useParams();
   const navigate = useNavigate();
@@ -52,16 +52,16 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
   const [units, setUnits] = useState<Array<Unit>>([]);
 
   useEffect(() => {
-    getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
-  }, [user]);
+    getProductCategories(user.id, "", organization?.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
+  }, [organization?.id, user]);
 
   useEffect(() => {
-    getSuppliers({ pageSize: 1000, userID: user.id }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
-  }, [user]);
+    getSuppliers({ pageSize: 1000, userID: user.id, organizationId: organization?.id }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
+  }, [organization?.id, user]);
 
   useEffect(() => {
-    getUnits(user.id).then(queryResult => setUnits(queryResult.docs.map(qr => qr.data() as Unit)))
-  }, [user]);
+    getUnits(user.id, "", organization?.id).then(queryResult => setUnits(queryResult.docs.map(qr => qr.data() as Unit)))
+  }, [organization?.id, user]);
 
   const handleSubmit = async () => {
     if (productID) {

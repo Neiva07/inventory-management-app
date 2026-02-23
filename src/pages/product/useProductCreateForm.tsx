@@ -68,7 +68,7 @@ const INITIAL_PRODUCT_FORM_STATE = {
 } as ProductFormDataInterface;
 
 export const useProductCreateForm = (productID?: string) => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const [fetchedProductForm, setFetchedProductForm] = React.useState<ProductFormDataInterface>();
   const [product, setProduct] = React.useState<Product>();
 
@@ -158,6 +158,7 @@ export const useProductCreateForm = (productID?: string) => {
         } as ProductUnit : null,
         status: "active",
         userID: user.id,
+        organizationId: organization?.id,
         variants: data.variants.map(so => {
           const { unit, ...rest } = so;
           return {
@@ -193,7 +194,7 @@ export const useProductCreateForm = (productID?: string) => {
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
 
-  }, [])
+  }, [organization?.id, user.id])
 
 
   const onUpdate = useCallback((data: ProductFormDataInterface) => {
@@ -213,6 +214,7 @@ export const useProductCreateForm = (productID?: string) => {
           name: data.baseUnit.label,
         } as ProductUnit : null,
         status: "active",
+        organizationId: organization?.id,
         variants: data.variants.map(so => {
           const { unit, ...rest } = so;
           return {
@@ -247,7 +249,7 @@ export const useProductCreateForm = (productID?: string) => {
       toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
 
-  }, [productID])
+  }, [organization?.id, productID])
 
 
   const onDelete = useCallback((onSuccess?: () => void) => {

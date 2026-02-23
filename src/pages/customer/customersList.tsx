@@ -46,7 +46,7 @@ const statuses = [
 ] as SelectField<string>[]
 
 export const CustomerList = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const navigate = useNavigate();
 
   const [customers, setCustomers] = React.useState<Array<Customer>>([]);
@@ -71,6 +71,7 @@ export const CustomerList = () => {
     setLoading(true);
     getCustomers({
       userID: user.id,
+      organizationId: organization?.id,
       pageSize,
       name: searchName,
       cursor: page > 0 ? currentCursor : undefined,
@@ -93,11 +94,11 @@ export const CustomerList = () => {
   React.useEffect(() => {
     setCurrentCursor(undefined);
     setPage(0);
-  }, [user, searchName, statusSelected]);
+  }, [organization?.id, user, searchName, statusSelected]);
 
   React.useEffect(() => {
     queryCustomers();
-  }, [user, searchName, pageSize, statusSelected, page]);
+  }, [organization?.id, user, searchName, pageSize, statusSelected, page]);
 
   const handleSearchName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchName(e.target.value)

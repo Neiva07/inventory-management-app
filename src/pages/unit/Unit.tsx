@@ -12,7 +12,7 @@ import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 
 export const Units = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
 
   const [name, setName] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -51,7 +51,7 @@ export const Units = () => {
 
   useEffect(() => {
     setLoading(true);
-    getUnits(user.id)
+    getUnits(user.id, '', organization?.id)
       .then(queryResult => {
         const unitsData = queryResult.docs.map(r => r.data() as Unit);
         setUnits(unitsData);
@@ -111,7 +111,7 @@ export const Units = () => {
 
   const refreshUnits = () => {
     setLoading(true);
-    getUnits(user.id)
+    getUnits(user.id, '', organization?.id)
       .then(queryResult => {
         const unitsData = queryResult.docs.map(r => r.data() as Unit);
         setUnits(unitsData);
@@ -128,7 +128,7 @@ export const Units = () => {
 
     try {
       if (editingUnit) {
-        updateUnit(editingUnit.id, { name, description, userID: user.id })
+        updateUnit(editingUnit.id, { name, description, userID: user.id, organizationId: organization?.id })
           .catch((err: Error) => {
             console.error(err);
             toast.error('Erro ao atualizar unidade');
@@ -136,7 +136,7 @@ export const Units = () => {
           toast.success('Unidade atualizada com sucesso');
 
       } else {
-        createUnit({ name, description, userID: user.id })
+        createUnit({ name, description, userID: user.id, organizationId: organization?.id })
           .catch((err: Error) => {
             console.error(err);
             toast.error('Erro ao criar unidade');

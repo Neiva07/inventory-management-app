@@ -42,7 +42,7 @@ const statuses = [
 ] as SelectField<InstallmentPaymentStatus | "">[];
 
 export const InstallmentPaymentList = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const navigate = useNavigate();
   const { forceCheckOverdue } = useOverdueCheck();
 
@@ -199,6 +199,7 @@ export const InstallmentPaymentList = () => {
     setLoading(true);
     getInstallmentPayments({
       userID: user.id,
+      organizationId: organization?.id,
       pageSize,
       status: statusSelected?.value || undefined,
       dateRange: {
@@ -220,12 +221,12 @@ export const InstallmentPaymentList = () => {
   React.useEffect(() => {
     setCurrentCursor(undefined);
     setPage(0);
-  }, [user, statusSelected, startDate, endDate]);
+  }, [organization?.id, endDate, startDate, statusSelected, user.id]);
 
   // Query when dependencies change
   React.useEffect(() => {
     queryInstallmentPayments();
-  }, [user, pageSize, statusSelected, startDate, endDate, page]);
+  }, [organization?.id, endDate, page, pageSize, startDate, statusSelected, user.id]);
 
   const handleStatusSelection = (event: React.SyntheticEvent<Element, Event>, value: SelectField<InstallmentPaymentStatus | "">) => {
     setStatusSelected(value);

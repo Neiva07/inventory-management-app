@@ -91,7 +91,7 @@ const INITIAL_ORDER_VALUES: OrderFormDataInterface = {
 };
 
 export const useOrderForm = (orderID?: string) => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const [fetchedOrderForm, setFetchedOrderForm] = React.useState<OrderFormDataInterface>();
   const [order, setOrder] = React.useState<Order>();
   const [products, setProducts] = useState<Array<Product>>([]);
@@ -101,21 +101,25 @@ export const useOrderForm = (orderID?: string) => {
       pageSize: 10000,
       status: 'active',
       userID: user.id,
+      organizationId: organization?.id,
     }).then(result => {
-      const queriedProducts = result[0].map(p => p as Product)
+      const queriedProducts = result[0].map((p: Product) => p as Product)
       setProducts(queriedProducts)
       if (queriedProducts.length > 0) {
         formMethods.setValue('pendingItem.selectedProduct', queriedProducts[0])
         formMethods.setValue('pendingItem.variant', queriedProducts[0].variants[0])
-        formMethods.setValue('pendingItem.unitPrice', queriedProducts[0].variants[0].prices.find(p => p.paymentMethod.id === formMethods.getValues('paymentMethod').value)?.value ?? 0)
+        formMethods.setValue(
+          'pendingItem.unitPrice',
+          queriedProducts[0].variants[0].prices.find((p: Variant["prices"][number]) => p.paymentMethod.id === formMethods.getValues('paymentMethod').value)?.value ?? 0
+        )
       }
     })
 
-  }, [user]);
+  }, [organization?.id, user.id]);
 
   React.useEffect(() => {
     queryProducts();
-  }, [user]);
+  }, [queryProducts]);
 
 
   const formValidationSchema = useOrderFormValidationSchema();
@@ -127,7 +131,14 @@ export const useOrderForm = (orderID?: string) => {
 
   const getOrderFormData = React.useCallback(async (orderID?: string) => {
 
-    const queriedOrder = await getOrder(orderID)
+    const queriedOrder = await getOrder(orderID, {
+      userID: user.id,
+      organizationId: organization?.id,
+    })
+
+    if (!queriedOrder) {
+      return;
+    }
     setOrder(queriedOrder);
 
     const orderForm = {
@@ -160,7 +171,7 @@ export const useOrderForm = (orderID?: string) => {
     } as OrderFormDataInterface
 
     setFetchedOrderForm(orderForm);
-  }, [orderID]);
+  }, [orderID, organization?.id, user.id]);
 
   React.useEffect(() => {
     if (orderID) {
@@ -186,6 +197,7 @@ export const useOrderForm = (orderID?: string) => {
         id: paymentMethod.value,
       },
       userID: user.id,
+      organizationId: organization?.id,
       status: status.value as OrderStatus,
       dueDate: dueDate.getTime(),
       orderDate: orderDate.getTime(),
@@ -210,7 +222,7 @@ export const useOrderForm = (orderID?: string) => {
         theme: "colored",
       })
     }
-  }, [orderID]);
+  }, [orderID, organization?.id, user.id]);
 
   const onDelete = useCallback((onSuccess?: () => void) => {
     try {

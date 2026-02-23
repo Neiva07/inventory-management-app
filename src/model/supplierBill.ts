@@ -1,7 +1,9 @@
-import { uuidv4 } from "@firebase/util";
-import { db } from "firebase";
-import { collection, doc, getDoc, getDocs, limit, orderBy, query, QueryConstraint, writeBatch, startAfter, where, updateDoc } from "firebase/firestore";
-import { getDocumentCount } from "../lib/count";
+import { and, count, desc, eq, gt, isNull, lte, gte } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
+import { createAppDb } from "../db/client";
+import { resolveOrganizationId } from "../db/scope";
+import { supplierBills } from "../db/schema";
+import { trackPendingSyncChange } from "../db/syncTracking";
 import { generatePublicId } from "../lib/publicId";
 import { COLLECTION_NAMES } from "./index";
 import { multiply, divide } from "lib/math";
@@ -12,6 +14,7 @@ export interface SupplierBill {
   id: string;
   publicId: string;
   userID: string;
+  organizationId?: string;
   supplier: {
     supplierID: string;
     publicID: string;
@@ -21,10 +24,10 @@ export interface SupplierBill {
     id: string;
     publicId: string;
   };
-  totalValue: number; // Total order value
-  initialCashInstallment: number; // Amount paid upfront
-  remainingValue: number; // Value to be paid in installments
-  startDate: number; // When installments begin
+  totalValue: number;
+  initialCashInstallment: number;
+  remainingValue: number;
+  startDate: number;
   createdAt: number;
   updatedAt?: number;
   deleted: {
@@ -36,6 +39,7 @@ export interface SupplierBill {
 
 interface SupplierBillSearchParams {
   userID: string;
+  organizationId?: string;
   supplierID?: string;
   status?: SupplierBillStatus;
   dateRange?: {
@@ -47,113 +51,7 @@ interface SupplierBillSearchParams {
 }
 
 const SUPPLIER_BILL_COLLECTION = COLLECTION_NAMES.SUPPLIER_BILLS;
-const supplierBillCollection = collection(db, SUPPLIER_BILL_COLLECTION);
 
-export const getSupplierBills = async (searchParams: SupplierBillSearchParams) => {
-  const userID = searchParams.userID;
-  const constrains: QueryConstraint[] = [where("userID", "==", userID)];
-  const countConstraints: QueryConstraint[] = [where("userID", "==", userID)];
-
-  if (searchParams.supplierID) {
-    constrains.push(where("supplier.supplierID", "==", searchParams.supplierID));
-    countConstraints.push(where("supplier.supplierID", "==", searchParams.supplierID));
-  }
-
-  if (searchParams.status) {
-    constrains.push(where("status", "==", searchParams.status));
-    countConstraints.push(where("status", "==", searchParams.status));
-  }
-
-  constrains.push(orderBy("createdAt", "desc"));
-
-  if (searchParams.cursor) {
-    constrains.push(startAfter(searchParams.cursor.createdAt));
-  }
-
-  if (searchParams.dateRange) {
-    if (searchParams.dateRange.startDate) {
-      constrains.push(where("createdAt", ">=", searchParams.dateRange.startDate));
-      countConstraints.push(where("createdAt", ">=", searchParams.dateRange.startDate));
-    }
-    if (searchParams.dateRange.endDate) {
-      constrains.push(where("createdAt", "<=", searchParams.dateRange.endDate));
-      countConstraints.push(where("createdAt", "<=", searchParams.dateRange.endDate));
-    }
-  }
-
-  constrains.push(where("deleted.isDeleted", "==", false));
-  countConstraints.push(where("deleted.isDeleted", "==", false));
-
-  constrains.push(limit(searchParams.pageSize));
-
-  const q = query(supplierBillCollection, ...constrains);
-  const [docs, count] = await Promise.all([
-    getDocs(q),
-    getDocumentCount(supplierBillCollection, countConstraints, searchParams.pageSize)
-  ]);
-  const supplierBills = docs.docs.map(d => convertSupplierBillUnitsDisplay(d.data()) as SupplierBill);
-
-  return {
-    supplierBills,
-    count,
-  };
-};
-
-export const getSupplierBill = (supplierBillID: string) => {
-  return getDoc(doc(db, SUPPLIER_BILL_COLLECTION, supplierBillID)).then(r => convertSupplierBillUnitsDisplay(r.data()) as SupplierBill);
-};
-
-export const createSupplierBill = async (supplierBillInfo: Partial<SupplierBill>) => {
-  const supplierBillID = uuidv4();
-  const publicId = await generatePublicId(SUPPLIER_BILL_COLLECTION);
-  const newSupplierBill = doc(db, SUPPLIER_BILL_COLLECTION, supplierBillID);
-  
-  const batch = writeBatch(db);
-
-  // Create the supplier bill document
-  const documentData = {
-    id: supplierBillID,
-    publicId,
-    createdAt: Date.now(),
-    deleted: {
-      isDeleted: false,
-    },
-    status: "active",
-    ...convertSupplierBillUnitsStore(supplierBillInfo),
-  };
-  
-  // Remove any undefined values before setting the document
-  const cleanData = Object.fromEntries(
-    Object.entries(documentData).filter(([_, value]) => value !== undefined)
-  );
-
-  batch.set(newSupplierBill, cleanData);
-
-  await batch.commit();
-  return supplierBillID;
-};
-
-export const updateSupplierBill = async (supplierBillID: string, supplierBillInfo: Partial<SupplierBill>) => {
-  const supplierBillDoc = doc(db, SUPPLIER_BILL_COLLECTION, supplierBillID);
-  
-  return updateDoc(supplierBillDoc, {
-    ...convertSupplierBillUnitsStore(supplierBillInfo),
-    updatedAt: Date.now(),
-  });
-};
-
-export const deleteSupplierBill = async (supplierBillID: string) => {
-  const supplierBillDoc = doc(db, SUPPLIER_BILL_COLLECTION, supplierBillID);
-  
-  return updateDoc(supplierBillDoc, {
-    deleted: {
-      isDeleted: true,
-      date: Date.now(),
-    }
-  });
-};
-
-// Helper functions for unit conversion (storing in cents, displaying in currency)
 const convertSupplierBillUnitsStore = (supplierBillInfo: Partial<SupplierBill>) => {
   return {
     ...supplierBillInfo,
@@ -170,4 +68,217 @@ const convertSupplierBillUnitsDisplay = (supplierBillInfo: Partial<SupplierBill>
     initialCashInstallment: divide(supplierBillInfo.initialCashInstallment ?? 0, 100),
     remainingValue: divide(supplierBillInfo.remainingValue ?? 0, 100),
   };
-}; 
+};
+
+const mapSupplierBill = (row: typeof supplierBills.$inferSelect): SupplierBill => {
+  const bill = {
+    id: row.id,
+    publicId: row.publicId ?? "",
+    userID: row.userId,
+    organizationId: row.organizationId,
+    supplier: row.supplierJson
+      ? JSON.parse(row.supplierJson)
+      : {
+          supplierID: row.supplierId ?? "",
+          publicID: "",
+          supplierName: "",
+        },
+    inboundOrder: row.inboundOrderJson
+      ? JSON.parse(row.inboundOrderJson)
+      : {
+          id: row.inboundOrderId ?? "",
+          publicId: "",
+        },
+    totalValue: row.totalAmountCents,
+    initialCashInstallment: row.paidAmountCents,
+    remainingValue: Math.max(0, row.totalAmountCents - row.paidAmountCents),
+    startDate: row.dueDate ?? row.createdAt,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    deleted: {
+      isDeleted: row.deletedAt !== null,
+      date: row.deletedAt ?? 0,
+    },
+    status: row.status as SupplierBillStatus,
+  } as SupplierBill;
+
+  return convertSupplierBillUnitsDisplay(bill) as SupplierBill;
+};
+
+export const getSupplierBills = async (searchParams: SupplierBillSearchParams) => {
+  const db = createAppDb();
+  const scopeOrganizationId = resolveOrganizationId({
+    userID: searchParams.userID,
+    organizationId: searchParams.organizationId,
+  });
+
+  const filters = [eq(supplierBills.organizationId, scopeOrganizationId), isNull(supplierBills.deletedAt)];
+
+  if (searchParams.supplierID) {
+    filters.push(eq(supplierBills.supplierId, searchParams.supplierID));
+  }
+
+  if (searchParams.status) {
+    filters.push(eq(supplierBills.status, searchParams.status));
+  }
+
+  if (searchParams.dateRange?.startDate) {
+    filters.push(gte(supplierBills.createdAt, searchParams.dateRange.startDate));
+  }
+
+  if (searchParams.dateRange?.endDate) {
+    filters.push(lte(supplierBills.createdAt, searchParams.dateRange.endDate));
+  }
+
+  if (searchParams.cursor?.createdAt) {
+    filters.push(gt(supplierBills.createdAt, searchParams.cursor.createdAt));
+  }
+
+  const rows = await db
+    .select()
+    .from(supplierBills)
+    .where(and(...filters))
+    .orderBy(desc(supplierBills.createdAt))
+    .limit(searchParams.pageSize);
+
+  const countFilters = [eq(supplierBills.organizationId, scopeOrganizationId), isNull(supplierBills.deletedAt)];
+
+  if (searchParams.supplierID) {
+    countFilters.push(eq(supplierBills.supplierId, searchParams.supplierID));
+  }
+
+  if (searchParams.status) {
+    countFilters.push(eq(supplierBills.status, searchParams.status));
+  }
+
+  if (searchParams.dateRange?.startDate) {
+    countFilters.push(gte(supplierBills.createdAt, searchParams.dateRange.startDate));
+  }
+
+  if (searchParams.dateRange?.endDate) {
+    countFilters.push(lte(supplierBills.createdAt, searchParams.dateRange.endDate));
+  }
+
+  const [{ value: totalCount }] = await db.select({ value: count() }).from(supplierBills).where(and(...countFilters));
+
+  return {
+    supplierBills: rows.map(mapSupplierBill),
+    count: {
+      count: totalCount,
+      isEstimated: false,
+    },
+  };
+};
+
+export const getSupplierBill = async (
+  supplierBillID?: string,
+  scope?: {
+    userID: string;
+    organizationId?: string;
+  }
+) => {
+  if (!supplierBillID) {
+    return null as unknown as SupplierBill;
+  }
+
+  const db = createAppDb();
+  const filters = [eq(supplierBills.id, supplierBillID)];
+  if (scope) {
+    filters.push(eq(supplierBills.organizationId, resolveOrganizationId(scope)));
+  }
+
+  const row = await db.select().from(supplierBills).where(and(...filters)).limit(1);
+  return row.length ? mapSupplierBill(row[0]) : (null as unknown as SupplierBill);
+};
+
+export const createSupplierBill = async (supplierBillInfo: Partial<SupplierBill>) => {
+  const db = createAppDb();
+  const supplierBillID = uuidv4();
+  const publicId = await generatePublicId(SUPPLIER_BILL_COLLECTION);
+  const timestamp = Date.now();
+  const converted = convertSupplierBillUnitsStore(supplierBillInfo);
+
+  const userID = supplierBillInfo.userID ?? "";
+  const organizationId = resolveOrganizationId({
+    userID,
+    organizationId: supplierBillInfo.organizationId,
+  });
+
+  await db.insert(supplierBills).values({
+    id: supplierBillID,
+    publicId,
+    userId: userID,
+    organizationId,
+    supplierId: supplierBillInfo.supplier?.supplierID,
+    supplierJson: supplierBillInfo.supplier ? JSON.stringify(supplierBillInfo.supplier) : null,
+    inboundOrderId: supplierBillInfo.inboundOrder?.id,
+    inboundOrderJson: supplierBillInfo.inboundOrder ? JSON.stringify(supplierBillInfo.inboundOrder) : null,
+    status: supplierBillInfo.status ?? "active",
+    dueDate: supplierBillInfo.startDate,
+    totalAmountCents: (converted.totalValue as number) ?? 0,
+    paidAmountCents: (converted.initialCashInstallment as number) ?? 0,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    deletedAt: null,
+  });
+
+  await trackPendingSyncChange({
+    organizationId,
+    tableName: "supplier_bills",
+    recordId: supplierBillID,
+    operation: "create",
+    payload: supplierBillInfo,
+  });
+
+  return supplierBillID;
+};
+
+export const updateSupplierBill = async (supplierBillID: string, supplierBillInfo: Partial<SupplierBill>) => {
+  const db = createAppDb();
+  const converted = convertSupplierBillUnitsStore(supplierBillInfo);
+  const existing = await db.select({ organizationId: supplierBills.organizationId }).from(supplierBills).where(eq(supplierBills.id, supplierBillID)).limit(1);
+
+  await db
+    .update(supplierBills)
+    .set({
+      updatedAt: Date.now(),
+      supplierId: supplierBillInfo.supplier?.supplierID,
+      supplierJson: supplierBillInfo.supplier ? JSON.stringify(supplierBillInfo.supplier) : undefined,
+      inboundOrderId: supplierBillInfo.inboundOrder?.id,
+      inboundOrderJson: supplierBillInfo.inboundOrder ? JSON.stringify(supplierBillInfo.inboundOrder) : undefined,
+      status: supplierBillInfo.status,
+      dueDate: supplierBillInfo.startDate,
+      totalAmountCents: converted.totalValue as number,
+      paidAmountCents: converted.initialCashInstallment as number,
+    })
+    .where(eq(supplierBills.id, supplierBillID));
+
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "supplier_bills",
+    recordId: supplierBillID,
+    operation: "update",
+    payload: supplierBillInfo,
+  });
+};
+
+export const deleteSupplierBill = async (supplierBillID: string) => {
+  const db = createAppDb();
+  const existing = await db.select({ organizationId: supplierBills.organizationId }).from(supplierBills).where(eq(supplierBills.id, supplierBillID)).limit(1);
+
+  await db
+    .update(supplierBills)
+    .set({
+      deletedAt: Date.now(),
+      updatedAt: Date.now(),
+    })
+    .where(eq(supplierBills.id, supplierBillID));
+
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "supplier_bills",
+    recordId: supplierBillID,
+    operation: "delete",
+    payload: { id: supplierBillID },
+  });
+};

@@ -78,7 +78,7 @@ const statuses = [
 
 export const ProductList = () => {
 
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
 
   const [products, setProducts] = React.useState<Array<Product>>([]);
   const [count, setCount] = React.useState<number>();
@@ -104,8 +104,8 @@ export const ProductList = () => {
   const tableRef = React.useRef<CustomDataTableRef>(null);
 
   React.useEffect(() => {
-    getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
-  }, [user.id]);
+    getProductCategories(user.id, "", organization?.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
+  }, [organization?.id, user.id]);
 
   const queryProducts = () => {
     setLoading(true);
@@ -114,10 +114,11 @@ export const ProductList = () => {
       title: searchTitle,
       productCategory: categorySelected ?? undefined,
       userID: user.id,
+      organizationId: organization?.id,
       cursor: page > 0 ? currentCursor : undefined,
       status: statusSelected?.value
     }).then(result => { 
-      const newProducts = result[0].map(p => p as Product);
+      const newProducts = result[0].map((p: Product) => p as Product);
       setProducts(newProducts);
       setCount(result[1].count);
 

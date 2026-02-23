@@ -1,11 +1,13 @@
-import { uuidv4 } from "@firebase/util";
-import { db } from "firebase";
-import { collection, doc, getDoc, getDocs, limit, orderBy, query, QueryConstraint, writeBatch, startAfter, where, increment } from "firebase/firestore";
-import { Variant } from "./products";
-import { getDocumentCount } from "../lib/count";
+import { and, asc, count, eq, gt, gte, inArray, isNull, lte } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
+import { createAppDb } from "../db/client";
+import { resolveOrganizationId } from "../db/scope";
+import { orderItems, orders } from "../db/schema";
+import { trackPendingSyncChange } from "../db/syncTracking";
 import { generatePublicId } from "../lib/publicId";
 import { COLLECTION_NAMES } from "./index";
 import { add, divide, multiply, subtract } from "lib/math";
+import { adjustProductInventory, Variant } from "./products";
 
 export interface OrderCustomer {
   id: string;
@@ -27,15 +29,16 @@ export interface Item {
 }
 
 export function calcItemTotalCost(item: Partial<Item>) {
-  return divide(multiply(item.unitPrice, item.quantity,subtract(100, item.descount)), 100) 
+  return divide(multiply(item.unitPrice, item.quantity, subtract(100, item.descount)), 100);
 }
 
-export type OrderStatus = "request" | "complete"
+export type OrderStatus = "request" | "complete";
 
 export interface Order {
   id: string;
   publicId: string;
   userID: string;
+  organizationId?: string;
   customer: OrderCustomer;
   createdAt: number;
   updatedAt?: number;
@@ -46,221 +49,40 @@ export interface Order {
   paymentMethod: {
     label: string;
     id: string;
-  }; // change for db table later
+  };
   orderDate: number;
   dueDate: number;
   totalComission: number;
   status: OrderStatus;
   items: Array<Item>;
   totalCost: number;
-  // sailsman: Employee;
 }
 
 export function calcOrderTotalCost(order: Order) {
-  return order.items.reduce((acc, i) => add(acc, i.itemTotalCost), 0)
+  return order.items.reduce((acc, i) => add(acc, i.itemTotalCost), 0);
 }
 
 interface OrderSearchParams {
   userID: string;
+  organizationId?: string;
   customerID?: string;
   dateRange?: {
     startDate?: number;
     endDate?: number;
-  }
+  };
   status: OrderStatus;
   cursor?: Order;
   pageSize: number;
 }
 
-const ORDER_COLLECTION = COLLECTION_NAMES.ORDERS
-const orderCollection = collection(db, ORDER_COLLECTION)
-
-
-export const getOrders = (searchParams: OrderSearchParams) => {
-  const userID = searchParams.userID;
-  const constrains: QueryConstraint[] = [where("userID", "==", userID)]
-  const countConstraints: QueryConstraint[] = [where("userID", "==", userID)]
-
-  if (searchParams.customerID) {
-    constrains.push(where("customer.id", "==", searchParams.customerID))
-    countConstraints.push(where("customer.id", "==", searchParams.customerID))
-  }
-
-  if (searchParams.status) {
-    constrains.push(where("status", "==", searchParams.status))
-    countConstraints.push(where("status", "==", searchParams.status))
-  } else {
-    constrains.push(where("status", "==", "complete"))
-    countConstraints.push(where("status", "==", "complete"))
-  }
-
-  constrains.push(orderBy("createdAt"))
-
-  if (searchParams.cursor) {
-    constrains.push(startAfter(searchParams.cursor.createdAt))
-  }
-
-  if (searchParams.dateRange) {
-    if (searchParams.dateRange.startDate) {
-      constrains.push(where("createdAt", ">=", searchParams.dateRange.startDate))
-      countConstraints.push(where("createdAt", ">=", searchParams.dateRange.startDate))
-    }
-    if (searchParams.dateRange.endDate) {
-      constrains.push(where("createdAt", "<=", searchParams.dateRange.endDate))
-      countConstraints.push(where("createdAt", "<=", searchParams.dateRange.endDate))
-    }
-  }
-
-  constrains.push(where("deleted.isDeleted", "==", false))
-  countConstraints.push(where("deleted.isDeleted", "==", false))
-
-  constrains.push(limit(searchParams.pageSize))
-
-  const q = query(orderCollection, ...constrains);
-  return Promise.all([getDocs(q), getDocumentCount(orderCollection, countConstraints, searchParams.pageSize)]).then(([docs, count]) => {
-    return {
-      orders: docs.docs.map(d => convertOrderUnitsDisplay(d.data()) as Order),
-      count,
-    }
-  })
-}
-
-export const getOrder = (orderID: string) => {
-  return getDoc(doc(db, ORDER_COLLECTION, orderID)).then(r => convertOrderUnitsDisplay(r.data()) as Order);
-}
-
-export const createOrder = async (orderInfo: Partial<Order>) => {
-  const orderID = uuidv4();
-  const publicId = await generatePublicId(ORDER_COLLECTION);
-  const newOrder = doc(db, ORDER_COLLECTION, orderID);
-  
-  const batch = writeBatch(db);
-
-  // Create the order document
-  batch.set(newOrder, {
-    id: orderID,
-    publicId,
-    createdAt: Date.now(),
-    deleted: {
-      isDeleted: false,
-    },
-    ...convertOrderUnitsStore(orderInfo),
-  });
-  const itemsByProduct = orderInfo.items.reduce((acc, item) => {
-    acc[item.productID] = [...(acc[item.productID] ?? []), item]
-    return acc
-  }, {} as Record<string, Item[]>)
-
-  // Update product inventory for each item
-  for (const productItems of Object.values(itemsByProduct)) {
-    const productID = productItems[0].productID;
-    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
-
-    const balanceInBaseUnit = productItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
-
-    batch.update(productRef, { inventory: increment(-balanceInBaseUnit) });
-  }
-
-  return batch.commit();
-}
-
-export const deleteOrder = async (orderID: string) => {
-  const orderDoc = doc(db, ORDER_COLLECTION, orderID);
-  const order = await getDoc(orderDoc);
-  const orderData = order.data() as Order;
-  const batch = writeBatch(db);
-  
-  // Mark the order as deleted
-  batch.update(orderDoc, {
-    deleted: {
-      isDeleted: true,
-      date: Date.now(),
-    }
-  });
-
-  const itemsByProduct = orderData.items.reduce((acc, item) => {
-    acc[item.productID] = [...(acc[item.productID] ?? []), item]
-    return acc
-  }, {} as Record<string, Item[]>)
-
-  for (const productItems of Object.values(itemsByProduct)) {
-    const productID = productItems[0].productID;
-    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
-    const balanceInBaseUnit = productItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
-    batch.update(productRef, { inventory: increment(balanceInBaseUnit) });
-  }
-
-  return batch.commit();
-}
-
-
-export const updateOrder = async (orderID: string, currentOrder: Partial<Order>) => {
-  const orderDoc = doc(db, ORDER_COLLECTION, orderID);
-  const order = await getDoc(orderDoc);
-  const prevOrder = order.data() as Order;
-  const batch = writeBatch(db);
-
-  const prevOrderItemsByProduct = prevOrder.items.reduce((acc, item) => {
-    acc[item.productID] = [...(acc[item.productID] ?? []), item]
-    return acc
-  }, {} as Record<string, Item[]>)
-
-  const currentOrderItemsByProduct = currentOrder.items.reduce((acc, item) => {
-    acc[item.productID] = [...(acc[item.productID] ?? []), item]
-    return acc
-  }, {} as Record<string, Item[]>)
-
-  batch.update(orderDoc, {
-    ...convertOrderUnitsStore(currentOrder),
-    updatedAt: Date.now(),
-  })
-
-  if(currentOrder.status === "complete" && prevOrder.status === "complete") {
-
-  // Restore inventory for all products from previous order
-  for (const productID of Object.keys(prevOrderItemsByProduct)) {
-    const prevProductItems = prevOrderItemsByProduct[productID]
-    const balanceInBaseUnit = prevProductItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
-    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
-    batch.update(productRef, { inventory: increment(balanceInBaseUnit) });
-  }
-
-  // Reduce inventory for all products from current order
-  for (const productID of Object.keys(currentOrderItemsByProduct)) {
-    const currentProductItems = currentOrderItemsByProduct[productID]
-    const balanceInBaseUnit = currentProductItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
-    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
-    batch.update(productRef, { inventory: increment(-balanceInBaseUnit) });
-  }
-}
-
-if(currentOrder.status === "complete" && prevOrder.status === "request") {
-  for (const productID of Object.keys(currentOrderItemsByProduct)) {
-    const currentProductItems = currentOrderItemsByProduct[productID]
-    const balanceInBaseUnit = currentProductItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
-    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
-    batch.update(productRef, { inventory: increment(-balanceInBaseUnit) });
-  }
-}
-
-if(currentOrder.status === "request" && prevOrder.status === "complete") {
-  for (const productID of Object.keys(prevOrderItemsByProduct)) {
-    const prevProductItems = prevOrderItemsByProduct[productID]
-    const balanceInBaseUnit = prevProductItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0)
-    const productRef = doc(db, COLLECTION_NAMES.PRODUCTS, productID);
-    batch.update(productRef, { inventory: increment(balanceInBaseUnit) });
-  }
-}
-
-  return batch.commit();
-}
+const ORDER_COLLECTION = COLLECTION_NAMES.ORDERS;
 
 const convertOrderUnitsStore = (orderInfo: Partial<Order>) => {
   return {
     ...orderInfo,
     totalCost: multiply(orderInfo.totalCost ?? 0, 100),
     totalComission: multiply(orderInfo.totalComission ?? 0, 100),
-    items: orderInfo.items.map(i => ({
+    items: (orderInfo.items ?? []).map((i) => ({
       ...i,
       cost: multiply(i.cost ?? 0, 100),
       itemTotalCost: multiply(i.itemTotalCost ?? 0, 100),
@@ -269,23 +91,23 @@ const convertOrderUnitsStore = (orderInfo: Partial<Order>) => {
       descount: multiply(i.descount ?? 0, 100),
       variant: {
         ...i.variant,
-        prices: i.variant.prices.map(p => ({
+        prices: (i.variant?.prices ?? []).map((p) => ({
           ...p,
           value: multiply(p.value ?? 0, 100),
           profit: multiply(p.profit ?? 0, 100),
         })),
-        unitCost: multiply(i.variant.unitCost ?? 0, 100),
+        unitCost: multiply(i.variant?.unitCost ?? 0, 100),
       },
     })),
-  }
-}
+  };
+};
 
 const convertOrderUnitsDisplay = (orderInfo: Partial<Order>) => {
   return {
     ...orderInfo,
     totalCost: divide(orderInfo.totalCost ?? 0, 100),
     totalComission: divide(orderInfo.totalComission ?? 0, 100),
-    items: orderInfo.items.map(i => ({
+    items: (orderInfo.items ?? []).map((i) => ({
       ...i,
       cost: divide(i.cost ?? 0, 100),
       itemTotalCost: divide(i.itemTotalCost ?? 0, 100),
@@ -294,13 +116,345 @@ const convertOrderUnitsDisplay = (orderInfo: Partial<Order>) => {
       descount: divide(i.descount ?? 0, 100),
       variant: {
         ...i.variant,
-        prices: i.variant.prices.map(p => ({
+        prices: (i.variant?.prices ?? []).map((p) => ({
           ...p,
           value: divide(p.value ?? 0, 100),
           profit: divide(p.profit ?? 0, 100),
         })),
-        unitCost: divide(i.variant.unitCost ?? 0, 100),
+        unitCost: divide(i.variant?.unitCost ?? 0, 100),
       },
     })),
+  };
+};
+
+const mapOrder = (row: typeof orders.$inferSelect, rowItems: typeof orderItems.$inferSelect[]): Order => {
+  const order: Order = {
+    id: row.id,
+    publicId: row.publicId ?? "",
+    userID: row.userId,
+    organizationId: row.organizationId,
+    customer: row.customerJson
+      ? JSON.parse(row.customerJson)
+      : {
+          id: row.customerId ?? "",
+          name: "",
+        },
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    deleted: {
+      isDeleted: row.deletedAt !== null,
+      date: row.deletedAt ?? 0,
+    },
+    paymentMethod: {
+      id: row.paymentMethodId ?? "",
+      label: row.paymentMethodLabel ?? "",
+    },
+    orderDate: row.orderDate,
+    dueDate: row.dueDate ?? row.orderDate,
+    totalComission: row.totalCommissionCents,
+    status: row.status as OrderStatus,
+    totalCost: row.totalCostCents,
+    items: rowItems.map((item) => ({
+      productID: item.productId,
+      productBaseUnitInventory: item.productBaseUnitInventory,
+      variant: item.variantJson ? JSON.parse(item.variantJson) : ({} as Variant),
+      title: item.title,
+      balance: item.balance,
+      quantity: item.quantity,
+      cost: item.costCents,
+      unitPrice: item.unitPriceCents,
+      itemTotalCost: item.itemTotalCostCents,
+      descount: item.discountPercent,
+      commissionRate: item.commissionRate,
+    })),
+  };
+
+  return convertOrderUnitsDisplay(order) as Order;
+};
+
+const getOrderItemsRows = async (orderIds: string[]) => {
+  if (!orderIds.length) {
+    return new Map<string, typeof orderItems.$inferSelect[]>();
   }
-}
+
+  const db = createAppDb();
+  const rows = await db.select().from(orderItems).where(inArray(orderItems.orderId, orderIds));
+  const map = new Map<string, typeof orderItems.$inferSelect[]>();
+  rows.forEach((item) => {
+    const values = map.get(item.orderId) ?? [];
+    values.push(item);
+    map.set(item.orderId, values);
+  });
+  return map;
+};
+
+const applyInventoryDeltaFromItems = async (items: Item[], factor: 1 | -1) => {
+  const itemsByProduct = items.reduce((acc, item) => {
+    acc[item.productID] = [...(acc[item.productID] ?? []), item];
+    return acc;
+  }, {} as Record<string, Item[]>);
+
+  for (const productItems of Object.values(itemsByProduct)) {
+    const balanceInBaseUnit = productItems.reduce((acc, item) => add(acc, multiply(item.quantity, item.variant.conversionRate)), 0);
+    await adjustProductInventory(productItems[0].productID, factor * balanceInBaseUnit);
+  }
+};
+
+export const getOrders = async (searchParams: OrderSearchParams) => {
+  const db = createAppDb();
+  const scopeOrganizationId = resolveOrganizationId({
+    userID: searchParams.userID,
+    organizationId: searchParams.organizationId,
+  });
+
+  const filters = [eq(orders.organizationId, scopeOrganizationId), isNull(orders.deletedAt)];
+
+  if (searchParams.customerID) {
+    filters.push(eq(orders.customerId, searchParams.customerID));
+  }
+
+  if (searchParams.status) {
+    filters.push(eq(orders.status, searchParams.status));
+  } else {
+    filters.push(eq(orders.status, "complete"));
+  }
+
+  if (searchParams.dateRange?.startDate) {
+    filters.push(gte(orders.createdAt, searchParams.dateRange.startDate));
+  }
+
+  if (searchParams.dateRange?.endDate) {
+    filters.push(lte(orders.createdAt, searchParams.dateRange.endDate));
+  }
+
+  if (searchParams.cursor?.createdAt) {
+    filters.push(gt(orders.createdAt, searchParams.cursor.createdAt));
+  }
+
+  const rows = await db
+    .select()
+    .from(orders)
+    .where(and(...filters))
+    .orderBy(asc(orders.createdAt))
+    .limit(searchParams.pageSize);
+
+  const countFilters = [eq(orders.organizationId, scopeOrganizationId), isNull(orders.deletedAt)];
+  if (searchParams.customerID) {
+    countFilters.push(eq(orders.customerId, searchParams.customerID));
+  }
+  if (searchParams.status) {
+    countFilters.push(eq(orders.status, searchParams.status));
+  } else {
+    countFilters.push(eq(orders.status, "complete"));
+  }
+  if (searchParams.dateRange?.startDate) {
+    countFilters.push(gte(orders.createdAt, searchParams.dateRange.startDate));
+  }
+  if (searchParams.dateRange?.endDate) {
+    countFilters.push(lte(orders.createdAt, searchParams.dateRange.endDate));
+  }
+
+  const [{ value: totalCount }] = await db.select({ value: count() }).from(orders).where(and(...countFilters));
+
+  const itemsMap = await getOrderItemsRows(rows.map((row) => row.id));
+
+  return {
+    orders: rows.map((row) => mapOrder(row, itemsMap.get(row.id) ?? [])),
+    count: {
+      count: totalCount,
+      isEstimated: false,
+    },
+  };
+};
+
+export const getOrder = async (
+  orderID?: string,
+  scope?: {
+    userID: string;
+    organizationId?: string;
+  }
+) => {
+  if (!orderID) {
+    return null as unknown as Order;
+  }
+
+  const db = createAppDb();
+  const filters = [eq(orders.id, orderID)];
+  if (scope) {
+    filters.push(eq(orders.organizationId, resolveOrganizationId(scope)));
+  }
+
+  const rows = await db.select().from(orders).where(and(...filters)).limit(1);
+  if (!rows.length) {
+    return null as unknown as Order;
+  }
+
+  const itemsMap = await getOrderItemsRows([orderID]);
+  return mapOrder(rows[0], itemsMap.get(orderID) ?? []);
+};
+
+export const createOrder = async (orderInfo: Partial<Order>) => {
+  const db = createAppDb();
+  const orderID = uuidv4();
+  const publicId = await generatePublicId(ORDER_COLLECTION);
+  const timestamp = Date.now();
+  const converted = convertOrderUnitsStore(orderInfo);
+
+  const userID = orderInfo.userID ?? "";
+  const organizationId = resolveOrganizationId({
+    userID,
+    organizationId: orderInfo.organizationId,
+  });
+
+  await db.insert(orders).values({
+    id: orderID,
+    publicId,
+    userId: userID,
+    organizationId,
+    customerId: orderInfo.customer?.id,
+    customerJson: orderInfo.customer ? JSON.stringify(orderInfo.customer) : null,
+    status: orderInfo.status ?? "request",
+    paymentMethodId: orderInfo.paymentMethod?.id,
+    paymentMethodLabel: orderInfo.paymentMethod?.label,
+    orderDate: orderInfo.orderDate ?? timestamp,
+    dueDate: orderInfo.dueDate,
+    totalCommissionCents: (converted.totalComission as number) ?? 0,
+    totalCostCents: (converted.totalCost as number) ?? 0,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    deletedAt: null,
+  });
+
+  for (const item of converted.items ?? []) {
+    await db.insert(orderItems).values({
+      id: uuidv4(),
+      orderId: orderID,
+      productId: item.productID,
+      variantId: null,
+      variantJson: JSON.stringify(item.variant ?? {}),
+      title: item.title,
+      quantity: item.quantity,
+      balance: item.balance,
+      discountPercent: item.descount,
+      commissionRate: item.commissionRate,
+      unitPriceCents: item.unitPrice,
+      costCents: item.cost,
+      itemTotalCostCents: item.itemTotalCost,
+      productBaseUnitInventory: item.productBaseUnitInventory,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      deletedAt: null,
+    });
+  }
+
+  if ((orderInfo.status ?? "request") === "complete") {
+    await applyInventoryDeltaFromItems(orderInfo.items ?? [], -1);
+  }
+
+  await trackPendingSyncChange({
+    organizationId,
+    tableName: "orders",
+    recordId: orderID,
+    operation: "create",
+    payload: orderInfo,
+  });
+};
+
+export const deleteOrder = async (orderID: string) => {
+  const db = createAppDb();
+  const currentOrder = await getOrder(orderID);
+  if (!currentOrder) {
+    return;
+  }
+
+  await db
+    .update(orders)
+    .set({
+      deletedAt: Date.now(),
+      updatedAt: Date.now(),
+    })
+    .where(eq(orders.id, orderID));
+
+  await applyInventoryDeltaFromItems(currentOrder.items ?? [], 1);
+
+  await trackPendingSyncChange({
+    organizationId: currentOrder.organizationId,
+    tableName: "orders",
+    recordId: orderID,
+    operation: "delete",
+    payload: { id: orderID },
+  });
+};
+
+export const updateOrder = async (orderID: string, currentOrder: Partial<Order>) => {
+  const db = createAppDb();
+  const prevOrder = await getOrder(orderID);
+  if (!prevOrder) {
+    return;
+  }
+
+  const converted = convertOrderUnitsStore(currentOrder);
+
+  await db
+    .update(orders)
+    .set({
+      customerId: currentOrder.customer?.id,
+      customerJson: currentOrder.customer ? JSON.stringify(currentOrder.customer) : undefined,
+      status: currentOrder.status,
+      paymentMethodId: currentOrder.paymentMethod?.id,
+      paymentMethodLabel: currentOrder.paymentMethod?.label,
+      orderDate: currentOrder.orderDate,
+      dueDate: currentOrder.dueDate,
+      totalCommissionCents: converted.totalComission as number,
+      totalCostCents: converted.totalCost as number,
+      updatedAt: Date.now(),
+    })
+    .where(eq(orders.id, orderID));
+
+  await db.delete(orderItems).where(eq(orderItems.orderId, orderID));
+  for (const item of converted.items ?? []) {
+    await db.insert(orderItems).values({
+      id: uuidv4(),
+      orderId: orderID,
+      productId: item.productID,
+      variantId: null,
+      variantJson: JSON.stringify(item.variant ?? {}),
+      title: item.title,
+      quantity: item.quantity,
+      balance: item.balance,
+      discountPercent: item.descount,
+      commissionRate: item.commissionRate,
+      unitPriceCents: item.unitPrice,
+      costCents: item.cost,
+      itemTotalCostCents: item.itemTotalCost,
+      productBaseUnitInventory: item.productBaseUnitInventory,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      deletedAt: null,
+    });
+  }
+
+  const prevItems = prevOrder.items ?? [];
+  const nextItems = currentOrder.items ?? [];
+
+  if (currentOrder.status === "complete" && prevOrder.status === "complete") {
+    await applyInventoryDeltaFromItems(prevItems, 1);
+    await applyInventoryDeltaFromItems(nextItems, -1);
+  }
+
+  if (currentOrder.status === "complete" && prevOrder.status === "request") {
+    await applyInventoryDeltaFromItems(nextItems, -1);
+  }
+
+  if (currentOrder.status === "request" && prevOrder.status === "complete") {
+    await applyInventoryDeltaFromItems(prevItems, 1);
+  }
+
+  await trackPendingSyncChange({
+    organizationId: prevOrder.organizationId,
+    tableName: "orders",
+    recordId: orderID,
+    operation: "update",
+    payload: currentOrder,
+  });
+};

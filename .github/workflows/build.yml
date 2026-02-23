@@ -19,25 +19,22 @@ jobs:
       - name: Github checkout
         uses: actions/checkout@v3
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.2
+          run_install: false
+
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: 'yarn'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
 
-      - name: Cache yarn dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            **/node_modules
-            **/.yarn-cache
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Clean up lock files
+      - name: Install dependencies
         run: |
-          yarn install --network-timeout 100000
+          pnpm install --frozen-lockfile
 
       - name: Publish app
         env:
@@ -48,5 +45,5 @@ jobs:
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
           LOGIN_URL: ${{ secrets.LOGIN_URL }}
-        run: yarn run publish
+        run: pnpm run publish
         timeout-minutes: 15

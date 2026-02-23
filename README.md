@@ -28,7 +28,7 @@ Stockify é um aplicativo desktop moderno para gestão de estoque, desenvolvido 
 ## 📋 Pré-requisitos
 
 - Node.js 16+
-- Yarn ou npm
+- pnpm (recomendado)
 - Git
 
 ## 🔧 Instalação
@@ -40,7 +40,7 @@ git clone https://github.com/Neiva07/inventory-management-app.git
 
 2. Instale as dependências
 ```bash
-yarn install
+pnpm install
 ```
 
 3. Configure as variáveis de ambiente
@@ -51,7 +51,7 @@ Edite o arquivo `.env` com suas credenciais.
 
 4. Inicie o aplicativo em modo de desenvolvimento
 ```bash
-yarn start
+pnpm start
 ```
 
 ## 🏗️ Build
@@ -59,7 +59,7 @@ yarn start
 Para criar uma versão de produção:
 
 ```bash
-yarn make
+pnpm make
 ```
 
 ## 📦 Distribuição
@@ -67,7 +67,7 @@ yarn make
 Para publicar uma nova versão:
 
 ```bash
-yarn publish
+pnpm publish
 ```
 
 ## 🔐 Licença

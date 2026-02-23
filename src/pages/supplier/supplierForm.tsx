@@ -18,7 +18,7 @@ import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { EnhancedAutocomplete } from '../../components/EnhancedAutocomplete';
 
 export const SupplierForm = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const { supplierID } = useParams();
   const navigate = useNavigate();
   const [isCreateMode, setIsCreateMode] = useState(false);
@@ -42,8 +42,8 @@ export const SupplierForm = () => {
   const productCategoriesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
-  }, [user]);
+    getProductCategories(user.id, "", organization?.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
+  }, [organization?.id, user]);
 
   const handleSubmit = async () => {
     if (supplierID) {

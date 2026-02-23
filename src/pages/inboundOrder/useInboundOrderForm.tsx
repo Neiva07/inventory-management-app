@@ -85,7 +85,7 @@ const INITIAL_INBOUND_ORDER_VALUES: InboundOrderFormDataInterface = {
 };
 
 export const useInboundOrderForm = (inboundOrderID?: string) => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const [fetchedInboundOrderForm, setFetchedInboundOrderForm] = React.useState<InboundOrderFormDataInterface>();
   const [inboundOrder, setInboundOrder] = React.useState<InboundOrder>();
   const [products, setProducts] = useState<Array<Product>>([]);
@@ -96,8 +96,9 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
       pageSize: 10000,
       status: 'active',
       userID: user.id,
+      organizationId: organization?.id,
     }).then(result => {
-      const queriedProducts = result[0].map(p => p as Product)
+      const queriedProducts = result[0].map((p: Product) => p as Product)
       setProducts(queriedProducts)
       if (queriedProducts.length > 0) {
         formMethods.setValue('pendingItem.selectedProduct', queriedProducts[0])
@@ -105,11 +106,11 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
         formMethods.setValue('pendingItem.unitCost', queriedProducts[0].variants[0].unitCost ?? 0)
       }
     })
-  }, [user]);
+  }, [organization?.id, user.id]);
 
   React.useEffect(() => {
     queryProducts();
-  }, [user]);
+  }, [queryProducts]);
 
   const formValidationSchema = useInboundOrderFormValidationSchema();
   const formMethods = useForm<InboundOrderFormDataInterface>({
@@ -119,7 +120,13 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
   });
 
   const getInboundOrderFormData = React.useCallback(async (inboundOrderID?: string) => {
-    const queriedInboundOrder = await getInboundOrder(inboundOrderID)
+    const queriedInboundOrder = await getInboundOrder(inboundOrderID, {
+      userID: user.id,
+      organizationId: organization?.id,
+    })
+    if (!queriedInboundOrder) {
+      return;
+    }
     setInboundOrder(queriedInboundOrder);
 
     const inboundOrderForm = {
@@ -157,7 +164,7 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
     } as InboundOrderFormDataInterface
 
     setFetchedInboundOrderForm(inboundOrderForm);
-  }, [inboundOrderID]);
+  }, [inboundOrderID, organization?.id, user.id]);
 
   React.useEffect(() => {
     if (inboundOrderID) {
@@ -186,6 +193,7 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
         dueDate: payment.dueDate?.getTime(),
       } as InboundOrderPayment)),
       userID: user.id,
+      organizationId: organization?.id,
       status: status.value as InboundOrderStatus,
       dueDate: dueDate.getTime(),
       orderDate: orderDate.getTime(),
@@ -219,7 +227,7 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
       })
       return null;
     }
-  }, [inboundOrderID]);
+  }, [inboundOrderID, organization?.id, user.id]);
 
   const onDelete = useCallback((onSuccess?: () => void) => {
     try {

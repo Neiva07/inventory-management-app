@@ -63,7 +63,7 @@ const getStatusLabel = (status: string) => {
 export const SupplierBillDetail = () => {
   const { supplierBillID } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   
   const [supplierBill, setSupplierBill] = useState<SupplierBill | null>(null);
   const [installments, setInstallments] = useState<InstallmentPayment[]>([]);
@@ -80,12 +80,16 @@ export const SupplierBillDetail = () => {
         setLoading(true);
         
         // Fetch supplier bill
-        const bill = await getSupplierBill(supplierBillID);
+        const bill = await getSupplierBill(supplierBillID, {
+          userID: user.id,
+          organizationId: organization?.id,
+        });
         setSupplierBill(bill);
         
         // Fetch installments for this bill
         const installmentsResult = await getInstallmentPayments({
           userID: user.id,
+          organizationId: organization?.id,
           supplierBillID,
           pageSize: 100, // Get all installments
         });
@@ -100,7 +104,7 @@ export const SupplierBillDetail = () => {
     };
 
     fetchData();
-  }, [supplierBillID, user.id]);
+  }, [organization?.id, supplierBillID, user.id]);
 
   if (loading) {
     return (

@@ -6,12 +6,12 @@ import { getTodayStartTimestamp } from './date';
  * Check for overdue installments and update their status
  * This should be called when the app loads or periodically
  */
-export const checkOverdueInstallments = async (userID: string) => {
+export const checkOverdueInstallments = async (userID: string, organizationId?: string) => {
   try {
     const today = new Date(getTodayStartTimestamp());
     console.log(`Checking overdue installments for ${today.toLocaleDateString('pt-BR')}`);
     
-    const result = await updateOverdueInstallments(userID);
+    const result = await updateOverdueInstallments(userID, organizationId);
     
     if (result.updated > 0) {
       console.log(`✅ Updated ${result.updated} overdue installments`);
@@ -31,13 +31,14 @@ export const checkOverdueInstallments = async (userID: string) => {
  * Only runs once per day to avoid unnecessary database queries
  */
 export const useOverdueCheck = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   
   const checkOverdue = async () => {
     if (user?.id) {
       try {
         // Check if we already ran today
-        const lastCheckKey = `lastOverdueCheck_${user.id}`;
+        const scopeId = organization?.id ?? user.id;
+        const lastCheckKey = `lastOverdueCheck_${scopeId}`;
         const lastCheckDate = localStorage.getItem(lastCheckKey);
         const today = new Date().toDateString();
         
@@ -46,7 +47,7 @@ export const useOverdueCheck = () => {
           return;
         }
         
-        await checkOverdueInstallments(user.id);
+        await checkOverdueInstallments(user.id, organization?.id);
         
         // Mark as checked today
         localStorage.setItem(lastCheckKey, today);
@@ -64,7 +65,7 @@ export const useOverdueCheck = () => {
     if (user?.id) {
       try {
         console.log('🔄 Force checking overdue installments...');
-        await checkOverdueInstallments(user.id);
+        await checkOverdueInstallments(user.id, organization?.id);
       } catch (error) {
         console.error('Failed to force check overdue installments:', error);
       }

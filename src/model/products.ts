@@ -1,18 +1,21 @@
-import { DocumentData, collection, getDocs, where, query, setDoc, doc, QueryConstraint, limit, startAt, orderBy, startAfter, getCountFromServer, getDoc, updateDoc, deleteDoc, Transaction } from "firebase/firestore";
-import { db } from "../firebase";
+import { and, asc, count, eq, gt, isNull, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { ProductCategory } from "./productCategories";
-import { getDocumentCount } from "../lib/count";
+import { createAppDb } from "../db/client";
+import { resolveOrganizationId } from "../db/scope";
+import { productCategories, products } from "../db/schema";
+import { trackPendingSyncChange } from "../db/syncTracking";
 import { generatePublicId } from "../lib/publicId";
 import { COLLECTION_NAMES } from "./index";
 import { divide, multiply } from "lib/math";
 import { PaymentMethod } from "./paymentMethods";
+import { ProductCategory } from "./productCategories";
 
-export interface Variant extends DocumentData {
+export interface Variant {
   unit: ProductUnit;
   conversionRate: number;
   unitCost: number;
   prices: Array<Price>;
+  totalCost?: number;
 }
 
 export interface Price {
@@ -21,8 +24,7 @@ export interface Price {
   paymentMethod: PaymentMethod;
 }
 
-//temporary, probably will be separated entity -> should extends Partial Unit
-export interface ProductUnit extends DocumentData {
+export interface ProductUnit {
   name: string;
   id: string;
 }
@@ -34,25 +36,28 @@ export interface ProductSupplier {
   status: string;
 }
 
-export interface Product extends DocumentData {
+export interface Product {
   id: string;
   publicId: string;
   userID: string;
+  organizationId?: string;
   title: string;
   description: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  ean?: string;
+  ncm?: string;
+  createdAt?: Date | number;
+  updatedAt?: Date | number;
   deleted: {
-    date: Date;
+    date: Date | number;
     isDeleted: boolean;
   };
   status: string;
-  inventory: number; // Inventory in base units
-  baseUnit: ProductUnit; // The base unit for inventory tracking
-  variants: Array<Variant>; // Renamed from sellingOptions
+  inventory: number;
+  baseUnit: ProductUnit;
+  variants: Array<Variant>;
   weight: number;
   minInventory?: number;
-  cost: number; // Cost per base unit
+  cost: number;
   sailsmanComission?: number;
   suppliers: Array<ProductSupplier>;
   productCategory: Partial<ProductCategory>;
@@ -60,6 +65,7 @@ export interface Product extends DocumentData {
 
 export interface ProductSearchParams {
   userID: string;
+  organizationId?: string;
   cursor?: Product;
   pageSize: number;
   title?: string;
@@ -67,134 +73,305 @@ export interface ProductSearchParams {
   status?: string;
 }
 
-
-const PRODUCTS_COLLECTION = COLLECTION_NAMES.PRODUCTS
-
-const productColletion = collection(db, PRODUCTS_COLLECTION)
-
-export const getProducts = async (searchParams: ProductSearchParams) => {
-  const constrains: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
-  const countConstraints: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
-
-  const category = searchParams.productCategory;
-  const title = searchParams?.title || ''
-
-  if (category && category.id) {
-    constrains.push(where("productCategory.id", "==", category.id))
-    countConstraints.push(where("productCategory.id", "==", category.id))
-  }
-
-  if (searchParams.status && searchParams.status !== "") {
-    constrains.push(where("status", "==", searchParams.status)) 
-    countConstraints.push(where("status", "==", searchParams.status))
-  }
-
-  constrains.push(orderBy("title"))
-
-  if (searchParams.cursor) {
-    constrains.push(startAfter(searchParams.cursor.title))
-  }
-
-  constrains.push(where("title", ">=", title), where('title', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
-  countConstraints.push(where("title", ">=", title), where('title', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
-
-  constrains.push(limit(searchParams.pageSize))
-
-  const q = query(productColletion, ...constrains);
-  return Promise.all([getDocs(q).then(docs => docs.docs.map(doc => convertProductUnitsDisplay(doc.data() as Product))), getDocumentCount(productColletion, countConstraints, searchParams.pageSize)])
-}
-
-export const getProduct = (productID: string) => {
-  return getDoc(doc(db, PRODUCTS_COLLECTION, productID)).then(doc => {
-    return convertProductUnitsDisplay(doc.data() as Product);
-  });
-}
-
-
-export const createProduct = async (productInfo: Partial<Product>) => {
-  const productID = uuidv4();
-  const publicId = await generatePublicId(PRODUCTS_COLLECTION);
-
-  const newProduct = doc(db, PRODUCTS_COLLECTION, productID);
-
-  return setDoc(newProduct, {
-    id: productID,
-    publicId,
-    createdAt: Date.now(),
-    deleted: {
-      isDeleted: false,
-    },
-    ...convertProductUnitsStore(productInfo)
-  });
-}
-
-export const deleteProduct = async (productID: string) => {
-  const productDoc = doc(db, PRODUCTS_COLLECTION, productID);
-
-  return updateDoc(productDoc, {
-    deleted: {
-      isDeleted: true,
-      date: Date.now(),
-    }
-  })
-}
-
-export const deactiveProduct = async (productID: string) => {
-  const productDoc = doc(db, PRODUCTS_COLLECTION, productID);
-
-  return updateDoc(productDoc, {
-    updatedAt: Date.now(),
-    status: "inactive",
-  })
-}
-
-export const activeProduct = async (productID: string) => {
-  const productDoc = doc(db, PRODUCTS_COLLECTION, productID);
-
-  return updateDoc(productDoc, {
-    updatedAt: Date.now(),
-    status: "active",
-  })
-}
-export const updateProduct = (productID: string, productInfo: Partial<Product>) => {
-  const productDoc = doc(db, PRODUCTS_COLLECTION, productID);
-
-  return updateDoc(productDoc, {
-    updatedAt: Date.now(),
-    ...convertProductUnitsStore(productInfo),
-  })
-}
+const PRODUCTS_COLLECTION = COLLECTION_NAMES.PRODUCTS;
 
 const convertProductUnitsStore = (productInfo: Partial<Product>): Partial<Product> => {
   return {
     ...productInfo,
     cost: multiply(productInfo.cost ?? 0, 100),
     sailsmanComission: multiply(productInfo.sailsmanComission ?? 0, 100),
-    variants: productInfo.variants.map(so => ({
+    variants: (productInfo.variants ?? []).map((so) => ({
       ...so,
       unitCost: multiply(so.unitCost ?? 0, 100),
-      prices: so.prices.map(p => ({
+      totalCost: multiply(so.totalCost ?? 0, 100),
+      prices: (so.prices ?? []).map((p) => ({
         ...p,
         value: multiply(p.value ?? 0, 100),
         profit: multiply(p.profit ?? 0, 100),
       })),
     })),
-  }
-}
+  };
+};
 
 const convertProductUnitsDisplay = (productInfo: Partial<Product>): Partial<Product> => {
   return {
     ...productInfo,
     cost: divide(productInfo.cost ?? 0, 100),
     sailsmanComission: divide(productInfo.sailsmanComission ?? 0, 100),
-    variants: productInfo.variants.map(so => ({
+    variants: (productInfo.variants ?? []).map((so) => ({
       ...so,
       unitCost: divide(so.unitCost ?? 0, 100),
-      prices: so.prices.map(p => ({
+      totalCost: divide(so.totalCost ?? 0, 100),
+      prices: (so.prices ?? []).map((p) => ({
         ...p,
         value: divide(p.value ?? 0, 100),
         profit: divide(p.profit ?? 0, 100),
       })),
     })),
+  };
+};
+
+const mapProductRow = (row: typeof products.$inferSelect): Product => {
+  const category = row.productCategoryJson ? (JSON.parse(row.productCategoryJson) as Partial<ProductCategory>) : {};
+  const baseUnit = row.baseUnitJson ? (JSON.parse(row.baseUnitJson) as ProductUnit) : ({ id: "", name: "" } as ProductUnit);
+  const suppliersData = row.suppliersJson ? (JSON.parse(row.suppliersJson) as Array<ProductSupplier>) : [];
+  const variantsData = row.variantsJson ? (JSON.parse(row.variantsJson) as Array<Variant>) : [];
+
+  const product = {
+    id: row.id,
+    publicId: row.publicId ?? "",
+    userID: row.userId,
+    organizationId: row.organizationId,
+    title: row.title,
+    description: row.description ?? "",
+    ean: row.barcode ?? undefined,
+    ncm: row.sku ?? undefined,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    deleted: {
+      isDeleted: row.deletedAt !== null,
+      date: row.deletedAt ?? 0,
+    },
+    status: row.status,
+    inventory: row.inventoryBaseUnit,
+    baseUnit,
+    variants: variantsData,
+    weight: row.weight,
+    minInventory: row.minInventory ?? undefined,
+    cost: row.costCents,
+    sailsmanComission: row.sailsmanCommissionCents,
+    suppliers: suppliersData,
+    productCategory: category,
+  } as Product;
+
+  return convertProductUnitsDisplay(product) as Product;
+};
+
+export const getProducts = async (searchParams: ProductSearchParams) => {
+  const db = createAppDb();
+  const scopeOrganizationId = resolveOrganizationId({
+    userID: searchParams.userID,
+    organizationId: searchParams.organizationId,
+  });
+  const title = searchParams.title ?? "";
+
+  const filters = [
+    eq(products.organizationId, scopeOrganizationId),
+    isNull(products.deletedAt),
+    like(products.title, `${title}%`),
+  ];
+
+  if (searchParams.productCategory?.id) {
+    filters.push(eq(products.categoryId, searchParams.productCategory.id));
   }
-}
+
+  if (searchParams.status && searchParams.status !== "") {
+    filters.push(eq(products.status, searchParams.status));
+  }
+
+  if (searchParams.cursor?.title) {
+    filters.push(gt(products.title, searchParams.cursor.title));
+  }
+
+  const rows = await db
+    .select()
+    .from(products)
+    .where(and(...filters))
+    .orderBy(asc(products.title))
+    .limit(searchParams.pageSize);
+
+  const countFilters = [
+    eq(products.organizationId, scopeOrganizationId),
+    isNull(products.deletedAt),
+    like(products.title, `${title}%`),
+  ];
+
+  if (searchParams.productCategory?.id) {
+    countFilters.push(eq(products.categoryId, searchParams.productCategory.id));
+  }
+
+  if (searchParams.status && searchParams.status !== "") {
+    countFilters.push(eq(products.status, searchParams.status));
+  }
+
+  const [{ value: totalCount }] = await db
+    .select({ value: count() })
+    .from(products)
+    .where(and(...countFilters));
+
+  return [rows.map(mapProductRow), { count: totalCount, isEstimated: false }] as const;
+};
+
+export const getProduct = async (productID: string) => {
+  const db = createAppDb();
+  const rows = await db.select().from(products).where(eq(products.id, productID)).limit(1);
+  return rows.length ? mapProductRow(rows[0]) : (null as unknown as Product);
+};
+
+export const createProduct = async (productInfo: Partial<Product>) => {
+  const db = createAppDb();
+  const productID = uuidv4();
+  const publicId = await generatePublicId(PRODUCTS_COLLECTION);
+  const timestamp = Date.now();
+  const converted = convertProductUnitsStore(productInfo);
+
+  const userID = productInfo.userID ?? "";
+  const organizationId = resolveOrganizationId({ userID, organizationId: productInfo.organizationId });
+
+  await db.insert(products).values({
+    id: productID,
+    publicId,
+    userId: userID,
+    organizationId,
+    categoryId: productInfo.productCategory?.id,
+    supplierId: productInfo.suppliers?.[0]?.supplierID,
+    baseUnitId: productInfo.baseUnit?.id,
+    title: productInfo.title ?? "",
+    sku: productInfo.ncm,
+    barcode: productInfo.ean,
+    description: productInfo.description ?? "",
+    status: productInfo.status ?? "active",
+    inventoryBaseUnit: productInfo.inventory ?? 0,
+    costCents: (converted.cost as number) ?? 0,
+    sailsmanCommissionCents: (converted.sailsmanComission as number) ?? 0,
+    weight: productInfo.weight ?? 0,
+    minInventory: productInfo.minInventory,
+    baseUnitJson: productInfo.baseUnit ? JSON.stringify(productInfo.baseUnit) : null,
+    suppliersJson: JSON.stringify(productInfo.suppliers ?? []),
+    productCategoryJson: productInfo.productCategory ? JSON.stringify(productInfo.productCategory) : null,
+    variantsJson: JSON.stringify(converted.variants ?? []),
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    deletedAt: null,
+  });
+
+  await trackPendingSyncChange({
+    organizationId,
+    tableName: "products",
+    recordId: productID,
+    operation: "create",
+    payload: productInfo,
+  });
+};
+
+export const deleteProduct = async (productID: string) => {
+  const db = createAppDb();
+  const existing = await db.select({ organizationId: products.organizationId }).from(products).where(eq(products.id, productID)).limit(1);
+  await db
+    .update(products)
+    .set({
+      deletedAt: Date.now(),
+      updatedAt: Date.now(),
+    })
+    .where(eq(products.id, productID));
+
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "products",
+    recordId: productID,
+    operation: "delete",
+    payload: { id: productID },
+  });
+};
+
+export const deactiveProduct = async (productID: string) => {
+  const db = createAppDb();
+  const existing = await db.select({ organizationId: products.organizationId }).from(products).where(eq(products.id, productID)).limit(1);
+  await db
+    .update(products)
+    .set({
+      updatedAt: Date.now(),
+      status: "inactive",
+    })
+    .where(eq(products.id, productID));
+
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "products",
+    recordId: productID,
+    operation: "update",
+    payload: { id: productID, status: "inactive" },
+  });
+};
+
+export const activeProduct = async (productID: string) => {
+  const db = createAppDb();
+  const existing = await db.select({ organizationId: products.organizationId }).from(products).where(eq(products.id, productID)).limit(1);
+  await db
+    .update(products)
+    .set({
+      updatedAt: Date.now(),
+      status: "active",
+    })
+    .where(eq(products.id, productID));
+
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "products",
+    recordId: productID,
+    operation: "update",
+    payload: { id: productID, status: "active" },
+  });
+};
+
+export const updateProduct = async (productID: string, productInfo: Partial<Product>) => {
+  const db = createAppDb();
+  const converted = convertProductUnitsStore(productInfo);
+  const existing = await db.select({ organizationId: products.organizationId }).from(products).where(eq(products.id, productID)).limit(1);
+
+  await db
+    .update(products)
+    .set({
+      updatedAt: Date.now(),
+      categoryId: productInfo.productCategory?.id,
+      supplierId: productInfo.suppliers?.[0]?.supplierID,
+      baseUnitId: productInfo.baseUnit?.id,
+      title: productInfo.title,
+      sku: productInfo.ncm,
+      barcode: productInfo.ean,
+      description: productInfo.description,
+      status: productInfo.status,
+      inventoryBaseUnit: productInfo.inventory,
+      costCents: converted.cost as number,
+      sailsmanCommissionCents: converted.sailsmanComission as number,
+      weight: productInfo.weight,
+      minInventory: productInfo.minInventory,
+      baseUnitJson: productInfo.baseUnit ? JSON.stringify(productInfo.baseUnit) : undefined,
+      suppliersJson: productInfo.suppliers ? JSON.stringify(productInfo.suppliers) : undefined,
+      productCategoryJson: productInfo.productCategory ? JSON.stringify(productInfo.productCategory) : undefined,
+      variantsJson: converted.variants ? JSON.stringify(converted.variants) : undefined,
+    })
+    .where(eq(products.id, productID));
+
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "products",
+    recordId: productID,
+    operation: "update",
+    payload: productInfo,
+  });
+};
+
+export const adjustProductInventory = async (productID: string, deltaBaseUnit: number) => {
+  const db = createAppDb();
+  const current = await db.select().from(products).where(eq(products.id, productID)).limit(1);
+  if (!current.length) {
+    return;
+  }
+
+  await db
+    .update(products)
+    .set({
+      inventoryBaseUnit: (current[0].inventoryBaseUnit ?? 0) + deltaBaseUnit,
+      updatedAt: Date.now(),
+    })
+    .where(eq(products.id, productID));
+
+  await trackPendingSyncChange({
+    organizationId: current[0].organizationId,
+    tableName: "products",
+    recordId: productID,
+    operation: "update",
+    payload: { id: productID, deltaBaseUnit },
+  });
+};

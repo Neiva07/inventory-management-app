@@ -1,6 +1,10 @@
-import { collection, getDocs, where, query, setDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { and, asc, eq, isNull, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
+import { createAppDb } from "../db/client";
+import { makeQuerySnapshot } from "../db/firestoreCompat";
+import { resolveOrganizationId } from "../db/scope";
+import { productCategories } from "../db/schema";
+import { trackPendingSyncChange } from "../db/syncTracking";
 import { generatePublicId } from "../lib/publicId";
 import { COLLECTION_NAMES } from "./index";
 
@@ -9,64 +13,132 @@ export interface ProductCategory {
   description: string;
   id: string;
   publicId: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: Date | number;
+  updatedAt?: Date | number;
   userID: string;
+  organizationId?: string;
+  status?: string;
   deleted?: {
-    date: Date;
+    date: Date | number;
     isDeleted: boolean;
   };
 }
 
+const PRODUCT_CATEGORIES_COLLECTION = COLLECTION_NAMES.PRODUCT_CATEGORIES;
 
-const PRODUCT_CATEGORIES_COLLECTION = COLLECTION_NAMES.PRODUCT_CATEGORIES
+export const getProductCategories = async (userID: string, name = "", organizationId?: string) => {
+  const db = createAppDb();
+  const scopeOrganizationId = resolveOrganizationId({ userID, organizationId });
 
-const productCategoryColletion = collection(db, PRODUCT_CATEGORIES_COLLECTION);
+  const rows = await db
+    .select()
+    .from(productCategories)
+    .where(
+      and(
+        eq(productCategories.organizationId, scopeOrganizationId),
+        isNull(productCategories.deletedAt),
+        like(productCategories.name, `${name}%`)
+      )
+    )
+    .orderBy(asc(productCategories.name));
 
-export const getProductCategories = (userID: string, name = '') => {
-  const q = query(
-    productCategoryColletion, 
-    where("userID", "==", userID), 
-    where("name", ">=", name), 
-    where('name', '<=', name + '\uf8ff'),
-    where("deleted.isDeleted", "==", false)
-  );
+  const categories: ProductCategory[] = rows.map((row) => ({
+    id: row.id,
+    publicId: row.publicId ?? "",
+    name: row.name,
+    description: row.description ?? "",
+    userID: row.userId,
+    organizationId: row.organizationId,
+    status: row.status,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    deleted: {
+      isDeleted: row.deletedAt !== null,
+      date: row.deletedAt ?? 0,
+    },
+  }));
 
-  return getDocs(q);
-}
+  return makeQuerySnapshot(categories);
+};
 
 export const createProductCategories = async (productCategoryInfo: Partial<ProductCategory>) => {
+  const db = createAppDb();
   const id = uuidv4();
   const publicId = await generatePublicId(PRODUCT_CATEGORIES_COLLECTION);
-  const newProductCategory = doc(db, PRODUCT_CATEGORIES_COLLECTION, id);
+  const timestamp = Date.now();
 
-  return setDoc(newProductCategory, {
+  const userID = productCategoryInfo.userID ?? "";
+  const organizationId = resolveOrganizationId({ userID, organizationId: productCategoryInfo.organizationId });
+
+  await db.insert(productCategories).values({
     id,
     publicId,
-    createdAt: Date.now(),
-    deleted: {
-      isDeleted: false,
-    },
-    ...productCategoryInfo
+    userId: userID,
+    organizationId,
+    name: productCategoryInfo.name ?? "",
+    description: productCategoryInfo.description ?? "",
+    status: productCategoryInfo.status ?? "active",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    deletedAt: null,
   });
-}
 
-export const updateProductCategory = (id: string, productCategoryInfo: Partial<ProductCategory>) => {
-  const productCategoryRef = doc(db, PRODUCT_CATEGORIES_COLLECTION, id);
-  
-  return updateDoc(productCategoryRef, {
-    ...productCategoryInfo,
-    updatedAt: Date.now()
+  await trackPendingSyncChange({
+    organizationId,
+    tableName: "product_categories",
+    recordId: id,
+    operation: "create",
+    payload: productCategoryInfo,
   });
-}
+};
+
+export const updateProductCategory = async (id: string, productCategoryInfo: Partial<ProductCategory>) => {
+  const db = createAppDb();
+  const existing = await db
+    .select({ organizationId: productCategories.organizationId })
+    .from(productCategories)
+    .where(eq(productCategories.id, id))
+    .limit(1);
+
+  await db
+    .update(productCategories)
+    .set({
+      name: productCategoryInfo.name,
+      description: productCategoryInfo.description,
+      updatedAt: Date.now(),
+    })
+    .where(eq(productCategories.id, id));
+
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "product_categories",
+    recordId: id,
+    operation: "update",
+    payload: productCategoryInfo,
+  });
+};
 
 export const deleteProductCategory = async (id: string) => {
-  const productCategoryRef = doc(db, PRODUCT_CATEGORIES_COLLECTION, id);
-  
-  return updateDoc(productCategoryRef, {
-    deleted: {
-      isDeleted: true,
-      date: Date.now(),
-    }
+  const db = createAppDb();
+  const existing = await db
+    .select({ organizationId: productCategories.organizationId })
+    .from(productCategories)
+    .where(eq(productCategories.id, id))
+    .limit(1);
+
+  await db
+    .update(productCategories)
+    .set({
+      deletedAt: Date.now(),
+      updatedAt: Date.now(),
+    })
+    .where(eq(productCategories.id, id));
+
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "product_categories",
+    recordId: id,
+    operation: "delete",
+    payload: { id },
   });
-}
+};

@@ -1,22 +1,26 @@
-import { collection, getDocs, where, query, setDoc, doc, updateDoc, QueryConstraint, getCountFromServer, limit, startAfter, orderBy, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { and, asc, count, eq, gt, isNull, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { Address } from "./suppliers";
-import { getDocumentCount } from "../lib/count";
+import { createAppDb } from "../db/client";
+import { makeDocSnapshot, makeQuerySnapshot } from "../db/firestoreCompat";
+import { resolveOrganizationId } from "../db/scope";
+import { customers } from "../db/schema";
+import { trackPendingSyncChange } from "../db/syncTracking";
 import { generatePublicId } from "../lib/publicId";
 import { COLLECTION_NAMES } from "./index";
+import { Address } from "./suppliers";
 
 export interface Customer {
   id: string;
   publicId: string;
   userID: string;
+  organizationId?: string;
   name: string;
   cpf?: string;
   rg?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: Date | number;
+  updatedAt?: Date | number;
   deleted?: {
-    date: Date;
+    date: Date | number;
     isDeleted: boolean;
   }
   status: string;
@@ -24,109 +28,232 @@ export interface Customer {
   companyPhone?: string;
   contactPhone?: string;
   contactName?: string;
-  // sailsman: Sailsman
 }
 
 interface CustomerSearchParams {
   userID: string;
+  organizationId?: string;
   name?: string;
   status?: string;
   cursor?: Customer;
   pageSize: number;
 }
 
-const CUSTOMER_COLLECTION = COLLECTION_NAMES.CUSTOMERS
+const CUSTOMER_COLLECTION = COLLECTION_NAMES.CUSTOMERS;
 
-const customerCollection = collection(db, CUSTOMER_COLLECTION)
+const mapCustomer = (row: typeof customers.$inferSelect): Customer => ({
+  id: row.id,
+  publicId: row.publicId ?? "",
+  userID: row.userId,
+  organizationId: row.organizationId,
+  name: row.name,
+  cpf: row.cpf ?? undefined,
+  rg: row.rg ?? undefined,
+  status: row.status,
+  address: row.addressJson ? (JSON.parse(row.addressJson) as Address) : undefined,
+  companyPhone: row.companyPhone ?? undefined,
+  contactPhone: row.contactPhone ?? undefined,
+  contactName: row.contactName ?? undefined,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+  deleted: {
+    isDeleted: row.deletedAt !== null,
+    date: row.deletedAt ?? 0,
+  },
+});
 
-export const getCustomers = (searchParams: CustomerSearchParams) => {
-  const constrains: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
-  const countConstraints: QueryConstraint[] = [where("userID", "==", searchParams.userID)]
+export const getCustomers = async (searchParams: CustomerSearchParams) => {
+  const db = createAppDb();
+  const scopeOrganizationId = resolveOrganizationId({
+    userID: searchParams.userID,
+    organizationId: searchParams.organizationId,
+  });
 
-  const title = searchParams?.name || ''
+  const namePrefix = searchParams.name ?? "";
+  const filters = [
+    eq(customers.organizationId, scopeOrganizationId),
+    isNull(customers.deletedAt),
+    like(customers.name, `${namePrefix}%`),
+  ];
 
   if (searchParams.status && searchParams.status !== "") {
-    constrains.push(where("status", "==", searchParams.status))
-    countConstraints.push(where("status", "==", searchParams.status))
+    filters.push(eq(customers.status, searchParams.status));
   }
 
-  constrains.push(orderBy("name"))
-
-  if (searchParams.cursor) {
-    constrains.push(startAfter(searchParams.cursor.name))
+  if (searchParams.cursor?.name) {
+    filters.push(gt(customers.name, searchParams.cursor.name));
   }
 
-  constrains.push(where("name", ">=", title), where('name', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
-  countConstraints.push(where("name", ">=", title), where('name', '<=', title + '\uf8ff'), where("deleted.isDeleted", "==", false))
+  const rows = await db
+    .select()
+    .from(customers)
+    .where(and(...filters))
+    .orderBy(asc(customers.name))
+    .limit(searchParams.pageSize);
 
-  constrains.push(limit(searchParams.pageSize))
+  const countFilters = [
+    eq(customers.organizationId, scopeOrganizationId),
+    isNull(customers.deletedAt),
+    like(customers.name, `${namePrefix}%`),
+  ];
 
-  const q = query(customerCollection, ...constrains);
-  return Promise.all([
-    getDocs(q), 
-    getDocumentCount(customerCollection, countConstraints, searchParams.pageSize)
-  ]);
-}
+  if (searchParams.status && searchParams.status !== "") {
+    countFilters.push(eq(customers.status, searchParams.status));
+  }
+
+  const [{ value: totalCount }] = await db.select({ value: count() }).from(customers).where(and(...countFilters));
+
+  const mapped = rows.map(mapCustomer);
+  return [makeQuerySnapshot(mapped), { count: totalCount, isEstimated: false }] as const;
+};
 
 export const createCustomer = async (customerInfo: Customer) => {
+  const db = createAppDb();
   const customerID = uuidv4();
   const publicId = await generatePublicId(CUSTOMER_COLLECTION);
+  const timestamp = Date.now();
 
-  const customerDoc = doc(db, CUSTOMER_COLLECTION, customerID);
+  const organizationId = resolveOrganizationId({
+    userID: customerInfo.userID,
+    organizationId: customerInfo.organizationId,
+  });
 
-  const customerData = {
+  const customerData: Customer = {
     ...customerInfo,
     id: customerID,
     publicId,
-    createdAt: new Date(Date.now()),
+    organizationId,
+    createdAt: timestamp,
+    updatedAt: timestamp,
     deleted: {
       isDeleted: false,
+      date: 0,
     },
   };
 
-  return setDoc(customerDoc, customerData).then(() => customerData as Customer);
-}
+  await db.insert(customers).values({
+    id: customerID,
+    publicId,
+    userId: customerInfo.userID,
+    organizationId,
+    name: customerInfo.name,
+    status: customerInfo.status,
+    cpf: customerInfo.cpf,
+    rg: customerInfo.rg,
+    companyPhone: customerInfo.companyPhone,
+    contactPhone: customerInfo.contactPhone,
+    contactName: customerInfo.contactName,
+    addressJson: customerInfo.address ? JSON.stringify(customerInfo.address) : null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    deletedAt: null,
+  });
 
-export const getCustomer = (customerID: string) => {
-  return getDoc(doc(db, CUSTOMER_COLLECTION, customerID));
-}
+  await trackPendingSyncChange({
+    organizationId,
+    tableName: "customers",
+    recordId: customerID,
+    operation: "create",
+    payload: customerInfo,
+  });
+
+  return customerData;
+};
+
+export const getCustomer = async (customerID: string) => {
+  const db = createAppDb();
+  const row = await db.select().from(customers).where(eq(customers.id, customerID)).limit(1);
+  const customer = row.length ? mapCustomer(row[0]) : null;
+  return makeDocSnapshot(customerID, customer);
+};
 
 export const deleteCustomer = async (customerID: string) => {
-  const customerDoc = doc(db, CUSTOMER_COLLECTION, customerID)
+  const db = createAppDb();
+  const existing = await db.select({ organizationId: customers.organizationId }).from(customers).where(eq(customers.id, customerID)).limit(1);
 
-  return updateDoc(customerDoc, {
-    deleted: {
-      isDeleted: true,
-      date: Date.now(),
-    }
-  })
-}
+  await db
+    .update(customers)
+    .set({
+      deletedAt: Date.now(),
+      updatedAt: Date.now(),
+    })
+    .where(eq(customers.id, customerID));
+
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "customers",
+    recordId: customerID,
+    operation: "delete",
+    payload: { id: customerID },
+  });
+};
 
 export const deactiveCustomer = async (customerID: string) => {
+  const db = createAppDb();
+  const existing = await db.select({ organizationId: customers.organizationId }).from(customers).where(eq(customers.id, customerID)).limit(1);
 
-  const customerDoc = doc(db, CUSTOMER_COLLECTION, customerID)
+  await db
+    .update(customers)
+    .set({
+      updatedAt: Date.now(),
+      status: "inactive",
+    })
+    .where(eq(customers.id, customerID));
 
-  return updateDoc(customerDoc, {
-    updatedAt: Date.now(),
-    status: "inactive",
-  })
-}
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "customers",
+    recordId: customerID,
+    operation: "update",
+    payload: { id: customerID, status: "inactive" },
+  });
+};
+
 export const activeCustomer = async (customerID: string) => {
+  const db = createAppDb();
+  const existing = await db.select({ organizationId: customers.organizationId }).from(customers).where(eq(customers.id, customerID)).limit(1);
 
-  const customerDoc = doc(db, CUSTOMER_COLLECTION, customerID)
+  await db
+    .update(customers)
+    .set({
+      updatedAt: Date.now(),
+      status: "active",
+    })
+    .where(eq(customers.id, customerID));
 
-  return updateDoc(customerDoc, {
-    updatedAt: Date.now(),
-    status: "active",
-  })
-}
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "customers",
+    recordId: customerID,
+    operation: "update",
+    payload: { id: customerID, status: "active" },
+  });
+};
 
+export const updateCustomer = async (customerID: string, customerInfo: Partial<Customer>) => {
+  const db = createAppDb();
+  const existing = await db.select({ organizationId: customers.organizationId }).from(customers).where(eq(customers.id, customerID)).limit(1);
 
-export const updateCustomer = (customerID: string, customerInfo: Partial<Customer>) => {
-  const customerDoc = doc(db, CUSTOMER_COLLECTION, customerID);
+  await db
+    .update(customers)
+    .set({
+      updatedAt: Date.now(),
+      name: customerInfo.name,
+      status: customerInfo.status,
+      cpf: customerInfo.cpf,
+      rg: customerInfo.rg,
+      companyPhone: customerInfo.companyPhone,
+      contactPhone: customerInfo.contactPhone,
+      contactName: customerInfo.contactName,
+      addressJson: customerInfo.address ? JSON.stringify(customerInfo.address) : undefined,
+    })
+    .where(eq(customers.id, customerID));
 
-  return updateDoc(customerDoc, {
-    updatedAt: Date.now(),
-    ...customerInfo,
-  })
-}
+  await trackPendingSyncChange({
+    organizationId: existing[0]?.organizationId,
+    tableName: "customers",
+    recordId: customerID,
+    operation: "update",
+    payload: customerInfo,
+  });
+};

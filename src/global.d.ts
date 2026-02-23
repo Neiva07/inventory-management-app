@@ -21,6 +21,9 @@ declare global {
       FIREBASE_MESSAGING_SENDER_ID: string;
       FIREBASE_APP_ID: string;
       FIREBASE_AUTH_DOMAIN: string;
+      TURSO_DATABASE_URL: string;
+      TURSO_LOCAL_DATABASE_URL: string;
+      TURSO_AUTH_TOKEN: string;
     }
   }
 }

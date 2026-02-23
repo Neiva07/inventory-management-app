@@ -43,7 +43,7 @@ const INITIAL_CUSTOMER_VALUES: CustomerFormDataInterface = {
 };
 
 export const useCustomerCreateForm = (customerID?: string) => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const [customer, setCustomer] = useState<Customer>();
   const [fetchedCustomerForm, setFetchedCustomerForm] = useState<CustomerFormDataInterface | null>(null);
   const [availableCities, setAvailableCities] = useState<Array<SelectField>>([]);
@@ -151,6 +151,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
         contactPhone: cleanedContactPhone,
         contactName,
         userID: user.id,
+        organizationId: organization?.id,
         cpf: cleanedCPF,
         rg: cleanedRG,
       } as Customer);
@@ -167,7 +168,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
         theme: "colored",
       })
     }
-  }, []);
+  }, [organization?.id, user.id]);
 
   const onUpdate = useCallback((data: CustomerFormDataInterface) => {
     const { address, companyPhone, contactPhone, contactName, rg, cpf, name } = data;

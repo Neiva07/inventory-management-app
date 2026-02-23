@@ -56,7 +56,7 @@ const INITIAL_SUPPLIER_FORM_STATE: SupplierFormDataInterface = {
 };
 
 export const useSupplierCreateForm = (supplierID?: string) => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [fetchedSupplierForm, setFetchedSupplierForm] = useState<SupplierFormDataInterface | null>(null);
   const [availableCities, setAvailableCities] = useState<Array<SelectField>>([]);
@@ -162,6 +162,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
         status: 'active',
         entityID: cleanedEntityID,
         userID: user.id,
+        organizationId: organization?.id,
         companyPhone: cleanedCompanyPhone,
         contactPhone: cleanedContactPhone,
         productCategories: productCategories.map(pc =>
@@ -198,7 +199,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
       })
     }
 
-  }, []);
+  }, [organization?.id, user.id]);
 
   const onUpdate = useCallback((data: SupplierFormDataInterface) => {
     const { productCategories, address, contactPhone, companyPhone, entityID, ...restData } = data;

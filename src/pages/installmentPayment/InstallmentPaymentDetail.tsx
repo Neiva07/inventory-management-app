@@ -63,7 +63,7 @@ const getStatusLabel = (status: string) => {
 export const InstallmentPaymentDetail = () => {
   const { installmentPaymentID } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   
   const [installmentPayment, setInstallmentPayment] = useState<InstallmentPayment | null>(null);
   const [supplierBill, setSupplierBill] = useState<SupplierBill | null>(null);
@@ -79,13 +79,19 @@ export const InstallmentPaymentDetail = () => {
         setLoading(true);
         
         // Fetch installment payment
-        const installment = await getInstallmentPayment(installmentPaymentID);
+        const installment = await getInstallmentPayment(installmentPaymentID, {
+          userID: user.id,
+          organizationId: organization?.id,
+        });
         setInstallmentPayment(installment);
         
         // Fetch related supplier bill
         if (installment.supplierBillID) {
           try {
-            const bill = await getSupplierBill(installment.supplierBillID);
+            const bill = await getSupplierBill(installment.supplierBillID, {
+              userID: user.id,
+              organizationId: organization?.id,
+            });
             setSupplierBill(bill);
           } catch (err) {
             console.warn('Could not fetch supplier bill:', err);
@@ -101,12 +107,15 @@ export const InstallmentPaymentDetail = () => {
     };
 
     fetchData();
-  }, [installmentPaymentID]);
+  }, [installmentPaymentID, organization?.id, user.id]);
 
   const handlePaymentRecorded = () => {
     // Refresh the data
     if (installmentPaymentID) {
-      getInstallmentPayment(installmentPaymentID).then(setInstallmentPayment);
+      getInstallmentPayment(installmentPaymentID, {
+        userID: user.id,
+        organizationId: organization?.id,
+      }).then(setInstallmentPayment);
     }
   };
 

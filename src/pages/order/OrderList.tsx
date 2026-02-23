@@ -48,7 +48,7 @@ const columns: ColumnDefinition<Order>[] = [
 ];
 
 export const OrderList = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const navigate = useNavigate();
 
   const [orders, setOrders] = React.useState<Array<Order>>([]);
@@ -74,8 +74,8 @@ export const OrderList = () => {
   const tableRef = React.useRef<CustomDataTableRef>(null);
 
   React.useEffect(() => {
-    getCustomers({ pageSize: 10000, userID: user.id }).then(queryResult => setCustomers(queryResult[0].docs.map(qr => qr.data() as Customer)))
-  }, [user]);
+    getCustomers({ pageSize: 10000, userID: user.id, organizationId: organization?.id }).then(queryResult => setCustomers(queryResult[0].docs.map(qr => qr.data() as Customer)))
+  }, [organization?.id, user.id]);
 
   const queryOrders = () => {
     setLoading(true);
@@ -86,6 +86,7 @@ export const OrderList = () => {
         endDate: endDate?.getTime(),
       },
       userID: user.id,
+      organizationId: organization?.id,
       customerID: selectedCustomer?.id,
       cursor: page > 0 ? currentCursor : undefined,
       status: statusSelected,
@@ -107,11 +108,11 @@ export const OrderList = () => {
   React.useEffect(() => {
     setCurrentCursor(undefined);
     setPage(0);
-  }, [user, selectedCustomer, statusSelected, startDate, endDate]);
+  }, [organization?.id, selectedCustomer, startDate, statusSelected, endDate, user.id]);
 
   React.useEffect(() => {
     queryOrders();
-  }, [user, selectedCustomer, statusSelected, startDate, endDate, pageSize, page]);
+  }, [organization?.id, selectedCustomer, statusSelected, startDate, endDate, pageSize, page, user.id]);
 
   const handleCustomerSelection = (_: React.SyntheticEvent<Element, Event>, value: Customer) => {
     setSelectedCustomer(value)

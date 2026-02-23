@@ -47,7 +47,7 @@ const statuses = [
 ] as SelectField<string>[]
 
 export const SupplierList = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const navigate = useNavigate();
 
   const [suppliers, setSuppliers] = React.useState<Array<Supplier>>([]);
@@ -72,13 +72,14 @@ export const SupplierList = () => {
   const tableRef = React.useRef<CustomDataTableRef>(null);
 
   React.useEffect(() => {
-    getProductCategories(user.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
-  }, [user]);
+    getProductCategories(user.id, "", organization?.id).then(queryResult => setCategories(queryResult.docs.map(qr => qr.data() as ProductCategory)))
+  }, [organization?.id, user]);
 
   const querySuppliers = () => {
     setLoading(true);
     getSuppliers({
       userID: user.id,
+      organizationId: organization?.id,
       pageSize,
       tradeName: searchTitle,
       productCategory: categorySelected,
@@ -102,11 +103,11 @@ export const SupplierList = () => {
   React.useEffect(() => {
     setCurrentCursor(undefined);
     setPage(0);
-  }, [user, searchTitle, categorySelected, statusSelected, pageSize]);
+  }, [organization?.id, user, searchTitle, categorySelected, statusSelected, pageSize]);
 
   React.useEffect(() => {
     querySuppliers();
-  }, [user, searchTitle, categorySelected, pageSize, statusSelected, page]);
+  }, [organization?.id, user, searchTitle, categorySelected, pageSize, statusSelected, page]);
 
   const handleSearchTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTitle(e.target.value)

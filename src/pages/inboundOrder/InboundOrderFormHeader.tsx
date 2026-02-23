@@ -32,7 +32,7 @@ interface InboundOrderFormHeaderProps {
 }
 
 export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFieldRef, onShowHelp, focusNextField, focusPreviousField, headerRefs }: InboundOrderFormHeaderProps) => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const { inboundOrderID } = useParams();
   const [suppliers, setSuppliers] = useState<Array<Supplier>>([]);
 
@@ -40,7 +40,7 @@ export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFi
   const totalCost = formMethods.watch('totalCost');
   
   useEffect(() => {
-    getSuppliers({ pageSize: 1000, userID: user.id }).then(results => {
+    getSuppliers({ pageSize: 1000, userID: user.id, organizationId: organization?.id }).then(results => {
       const queriedSuppliers = results[0].docs.map(qr => qr.data() as Supplier)
       setSuppliers(queriedSuppliers)
       if (queriedSuppliers.length > 0 && !Boolean(formMethods.getValues('supplier').value)) {
@@ -50,7 +50,7 @@ export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFi
         })
       }
     })
-  }, [formMethods]);
+  }, [formMethods, organization?.id, user.id]);
 
   return (
     <Box sx={{ pt: 8 }}>

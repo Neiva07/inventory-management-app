@@ -26,7 +26,7 @@ import { Product } from 'model/products';
 export const InboundOrderForm = () => {
   const { inboundOrderID } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [installmentModalOpen, setInstallmentModalOpen] = useState(false);
@@ -106,6 +106,7 @@ export const InboundOrderForm = () => {
       
       const supplierBillData = {
         userID: user.id,
+        organizationId: organization?.id,
         supplier: {
           supplierID: formData.supplier.value,
           publicID: supplierData?.publicId ?? '',
@@ -127,6 +128,7 @@ export const InboundOrderForm = () => {
       // Create InstallmentPayments
       const installmentPayments = data.plannedPayments.map((payment: any, index: number) => ({
         userID: user.id,
+        organizationId: organization?.id,
         supplierBillID,
         installmentNumber: index + 1,
         dueDate: payment.dueDate.getTime(),

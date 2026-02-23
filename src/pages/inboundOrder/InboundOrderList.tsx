@@ -48,7 +48,7 @@ const columns: ColumnDefinition<InboundOrder>[] = [
 ];
 
 export const InboundOrderList = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const navigate = useNavigate();
 
   const [inboundOrders, setInboundOrders] = React.useState<Array<InboundOrder>>([]);
@@ -74,8 +74,8 @@ export const InboundOrderList = () => {
   const tableRef = React.useRef<CustomDataTableRef>(null);
 
   React.useEffect(() => {
-    getSuppliers({ pageSize: 10000, userID: user.id }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
-  }, [user]);
+    getSuppliers({ pageSize: 10000, userID: user.id, organizationId: organization?.id }).then(queryResult => setSuppliers(queryResult[0].docs.map(qr => qr.data() as Supplier)))
+  }, [organization?.id, user.id]);
 
   const queryInboundOrders = () => {
     setLoading(true);
@@ -86,6 +86,7 @@ export const InboundOrderList = () => {
         endDate: endDate?.getTime(),
       },
       userID: user.id,
+      organizationId: organization?.id,
       supplierID: selectedSupplier?.id,
       cursor: page > 0 ? currentCursor : undefined,
       status: statusSelected,
@@ -107,11 +108,11 @@ export const InboundOrderList = () => {
   React.useEffect(() => {
     setCurrentCursor(undefined);
     setPage(0);
-  }, [user, selectedSupplier, statusSelected, startDate, endDate]);
+  }, [organization?.id, selectedSupplier, startDate, statusSelected, endDate, user.id]);
 
   React.useEffect(() => {
     queryInboundOrders();
-  }, [user, selectedSupplier, statusSelected, startDate, endDate, pageSize, page]);
+  }, [organization?.id, selectedSupplier, statusSelected, startDate, endDate, pageSize, page, user.id]);
 
   const handleSupplierSelection = (_: React.SyntheticEvent<Element, Event>, value: Supplier) => {
     setSelectedSupplier(value)

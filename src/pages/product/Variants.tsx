@@ -282,11 +282,11 @@ const VariantItem = ({ formMethods, index, focusNextField, focusPreviousField, r
   };
 
   const [units, setUnits] = React.useState<Array<Unit>>([]);
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
 
   React.useEffect(() => {
-    getUnits(user.id).then(qr => setUnits(qr.docs.map(d => d.data() as Unit)));
-  }, [])
+    getUnits(user.id, "", organization?.id).then(qr => setUnits(qr.docs.map(d => d.data() as Unit)));
+  }, [organization?.id, user.id])
 
   // Watch the main cost value
   const mainCost = formMethods.watch('cost') ?? 0;

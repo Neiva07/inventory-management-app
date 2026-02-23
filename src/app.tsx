@@ -43,6 +43,8 @@ import { useOverdueCheck } from "./lib/overdueCheck";
 import { useGlobalKeyboardShortcuts } from "./hooks/useGlobalKeyboardShortcuts";
 import { GlobalKeyboardHelp } from "./components/GlobalKeyboardHelp";
 import { OnboardingRouter } from "./pages/onboarding/OnboardingRouter";
+import { bootstrapDatabase } from "./db/bootstrap";
+import { startSyncRuntime, stopSyncRuntime } from "./db/syncRuntime";
 
 declare module '@mui/material/styles' {
   interface Components {
@@ -310,18 +312,52 @@ const theme = createTheme({
         },
       },
     },
-  },
+	},
 });
 
+const initialOverdueChecksStarted = new Set<string>();
+
 const App = () => {
+  const { user, organization } = useAuth();
   const { layout } = useUI();
   const { checkOverdue } = useOverdueCheck();
   const [showGlobalHelp, setShowGlobalHelp] = React.useState(false);
+  const [databaseReady, setDatabaseReady] = React.useState(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    void bootstrapDatabase()
+      .then(() => {
+        if (isMounted) {
+          setDatabaseReady(true);
+          startSyncRuntime();
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to bootstrap local database:", error);
+      });
+
+    return () => {
+      isMounted = false;
+      stopSyncRuntime();
+    };
+  }, []);
   
   // Check for overdue installments when app loads
   React.useEffect(() => {
-    checkOverdue();
-  }, [checkOverdue]);
+    if (!databaseReady || !user?.id) {
+      return;
+    }
+
+    const scopeKey = `${user.id}:${organization?.id ?? ""}`;
+    if (initialOverdueChecksStarted.has(scopeKey)) {
+      return;
+    }
+
+    initialOverdueChecksStarted.add(scopeKey);
+    void checkOverdue();
+  }, [checkOverdue, databaseReady, organization?.id, user?.id]);
 
   // Set up global keyboard shortcuts
   useGlobalKeyboardShortcuts({
@@ -383,7 +419,7 @@ function PrivateRoute() {
 
 const AppRouter = () => {
   return <>
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route
           path="/" element={<App />}

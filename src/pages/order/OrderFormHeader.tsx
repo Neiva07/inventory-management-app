@@ -53,7 +53,7 @@ interface OrderFormHeaderProps {
 }
 
 export const OrderFormHeader = ({ onDelete, onBack, order, firstFieldRef, focusNextField, focusPreviousField, headerRefs }: OrderFormHeaderProps) => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const { orderID } = useParams();
   const [customers, setCustomers] = useState<Array<Customer>>([]);
 
@@ -61,7 +61,7 @@ export const OrderFormHeader = ({ onDelete, onBack, order, firstFieldRef, focusN
   const totalCost = formMethods.watch('totalCost');
   const totalComission = formMethods.watch('totalComission');
   useEffect(() => {
-    getCustomers({ pageSize: 1000, userID: user.id }).then(results => {
+    getCustomers({ pageSize: 1000, userID: user.id, organizationId: organization?.id }).then(results => {
 
       const queriedCustomers = results[0].docs.map(qr => qr.data() as Customer)
       setCustomers(queriedCustomers)
@@ -72,7 +72,7 @@ export const OrderFormHeader = ({ onDelete, onBack, order, firstFieldRef, focusN
         })
       }
     })
-  }, []);
+  }, [formMethods, organization?.id, user.id]);
 
   return (
     <Box sx={{ pt: 8 }}>
