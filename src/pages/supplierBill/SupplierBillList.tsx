@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Button, Grid, TextField, Box, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { SupplierBill, getSupplierBills, SupplierBillStatus } from '../../model/supplierBill';
@@ -8,7 +7,7 @@ import { useAuth } from '../../context/auth';
 import { PageTitle } from '../../components/PageTitle';
 import { DeleteConfirmationDialog } from '../../components/DeleteConfirmationDialog';
 import { formatCurrency } from 'lib/math';
-import { DatePicker } from '@mui/x-date-pickers';
+import { DatePickerField } from 'components/ui';
 import { getDateStartTimestamp, getDateEndTimestamp } from '../../lib/date';
 import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
 import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
@@ -74,24 +73,15 @@ const columns: ColumnDefinition<SupplierBill>[] = [
         color: statusColors[row.status as keyof typeof statusColors] ?? '#757575'
       };
     },
-    renderCell: (value) => {
+      renderCell: (value) => {
       const statusInfo = value as { label: string; color: string };
       return (
-        <Box
-          sx={{
-            backgroundColor: statusInfo.color,
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+        <div
+          className="inline-flex min-w-[76px] items-center justify-center rounded px-2 py-1 text-xs font-bold text-white"
+          style={{ backgroundColor: statusInfo.color }}
         >
           {statusInfo.label}
-        </Box>
+        </div>
       );
     },
   },
@@ -312,8 +302,8 @@ export const SupplierBillList = () => {
         Contas a Pagar
       </PageTitle>
       
-      <Grid container spacing={1} sx={{ mb: 2 }}>
-        <Grid item xs={12} md={4}>
+      <div className="mb-2 grid grid-cols-12 gap-2">
+        <div className="col-span-12 md:col-span-4">
           <EnhancedAutocomplete
             ref={supplierFilterRef}
             id="supplier-filter"
@@ -329,34 +319,28 @@ export const SupplierBillList = () => {
             value={selectedSupplier}
             autoFocus
           />
-        </Grid>
-        <Grid item xs={6} md={2}>
-          <DatePicker
+        </div>
+        <div className="col-span-6 md:col-span-2">
+          <DatePickerField
+            ref={startDateRef}
+            id="supplier-bills-start-date"
             label="Data início"
             value={startDate}
             onChange={setStartDate}
-            ref={startDateRef}
-            slotProps={{ 
-              textField: { 
-                fullWidth: true,
-              } 
-            }}
+            allowClear
           />
-        </Grid>
-        <Grid item xs={6} md={2}>
-          <DatePicker
+        </div>
+        <div className="col-span-6 md:col-span-2">
+          <DatePickerField
+            ref={endDateRef}
+            id="supplier-bills-end-date"
             label="Data fim"
             value={endDate}
             onChange={setEndDate}
-            ref={endDateRef}
-            slotProps={{ 
-              textField: { 
-                fullWidth: true,
-              } 
-            }}
+            allowClear
           />
-        </Grid>
-        <Grid item xs={12} md={4}>
+        </div>
+        <div className="col-span-12 md:col-span-4">
           <EnhancedAutocomplete
             ref={statusFilterRef}
             id="status-filter"
@@ -371,10 +355,10 @@ export const SupplierBillList = () => {
             onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
             value={statusSelected}
           />
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
-      <Grid xs={12} item style={{ minHeight: 400 }}>
+      <div className="min-h-[400px]">
         <CustomDataTable
           data={supplierBills}
           columns={columns}
@@ -399,7 +383,7 @@ export const SupplierBillList = () => {
           onDeleteSelected={handleDeleteSupplierBill}
           ref={tableRef}
         />
-      </Grid>
+      </div>
 
       <DeleteConfirmationDialog
         open={deleteDialogOpen}

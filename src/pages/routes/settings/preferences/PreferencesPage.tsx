@@ -14,7 +14,7 @@ import {
   Grid,
   Paper,
   TextField,
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import { useUI } from '../../../../context/ui';
 import { useAuth } from '../../../../context/auth';
 import { getAppSettings, setAppSettings } from '../../../../model/appSettings';

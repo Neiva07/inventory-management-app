@@ -1,24 +1,29 @@
-import { Button, Grid } from "@mui/material"
-import { Box } from "@mui/system"
-import { DataGrid, GridCellParams, GridColDef, GridDeleteIcon, GridRowIdGetter } from "@mui/x-data-grid"
-import { useState } from "react"
-import { useFormContext } from "react-hook-form"
-import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm"
-import { add, divide, integerDivide, multiply, subtract } from "lib/math"
-import { Product } from "model/products"
-import { DeleteConfirmationDialog } from "components/DeleteConfirmationDialog"
+import { Box } from "components/ui/form-compat";
+import { Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useFormContext } from "react-hook-form";
+import { Button } from "components/ui";
+import { CustomDataTable } from "components/CustomDataTable";
+import { ColumnDefinition } from "components/CustomDataTable/types";
+import { DeleteConfirmationDialog } from "components/DeleteConfirmationDialog";
+import { ItemDataInterface, OrderFormDataInterface } from "./useOrderForm";
 
-export const OrderFormLineItemList = ({ deleteLineItemFromForm }: { deleteLineItemFromForm: (item: ItemDataInterface) => void }) => {
+export const OrderFormLineItemList = ({
+  deleteLineItemFromForm,
+}: {
+  deleteLineItemFromForm: (item: ItemDataInterface) => void;
+}) => {
   const formMethods = useFormContext<OrderFormDataInterface>();
 
   const [pageSize, setPageSize] = useState<number>(10);
+  const [page, setPage] = useState<number>(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<ItemDataInterface | null>(null);
   const items = formMethods.watch("items");
 
-  const handleGetRowID: GridRowIdGetter<ItemDataInterface> = (row) => {
+  const handleGetRowID = (row: ItemDataInterface) => {
     return `${row.productID}-${row.variant.unit.id}`;
-  }
+  };
 
   const handleDeleteItem = (item: ItemDataInterface) => {
     setItemToDelete(item);
@@ -27,7 +32,7 @@ export const OrderFormLineItemList = ({ deleteLineItemFromForm }: { deleteLineIt
 
   const confirmDelete = () => {
     if (!itemToDelete) return;
-    
+
     deleteLineItemFromForm(itemToDelete);
     setDeleteDialogOpen(false);
     setItemToDelete(null);
@@ -38,105 +43,127 @@ export const OrderFormLineItemList = ({ deleteLineItemFromForm }: { deleteLineIt
     setItemToDelete(null);
   };
 
-  const columns: GridColDef[] = [
-    {
-      field: 'title', headerName: 'Produto', flex: 1, sortable: false,
-    },
-    {
-      field: 'balance',
-      headerName: 'Saldo Estoque',
-      type: 'number',
-      flex: 1,
-      sortable: false,
-    },
-    {
-      field: 'quantity',
-      headerName: 'Quantidade',
-      type: 'string',
-      flex: 1,
-      sortable: false,
-    },
-    {
-      field: 'unit',
-      headerName: 'Unidade',
-      type: 'number',
-      flex: 1,
-      valueGetter: (params: GridCellParams<ItemDataInterface>) => {
-        return params.row.variant.unit.name
-      },
-      sortable: false,
-    },
-    {
-      field: 'cost',
-      headerName: 'Custo Compra',
-      type: 'number',
-      sortable: false,
-      flex: 1,
-    },
-    {
-      field: 'unitPrice',
-      headerName: 'Preço Venda',
-      sortable: false,
-      flex: 1,
-    },
-    {
-      field: 'descount',
-      headerName: 'Desconto (%)',
-      type: 'string',
-      flex: 1,
-      sortable: false,
-    },
-    {
-      field: 'commissionRate',
-      headerName: 'Comissão (%)',
-      type: 'number',
-      flex: 1,
-      sortable: false,
-    },
-    {
-      field: 'itemTotalCost',
-      headerName: 'Total do Produto',
-      type: 'number',
-      flex: 1,
-      sortable: false,
-    },
-    {
-      headerName: 'Remover',
-      field: 'delete',
-      flex: 1,
-      renderCell: (cell: GridCellParams<ItemDataInterface>) => {
-        return <Button onClick={() => handleDeleteItem(cell.row)}> <GridDeleteIcon /> </Button>;
-      },
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(items.length / pageSize) - 1);
+    if (page > maxPage) {
+      setPage(maxPage);
     }
+  }, [items.length, page, pageSize]);
+
+  const pagedItems = useMemo(() => {
+    const start = page * pageSize;
+    return items.slice(start, start + pageSize);
+  }, [items, page, pageSize]);
+
+  const columns: ColumnDefinition<ItemDataInterface>[] = [
+    {
+      field: "title",
+      headerName: "Produto",
+      flex: 1,
+      sortable: false,
+    },
+    {
+      field: "balance",
+      headerName: "Saldo Estoque",
+      flex: 1,
+      sortable: false,
+    },
+    {
+      field: "quantity",
+      headerName: "Quantidade",
+      flex: 1,
+      sortable: false,
+    },
+    {
+      field: "unit",
+      headerName: "Unidade",
+      flex: 1,
+      sortable: false,
+      valueGetter: (row) => row.variant.unit.name,
+    },
+    {
+      field: "cost",
+      headerName: "Custo Compra",
+      flex: 1,
+      sortable: false,
+    },
+    {
+      field: "unitPrice",
+      headerName: "Preço Venda",
+      flex: 1,
+      sortable: false,
+    },
+    {
+      field: "descount",
+      headerName: "Desconto (%)",
+      flex: 1,
+      sortable: false,
+    },
+    {
+      field: "commissionRate",
+      headerName: "Comissão (%)",
+      flex: 1,
+      sortable: false,
+    },
+    {
+      field: "itemTotalCost",
+      headerName: "Total do Produto",
+      flex: 1,
+      sortable: false,
+    },
+    {
+      headerName: "Remover",
+      field: "delete",
+      width: 110,
+      renderCell: (_value, row) => {
+        return (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`Remover item ${row.title}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleDeleteItem(row);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        );
+      },
+    },
   ];
-  return <Box>
-    <Grid container spacing={2}>
-      <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
-        <DataGrid
-          rows={items}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize },
-            },
-          }}
-          pageSizeOptions={[10, 20]}
-          getRowId={handleGetRowID}
-          pagination
-          onPaginationModelChange={v => setPageSize(v.pageSize)}
-          hideFooterSelectedRowCount
-          paginationMode="client"
-          disableColumnMenu
-          disableRowSelectionOnClick
-        />
-      </Grid>
-    </Grid>
-    
-    <DeleteConfirmationDialog
-      open={deleteDialogOpen}
-      onClose={cancelDelete}
-      onConfirm={confirmDelete}
-      resourceName={`item "${itemToDelete?.title}"`}
-    />
-  </Box>
-}
+
+  return (
+    <Box>
+      <div className="mt-5 min-h-[400px]">
+          <CustomDataTable
+            data={pagedItems}
+            columns={columns}
+            totalCount={items.length}
+            loading={false}
+            page={page}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 20]}
+            onPageChange={setPage}
+            onPageSizeChange={(nextPageSize) => {
+              setPageSize(nextPageSize);
+              setPage(0);
+            }}
+            getRowId={handleGetRowID}
+            selectionMode="single"
+            rowHeight={48}
+            maxHeight={600}
+            emptyMessage="Nenhum item adicionado"
+          />
+      </div>
+
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        resourceName={`item "${itemToDelete?.title}"`}
+      />
+    </Box>
+  );
+};

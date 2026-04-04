@@ -6,10 +6,13 @@ import {
   Grid,
   Card,
   CardContent,
-  Autocomplete,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   FormHelperText,
   Alert
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import { useOnboarding } from '../../context/onboarding';
 import { states, citiesByState } from '../../model/region';
 import { isValidEmail } from '../../lib/email';
@@ -254,34 +257,44 @@ export const OrganizationSetup: React.FC = () => {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Autocomplete
-                options={stateOptions}
-                value={onboardingData.organization?.state || ''}
-                onChange={(_, newValue) => handleStateChange(newValue)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Estado"
-                    required
-                  />
-                )}
-              />
+              <FormControl fullWidth>
+                <InputLabel>Estado</InputLabel>
+                <Select
+                  value={onboardingData.organization?.state || ''}
+                  onChange={(e) => handleStateChange(e.target.value || null)}
+                  required
+                >
+                  <MenuItem value="">Selecione um estado</MenuItem>
+                  {stateOptions.map((stateName) => (
+                    <MenuItem key={stateName} value={stateName}>
+                      {stateName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <Autocomplete
-                options={cities}
-                value={onboardingData.organization?.city || ''}
-                onChange={(_, newValue) => handleOrganizationChange('city', newValue || '')}
-                disabled={!onboardingData.organization?.state}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Cidade"
-                    required
-                    helperText={!onboardingData.organization?.state ? 'Selecione um estado primeiro' : ''}
-                  />
-                )}
-              />
+              <FormControl fullWidth>
+                <InputLabel>Cidade</InputLabel>
+                <Select
+                  value={onboardingData.organization?.city || ''}
+                  onChange={(e) => handleOrganizationChange('city', e.target.value)}
+                  disabled={!onboardingData.organization?.state}
+                  required
+                >
+                  <MenuItem value="">
+                    {onboardingData.organization?.state ? 'Selecione uma cidade' : 'Selecione um estado primeiro'}
+                  </MenuItem>
+                  {cities.map((cityName) => (
+                    <MenuItem key={cityName} value={cityName}>
+                      {cityName}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {!onboardingData.organization?.state ? (
+                  <FormHelperText>Selecione um estado primeiro</FormHelperText>
+                ) : null}
+              </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField

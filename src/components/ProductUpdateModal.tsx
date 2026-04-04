@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
-  Grid,
-  TextField,
-  Typography,
-  Box,
-  Divider,
-  Alert,
-} from '@mui/material';
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+} from 'components/ui';
+import { cn } from 'lib/utils';
 import { getProduct, Product } from 'model/products';
 import { add, divide, multiply, subtract } from 'lib/math';
 import { PaymentMethod } from 'model/paymentMethods';
@@ -42,6 +39,38 @@ interface EditableVariant {
   }>;
 }
 
+type NumericFieldProps = {
+  label: string;
+  value: number | string;
+  disabled?: boolean;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onFocus?: (event: React.FocusEvent<HTMLInputElement>) => void;
+  className?: string;
+};
+
+const NumericField: React.FC<NumericFieldProps> = ({
+  label,
+  value,
+  disabled = false,
+  onChange,
+  onFocus,
+  className,
+}) => {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      <Input
+        type="number"
+        value={value}
+        onChange={onChange}
+        onFocus={onFocus}
+        disabled={disabled}
+        className={className}
+      />
+    </div>
+  );
+};
+
 export const ProductUpdateModal: React.FC<ProductUpdateModalProps> = ({
   open,
   onClose,
@@ -57,7 +86,7 @@ export const ProductUpdateModal: React.FC<ProductUpdateModalProps> = ({
 
   useEffect(() => {
     if (open && productID) {
-      loadProduct();
+      void loadProduct();
     }
   }, [open, productID]);
 
@@ -65,27 +94,27 @@ export const ProductUpdateModal: React.FC<ProductUpdateModalProps> = ({
     try {
       setLoading(true);
       setError(null);
-      const productData = await getProduct(productID) as Product;
+      const productData = (await getProduct(productID)) as Product;
       setProduct(productData);
 
-      const variant = productData.variants.find(v => v.unit.id === variantUnitID)
-      
+      const variant = productData.variants.find((v) => v.unit.id === variantUnitID);
       const baseNewUnitCost = divide(newUnitCost, variant.conversionRate);
-     
-      // Prepare editable variants with old and new costs
-      const variants = productData.variants.map(variant => {
-        const isTargetVariant = variant.unit.id === variantUnitID;
-        const updatedUnitCost = isTargetVariant ? newUnitCost : baseNewUnitCost * variant.conversionRate;
-        
+
+      const variants = productData.variants.map((variantItem) => {
+        const isTargetVariant = variantItem.unit.id === variantUnitID;
+        const updatedUnitCost = isTargetVariant
+          ? newUnitCost
+          : baseNewUnitCost * variantItem.conversionRate;
+
         return {
           unit: {
-            name: variant.unit.name,
-            id: variant.unit.id,
+            name: variantItem.unit.name,
+            id: variantItem.unit.id,
           },
-          conversionRate: variant.conversionRate,
-          oldUnitCost: variant.unitCost,
+          conversionRate: variantItem.conversionRate,
+          oldUnitCost: variantItem.unitCost,
           newUnitCost: updatedUnitCost,
-          prices: variant.prices.map(price => {
+          prices: variantItem.prices.map((price) => {
             const newValue = divide(multiply(updatedUnitCost, add(price.profit, 100)), 100);
             return {
               paymentMethod: price.paymentMethod,
@@ -112,7 +141,7 @@ export const ProductUpdateModal: React.FC<ProductUpdateModalProps> = ({
     updatedVariants[variantIndex] = {
       ...updatedVariants[variantIndex],
       newUnitCost: newCost,
-      prices: updatedVariants[variantIndex].prices.map(price => {
+      prices: updatedVariants[variantIndex].prices.map((price) => {
         const newValue = divide(multiply(newCost, add(price.profit, 100)), 100);
         return {
           ...price,
@@ -124,19 +153,22 @@ export const ProductUpdateModal: React.FC<ProductUpdateModalProps> = ({
     setEditableVariants(updatedVariants);
   };
 
-  const handlePriceChange = (variantIndex: number, priceIndex: number, field: 'newValue' | 'profit', value: number) => {
+  const handlePriceChange = (
+    variantIndex: number,
+    priceIndex: number,
+    field: 'newValue' | 'profit',
+    value: number
+  ) => {
     const updatedVariants = [...editableVariants];
     const variant = updatedVariants[variantIndex];
     const price = variant.prices[priceIndex];
 
     if (field === 'newValue') {
-      // Calculate new profit based on new value
       const newProfit = divide(multiply(subtract(value, variant.newUnitCost), 100), variant.newUnitCost);
       price.newValue = value;
       price.profit = newProfit;
       price.difference = subtract(value, price.oldValue);
     } else {
-      // Calculate new value based on new profit
       const newValue = divide(multiply(variant.newUnitCost, add(value, 100)), 100);
       price.profit = value;
       price.newValue = newValue;
@@ -147,9 +179,10 @@ export const ProductUpdateModal: React.FC<ProductUpdateModalProps> = ({
   };
 
   const handleConfirm = () => {
-    if (!product) return;
+    if (!product) {
+      return;
+    }
 
-    // Create updated product with new costs and prices
     const updatedProduct: Product = {
       ...product,
       variants: product.variants.map((variant, index) => {
@@ -172,9 +205,19 @@ export const ProductUpdateModal: React.FC<ProductUpdateModalProps> = ({
 
   if (loading) {
     return (
-      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-        <DialogContent>
-          <Typography>Carregando produto...</Typography>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            onClose();
+          }
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-2xl"
+          onCloseAutoFocus={(event) => event.preventDefault()}
+        >
+          <p>Carregando produto...</p>
         </DialogContent>
       </Dialog>
     );
@@ -182,151 +225,177 @@ export const ProductUpdateModal: React.FC<ProductUpdateModalProps> = ({
 
   if (error) {
     return (
-      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-        <DialogContent>
-          <Alert severity="error">{error}</Alert>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            onClose();
+          }
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-2xl"
+          onCloseAutoFocus={(event) => event.preventDefault()}
+        >
+          <div
+            role="alert"
+            className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            {error}
+          </div>
+          <DialogFooter>
+            <Button onClick={onClose}>Fechar</Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose}>Fechar</Button>
-        </DialogActions>
       </Dialog>
     );
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>
-        <Typography variant="h6">
-          Atualizar Custos e Preços - {product?.title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          O custo unitário foi alterado. Atualize os custos e preços conforme necessário.
-        </Typography>
-      </DialogTitle>
-      
-      <DialogContent>
-        <Box sx={{ mt: 2 }}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent
+        className="max-h-[90vh] overflow-y-auto sm:max-w-6xl"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle>
+            Atualizar Custos e Precos - {product?.title}
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            O custo unitario foi alterado. Atualize os custos e precos conforme necessario.
+          </p>
+        </DialogHeader>
+
+        <div className="space-y-4 pt-1">
           {editableVariants.map((variant, variantIndex) => (
-            <Box key={variant.unit.id} sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
+            <div key={variant.unit.id} className="space-y-3">
+              <h3 className="text-base font-semibold">
                 Variante: {variant.unit.name}
-              </Typography>
-              
-              <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Grid item xs={4}>
-                  <TextField
-                    label="Custo Unitário (Antigo)"
+              </h3>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+                <div className="md:col-span-4">
+                  <NumericField
+                    label="Custo Unitario (Antigo)"
                     value={variant.oldUnitCost}
-                    fullWidth
                     disabled
-                    variant="outlined"
                   />
-                </Grid>
-                <Grid item xs={4}>
-                  <TextField
-                    label="Custo Unitário (Novo)"
+                </div>
+
+                <div className="md:col-span-4">
+                  <NumericField
+                    label="Custo Unitario (Novo)"
                     value={variant.newUnitCost}
-                    onChange={(e) => {
-                      const value = !isNaN(Number(e.target.value)) ? Number(e.target.value) : 0;
+                    onChange={(event) => {
+                      const value = !isNaN(Number(event.target.value))
+                        ? Number(event.target.value)
+                        : 0;
                       handleVariantCostChange(variantIndex, value);
                     }}
-                    fullWidth
-                    variant="outlined"
-                    onFocus={(e) => e.target.select()}
+                    onFocus={(event) => event.target.select()}
                   />
-                </Grid>
-                <Grid item xs={4}>
-                  <TextField
-                    label="Taxa de Conversão"
-                    value={variant.conversionRate}
-                    fullWidth
-                    disabled
-                    variant="outlined"
-                  />
-                </Grid>
-              </Grid>
+                </div>
 
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                Preços:
-              </Typography>
-              
-              {variant.prices.map((price, priceIndex) => (
-                <Grid container spacing={2} key={price.paymentMethod.id} sx={{ mb: 2 }}>
-                  <Grid item xs={3}>
-                    <TextField
-                      label="Método de Pagamento"
-                      value={price.paymentMethod.label}
-                      fullWidth
-                      disabled
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={3}>
-                    <TextField
-                      label="Preço (Antigo)"
-                      value={price.oldValue}
-                      fullWidth
-                      disabled
-                      variant="outlined"
-                    />
-                  </Grid>
-                  <Grid item xs={2}>
-                    <TextField
-                      label="Preço (Novo)"
-                      value={price.newValue}
-                      onChange={(e) => {
-                        const value = !isNaN(Number(e.target.value)) ? Number(e.target.value) : 0;
-                        handlePriceChange(variantIndex, priceIndex, 'newValue', value);
-                      }}
-                      fullWidth
-                      variant="outlined"
-                      onFocus={(e) => e.target.select()}
-                    />
-                  </Grid>
-                  <Grid item xs={2}>
-                    <TextField
-                      label="Lucro %"
-                      value={price.profit}
-                      onChange={(e) => {
-                        const value = !isNaN(Number(e.target.value)) ? Number(e.target.value) : 0;
-                        handlePriceChange(variantIndex, priceIndex, 'profit', value);
-                      }}
-                      fullWidth
-                      variant="outlined"
-                      onFocus={(e) => e.target.select()}
-                    />
-                  </Grid>
-                  <Grid item xs={2}>
-                    <TextField
-                      label="Diferença"
-                      value={price.difference}
-                      fullWidth
-                      disabled
-                      variant="outlined"
-                      sx={{
-                        '& .MuiInputBase-input': {
-                          color: price.difference >= 0 ? 'success.main' : 'error.main',
-                        },
-                      }}
-                    />
-                  </Grid>
-                </Grid>
-              ))}
-              
+                <div className="md:col-span-4">
+                  <NumericField
+                    label="Taxa de Conversao"
+                    value={variant.conversionRate}
+                    disabled
+                  />
+                </div>
+              </div>
+
+              <p className="text-sm font-semibold text-muted-foreground">Precos:</p>
+
+              <div className="space-y-2">
+                {variant.prices.map((price, priceIndex) => (
+                  <div
+                    key={price.paymentMethod.id}
+                    className="grid grid-cols-1 gap-3 md:grid-cols-12"
+                  >
+                    <div className="md:col-span-3">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Metodo de Pagamento
+                        </label>
+                        <Input value={price.paymentMethod.label} disabled />
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-3">
+                      <NumericField
+                        label="Preco (Antigo)"
+                        value={price.oldValue}
+                        disabled
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <NumericField
+                        label="Preco (Novo)"
+                        value={price.newValue}
+                        onChange={(event) => {
+                          const value = !isNaN(Number(event.target.value))
+                            ? Number(event.target.value)
+                            : 0;
+                          handlePriceChange(variantIndex, priceIndex, 'newValue', value);
+                        }}
+                        onFocus={(event) => event.target.select()}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <NumericField
+                        label="Lucro %"
+                        value={price.profit}
+                        onChange={(event) => {
+                          const value = !isNaN(Number(event.target.value))
+                            ? Number(event.target.value)
+                            : 0;
+                          handlePriceChange(variantIndex, priceIndex, 'profit', value);
+                        }}
+                        onFocus={(event) => event.target.select()}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <NumericField
+                        label="Diferenca"
+                        value={price.difference}
+                        disabled
+                        className={cn(
+                          'font-medium disabled:opacity-100',
+                          price.difference >= 0 ? 'text-emerald-600' : 'text-red-600'
+                        )}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {variantIndex < editableVariants.length - 1 && (
-                <Divider sx={{ my: 2 }} />
+                <div className="my-3 h-px bg-border" />
               )}
-            </Box>
+            </div>
           ))}
-        </Box>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleConfirm}>
+            Confirmar Atualizacoes
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleConfirm} variant="contained" color="primary">
-          Confirmar Atualizações
-        </Button>
-      </DialogActions>
     </Dialog>
   );
-}; 
+};

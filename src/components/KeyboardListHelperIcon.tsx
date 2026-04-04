@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
-import { IconButton, Tooltip } from '@mui/material';
-import HelpIcon from '@mui/icons-material/Help';
+import { HelpCircle } from 'lucide-react';
+import {
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from 'components/ui';
 import { KeyboardListPageKeyboardHelp } from './KeyboardListPageKeyboardHelp';
 
 interface ListPageKeyboardHelperIconProps {
@@ -39,18 +45,39 @@ export const ListPageKeyboardHelperIcon: React.FC<ListPageKeyboardHelperIconProp
     setShowHelp(false);
   };
 
+  const sizeClass =
+    size === 'small'
+      ? 'h-8 w-8'
+      : size === 'large'
+        ? 'h-12 w-12'
+        : 'h-10 w-10';
+  const iconClass =
+    size === 'small' ? 'h-4 w-4' : size === 'large' ? 'h-6 w-6' : 'h-5 w-5';
+  const colorClass =
+    color === 'secondary'
+      ? 'text-secondary'
+      : color === 'default'
+        ? 'text-foreground'
+        : 'text-primary';
+
   return (
     <>
-      <Tooltip title="Atalhos do Teclado (F1)" placement="top">
-        <IconButton
-          onClick={handleShowHelp}
-          size={size}
-          color={color}
-          sx={{ ml: 1 }}
-        >
-          <HelpIcon />
-        </IconButton>
-      </Tooltip>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={handleShowHelp}
+              variant="ghost"
+              size="icon"
+              className={`ml-1 ${sizeClass} ${colorClass}`}
+              aria-label="Atalhos do Teclado (F1)"
+            >
+              <HelpCircle className={iconClass} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Atalhos do Teclado (F1)</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <KeyboardListPageKeyboardHelp
         open={showHelp}

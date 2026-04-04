@@ -1,16 +1,14 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Badge,
   Button,
-  Grid,
-  Typography,
-  Box,
-  Chip,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from 'components/ui';
 
 interface GlobalKeyboardHelpProps {
   open: boolean;
@@ -18,22 +16,12 @@ interface GlobalKeyboardHelpProps {
 }
 
 const ShortcutItem: React.FC<{ shortcut: string; description: string }> = ({ shortcut, description }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-    <Chip
-      label={shortcut}
-      size="small"
-      sx={{
-        backgroundColor: 'primary.main',
-        color: 'white',
-        fontWeight: 600,
-        minWidth: 80,
-        mr: 2,
-      }}
-    />
-    <Typography variant="body2" color="text.secondary">
-      {description}
-    </Typography>
-  </Box>
+  <div className="mb-1.5 flex items-center last:mb-0">
+    <Badge className="mr-2 min-w-[80px] justify-center rounded-md bg-primary px-2 py-1 font-semibold text-primary-foreground">
+      {shortcut}
+    </Badge>
+    <p className="text-sm text-muted-foreground">{description}</p>
+  </div>
 );
 
 export const GlobalKeyboardHelp: React.FC<GlobalKeyboardHelpProps> = ({
@@ -58,59 +46,56 @@ export const GlobalKeyboardHelp: React.FC<GlobalKeyboardHelpProps> = ({
   ];
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
-      fullWidth
-      PaperProps={{
-        sx: { minHeight: '400px' }
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
       }}
     >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
-          Atalhos Globais do Teclado
-        </Typography>
-        <Button onClick={onClose} size="small">
-          <CloseIcon />
+      <DialogContent
+        className="relative max-h-[85vh] overflow-y-auto sm:max-w-3xl"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <Button
+          onClick={onClose}
+          variant="ghost"
+          size="icon"
+          className="absolute right-3 top-3"
+          aria-label="Fechar ajuda global"
+        >
+          <X className="h-4 w-4" />
         </Button>
-      </DialogTitle>
-      
-      <DialogContent>
-        <Grid container spacing={4}>
-          {/* Global Shortcuts */}
-          <Grid item xs={12} md={6}>
-            <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-              Atalhos Globais
-            </Typography>
+
+        <DialogHeader className="pr-10">
+          <DialogTitle className="text-primary">Atalhos Globais do Teclado</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+          <section>
+            <h3 className="mb-2.5 text-base font-bold text-primary">Atalhos Globais</h3>
             {globalShortcuts.map((item, index) => (
               <ShortcutItem key={index} shortcut={item.shortcut} description={item.description} />
             ))}
-          </Grid>
+          </section>
 
-          {/* Navigation Shortcuts */}
-          <Grid item xs={12} md={6}>
-            <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-              Navegação Rápida
-            </Typography>
+          <section>
+            <h3 className="mb-2.5 text-base font-bold text-primary">Navegação Rápida</h3>
             {navigationShortcuts.map((item, index) => (
               <ShortcutItem key={index} shortcut={item.shortcut} description={item.description} />
             ))}
-          </Grid>
-        </Grid>
-        
-        <Box sx={{ mt: 4, p: 2, backgroundColor: 'grey.100', borderRadius: 1 }}>
-          <Typography variant="body2" color="text.secondary">
+          </section>
+        </div>
+
+        <div className="mt-2 rounded-md border bg-muted/50 p-3">
+          <p className="text-sm text-muted-foreground">
             <strong>Dica:</strong> Os atalhos globais funcionam de qualquer lugar da aplicação, incluindo quando você está digitando em campos de entrada.
-          </Typography>
-        </Box>
+          </p>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={onClose}>Fechar</Button>
+        </DialogFooter>
       </DialogContent>
-      
-      <DialogActions>
-        <Button onClick={onClose} variant="contained">
-          Fechar
-        </Button>
-      </DialogActions>
     </Dialog>
   );
-}; 
+};

@@ -11,7 +11,7 @@ import {
   IconButton,
   Tooltip,
   Divider,
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageTitle } from '../../components/PageTitle';
 import { InstallmentPayment, getInstallmentPayment } from '../../model/installmentPayment';
@@ -20,7 +20,7 @@ import { useAuth } from '../../context/auth';
 import { formatCurrency } from 'lib/math';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { PaymentModal } from '../../components/PaymentModal';
-import { Payment, ArrowBack } from '@mui/icons-material';
+import { Payment, ArrowBack } from 'components/ui/icon-compat';
 
 // Helper function to format date
 const formatDate = (timestamp: number): string => {

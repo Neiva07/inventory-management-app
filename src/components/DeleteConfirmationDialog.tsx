@@ -1,12 +1,14 @@
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-} from '@mui/material';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from 'components/ui';
 
 interface DeleteConfirmationDialogProps {
   open: boolean;
@@ -23,6 +25,8 @@ export const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> =
   resourceName,
   onDialogClosed,
 }) => {
+  const isConfirmingRef = React.useRef(false);
+
   const handleClose = () => {
     onClose();
     if (onDialogClosed) {
@@ -33,6 +37,7 @@ export const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> =
   };
 
   const handleConfirm = () => {
+    isConfirmingRef.current = true;
     onConfirm();
     if (onDialogClosed) {
       setTimeout(() => {
@@ -42,45 +47,38 @@ export const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> =
   };
 
   return (
-    <Dialog
+    <AlertDialog
       open={open}
-      onClose={handleClose}
-      aria-labelledby="delete-confirmation-dialog-title"
-      aria-describedby="delete-confirmation-dialog-description"
-      disableRestoreFocus
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) return;
+        if (isConfirmingRef.current) {
+          isConfirmingRef.current = false;
+          return;
+        }
+        handleClose();
+      }}
     >
-      <DialogTitle id="delete-confirmation-dialog-title">
-        Confirmar exclusão
-      </DialogTitle>
-      <DialogContent>
-        <Typography id="delete-confirmation-dialog-description">
-          Você tem certeza que quer deletar o {resourceName}?
-        </Typography>
-      </DialogContent>
-      <DialogActions>
-        <Button 
-          onClick={handleClose} 
-          autoFocus
-          variant="outlined"
-          sx={{
-            '&:focus': {
-              outline: '2px solid #1976d2',
-              outlineOffset: '2px',
-              boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
-            },
-            '&:focus-visible': {
-              outline: '2px solid #1976d2',
-              outlineOffset: '2px',
-              boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
-            }
-          }}
-        >
-          Cancelar
-        </Button>
-        <Button onClick={handleConfirm} color="error" variant="contained">
-          Deletar
-        </Button>
-      </DialogActions>
-    </Dialog>
+      <AlertDialogContent onCloseAutoFocus={(event) => event.preventDefault()}>
+        <AlertDialogHeader>
+          <AlertDialogTitle id="delete-confirmation-dialog-title">
+            Confirmar exclusão
+          </AlertDialogTitle>
+          <AlertDialogDescription id="delete-confirmation-dialog-description">
+            Você tem certeza que quer deletar o {resourceName}?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel autoFocus>
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleConfirm}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Deletar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }; 

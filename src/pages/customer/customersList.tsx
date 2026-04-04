@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { GridSearchIcon } from '@mui/x-data-grid';
-import { Button, Grid, InputAdornment, TextField, Tooltip } from '@mui/material';
+import { SearchField } from 'components/SearchField';
+import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from 'components/ui';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { Customer, deactiveCustomer, deleteCustomer, getCustomers, activeCustomer } from 'model/customer';
@@ -243,27 +243,19 @@ export const CustomerList = () => {
       >
         Clientes
       </PageTitle>
-      <Grid spacing={1} container>
-
-        <Grid item xs={6}>
-          <TextField
+      <TooltipProvider>
+        <div className="grid grid-cols-12 gap-2">
+          <div className="col-span-12 md:col-span-6">
+            <SearchField
             ref={searchFieldRef}
             value={searchName}
-            fullWidth
             onChange={handleSearchName}
             placeholder={"Busque pelo nome do cliente..."}
             autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <GridSearchIcon />
-                </InputAdornment>
-              ),
-            }}
           />
-        </Grid>
-        <Grid item xs={6}>
-          <EnhancedAutocomplete
+          </div>
+          <div className="col-span-12 md:col-span-6">
+            <EnhancedAutocomplete
             ref={statusFilterRef}
             id="status-filter"
             options={statuses}
@@ -277,82 +269,98 @@ export const CustomerList = () => {
             onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
             value={statusSelected}
           />
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + E" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={() => navigate(`/customers/${selectedRowID}`)}
-              tabIndex={-1}
-            > 
-              Editar Cliente 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + D" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={handleDeleteCustomer}
-              tabIndex={-1}
-            > 
-              Deletar Cliente 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + I" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={handleDeactiveCustomer}
-              tabIndex={-1}
-            > 
-              Desativar Cliente 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + N" placement="top">
-            <Button 
-              fullWidth 
-              onClick={() => navigate(`/customers/create`)}
-              tabIndex={-1}
-            > 
-              Cadastrar Cliente 
-            </Button>
-          </Tooltip>
-        </Grid>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={() => navigate(`/customers/${selectedRowID}`)}
+                  tabIndex={-1}
+                >
+                  Editar Cliente
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + E</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={handleDeleteCustomer}
+                  tabIndex={-1}
+                >
+                  Deletar Cliente
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + D</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full border-amber-400/60 text-amber-700 hover:bg-amber-500 hover:text-white dark:text-amber-300"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={handleDeactiveCustomer}
+                  tabIndex={-1}
+                >
+                  Desativar Cliente
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + I</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  onClick={() => navigate(`/customers/create`)}
+                  tabIndex={-1}
+                >
+                  Cadastrar Cliente
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + N</TooltipContent>
+            </Tooltip>
+          </div>
 
-        <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
-          <CustomDataTable
-            data={customers}
-            columns={columns}
-            totalCount={count}
-            loading={loading}
-            selectedRowId={selectedRowID}
-            onRowSelectionChange={handleRowSelectionChange}
-            page={page}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            onRowDoubleClick={(customer) => navigate(`/customers/${customer.id}`)}
-            onNavigateToNextField={() => {
-              // Navigate to next component after table (could be action buttons)
-            }}
-            onNavigateToPreviousField={() => {
-              // Navigate back to status filter
-              focusNavigation.focusLastFieldBeforeTable();
-            }}
-            getRowId={(customer) => customer.id}
-            onEditSelected={handleEditSelected}
-            onDeleteSelected={handleDeleteCustomer}
-            ref={tableRef}
-          />
-        </Grid>
-      </Grid>
+          <div className="col-span-12 mt-5 min-h-[400px]">
+            <CustomDataTable
+              data={customers}
+              columns={columns}
+              totalCount={count}
+              loading={loading}
+              selectedRowId={selectedRowID}
+              onRowSelectionChange={handleRowSelectionChange}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              onRowDoubleClick={(customer) => navigate(`/customers/${customer.id}`)}
+              onNavigateToNextField={() => {
+                // Navigate to next component after table (could be action buttons)
+              }}
+              onNavigateToPreviousField={() => {
+                // Navigate back to status filter
+                focusNavigation.focusLastFieldBeforeTable();
+              }}
+              getRowId={(customer) => customer.id}
+              onEditSelected={handleEditSelected}
+              onDeleteSelected={handleDeleteCustomer}
+              ref={tableRef}
+            />
+          </div>
+        </div>
+      </TooltipProvider>
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onClose={handleCancelDelete}

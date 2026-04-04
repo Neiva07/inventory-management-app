@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { GridSearchIcon } from '@mui/x-data-grid';
+import { SearchField } from 'components/SearchField';
 import { deactiveProduct, deleteProduct, getProducts, Product, activeProduct } from 'model/products';
-import { Button, Grid, InputAdornment, TextField, Tooltip } from '@mui/material';
+import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from 'components/ui';
 import { ProductCategory, getProductCategories } from 'model/productCategories';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from './useProductCreateForm';
@@ -98,7 +98,7 @@ export const ProductList = () => {
   const navigate = useNavigate();
 
   // Refs for focus management
-  const searchFieldRef = React.useRef<HTMLInputElement>(null);
+  const searchFieldRef = React.useRef<HTMLDivElement>(null);
   const categoryFilterRef = React.useRef<HTMLDivElement>(null);
   const statusFilterRef = React.useRef<HTMLDivElement>(null);
   const tableRef = React.useRef<CustomDataTableRef>(null);
@@ -292,27 +292,19 @@ export const ProductList = () => {
       >
         Produtos
       </PageTitle>
-      <Grid spacing={1} container>
-
-        <Grid item xs={4}>
-          <TextField
+      <TooltipProvider>
+        <div className="grid grid-cols-12 gap-2">
+          <div className="col-span-12 lg:col-span-4">
+            <SearchField
             ref={searchFieldRef}
             value={searchTitle}
-            fullWidth
             onChange={handleSearchTitle}
             placeholder={"Busque pelo nome do produto..."}
             autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <GridSearchIcon />
-                </InputAdornment>
-              ),
-            }}
           />
-        </Grid>
-        <Grid item xs={4}>
-          <EnhancedAutocomplete
+          </div>
+          <div className="col-span-12 lg:col-span-4">
+            <EnhancedAutocomplete
             ref={categoryFilterRef}
             id="category-filter"
             options={categories}
@@ -326,9 +318,9 @@ export const ProductList = () => {
             onPreviousField={() => focusNavigation.focusPreviousField(categoryFilterRef)}
             value={categorySelected}
           />
-        </Grid>
-        <Grid item xs={4}>
-          <EnhancedAutocomplete
+          </div>
+          <div className="col-span-12 lg:col-span-4">
+            <EnhancedAutocomplete
             ref={statusFilterRef}
             id="status-filter"
             options={statuses}
@@ -342,82 +334,98 @@ export const ProductList = () => {
             onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
             value={statusSelected}
           />
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + E" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={() => navigate(`/products/${selectedRowID}`)}
-              tabIndex={-1}
-            > 
-              Editar Produto 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + D" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={handleDeleteProduct}
-              tabIndex={-1}
-            > 
-              Deletar Produto 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + I" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={handleDeactivateProduct}
-              tabIndex={-1}
-            > 
-              Desativar Produto 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + N" placement="top">
-            <Button 
-              fullWidth 
-              onClick={() => navigate(`/products/create`)}
-              tabIndex={-1}
-            > 
-              Cadastrar Produto 
-            </Button>
-          </Tooltip>
-        </Grid>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={() => navigate(`/products/${selectedRowID}`)}
+                  tabIndex={-1}
+                >
+                  Editar Produto
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + E</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={handleDeleteProduct}
+                  tabIndex={-1}
+                >
+                  Deletar Produto
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + D</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full border-amber-400/60 text-amber-700 hover:bg-amber-500 hover:text-white dark:text-amber-300"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={handleDeactivateProduct}
+                  tabIndex={-1}
+                >
+                  Desativar Produto
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + I</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  onClick={() => navigate(`/products/create`)}
+                  tabIndex={-1}
+                >
+                  Cadastrar Produto
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + N</TooltipContent>
+            </Tooltip>
+          </div>
 
-        <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
-          <CustomDataTable
-            data={products}
-            columns={columns}
-            totalCount={count}
-            loading={loading}
-            selectedRowId={selectedRowID}
-            onRowSelectionChange={handleRowSelectionChange}
-            page={page}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            onRowDoubleClick={(product) => navigate(`/products/${product.id}`)}
-            onNavigateToNextField={() => {
-              // Navigate to next component after table (could be action buttons)
-            }}
-            onNavigateToPreviousField={() => {
-              // Navigate back to status filter
-              focusNavigation.focusLastFieldBeforeTable();
-            }}
-            getRowId={(product) => product.id}
-            onEditSelected={handleEditSelected}
-            onDeleteSelected={handleDeleteProduct}
-            ref={tableRef}
-          />
-        </Grid>
-      </Grid>
+          <div className="col-span-12 mt-5 min-h-[400px]">
+            <CustomDataTable
+              data={products}
+              columns={columns}
+              totalCount={count}
+              loading={loading}
+              selectedRowId={selectedRowID}
+              onRowSelectionChange={handleRowSelectionChange}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              onRowDoubleClick={(product) => navigate(`/products/${product.id}`)}
+              onNavigateToNextField={() => {
+                // Navigate to next component after table (could be action buttons)
+              }}
+              onNavigateToPreviousField={() => {
+                // Navigate back to status filter
+                focusNavigation.focusLastFieldBeforeTable();
+              }}
+              getRowId={(product) => product.id}
+              onEditSelected={handleEditSelected}
+              onDeleteSelected={handleDeleteProduct}
+              ref={tableRef}
+            />
+          </div>
+        </div>
+      </TooltipProvider>
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onClose={handleCancelDelete}

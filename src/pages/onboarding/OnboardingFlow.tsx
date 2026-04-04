@@ -9,7 +9,7 @@ import {
   Button,
   Typography,
   LinearProgress,
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import { useOnboarding } from '../../context/onboarding';
 import { OnboardingWelcome } from './OnboardingWelcome';
 import { OrganizationSetup } from './OrganizationSetup';

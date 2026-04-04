@@ -1,6 +1,87 @@
 import React, { useEffect, useState } from 'react';
-import { Snackbar, Alert, Button, Box } from '@mui/material';
+import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
+import { Button } from 'components/ui';
 import type { UpdateInfo } from 'electron-updater';
+
+type NotificationVariant = 'info' | 'success' | 'error';
+
+interface NotificationCardProps {
+  variant: NotificationVariant;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+  onClose?: () => void;
+}
+
+const notificationStyles: Record<NotificationVariant, string> = {
+  info: 'border-sky-500/30 bg-sky-500/10 text-sky-100',
+  success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100',
+  error: 'border-destructive/30 bg-destructive/10 text-destructive-foreground',
+};
+
+const iconStyles: Record<NotificationVariant, string> = {
+  info: 'text-sky-300',
+  success: 'text-emerald-300',
+  error: 'text-destructive-foreground',
+};
+
+const NotificationIcon: React.FC<{ variant: NotificationVariant }> = ({ variant }) => {
+  if (variant === 'success') {
+    return <CheckCircle2 className="h-4 w-4 shrink-0" />;
+  }
+
+  if (variant === 'error') {
+    return <AlertCircle className="h-4 w-4 shrink-0" />;
+  }
+
+  return <Info className="h-4 w-4 shrink-0" />;
+};
+
+const NotificationCard: React.FC<NotificationCardProps> = ({
+  variant,
+  children,
+  action,
+  onClose,
+}) => {
+  return (
+    <div
+      role={variant === 'error' ? 'alert' : 'status'}
+      aria-live={variant === 'error' ? 'assertive' : 'polite'}
+      className={[
+        'pointer-events-auto w-full max-w-sm rounded-lg border shadow-lg backdrop-blur',
+        'bg-background/95 text-foreground',
+      ].join(' ')}
+    >
+      <div className="flex items-start gap-3 p-3">
+        <div
+          className={[
+            'mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full',
+            notificationStyles[variant],
+            iconStyles[variant],
+          ].join(' ')}
+        >
+          <NotificationIcon variant={variant} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="text-sm">{children}</div>
+          {action && <div className="mt-2">{action}</div>}
+        </div>
+
+        {onClose && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0"
+            onClick={onClose}
+            aria-label="Fechar notificação"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const UpdateNotification: React.FC = () => {
   const [updateAvailable, setUpdateAvailable] = useState<UpdateInfo | null>(null);
@@ -31,48 +112,49 @@ export const UpdateNotification: React.FC = () => {
   };
 
   return (
-    <>
-      <Snackbar
-        open={!!updateAvailable && !updateDownloaded}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          severity="info"
+    <div className="pointer-events-none fixed bottom-4 right-4 z-[10010] flex w-[min(100%-2rem,24rem)] flex-col gap-2">
+      {!!updateAvailable && !updateDownloaded && (
+        <NotificationCard
+          variant="info"
           action={
-            <Button color="inherit" size="small" onClick={handleDownload}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                void handleDownload();
+              }}
+            >
               Baixar
             </Button>
           }
         >
           Uma nova versão {updateAvailable?.version} está disponível!
-        </Alert>
-      </Snackbar>
+        </NotificationCard>
+      )}
 
-      <Snackbar
-        open={!!updateDownloaded}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          severity="success"
+      {!!updateDownloaded && (
+        <NotificationCard
+          variant="success"
           action={
-            <Button color="inherit" size="small" onClick={handleInstall}>
+            <Button
+              size="sm"
+              onClick={() => {
+                void handleInstall();
+              }}
+            >
               Instalar Agora
             </Button>
           }
         >
           Atualização {updateDownloaded?.version} baixada e pronta para instalar!
-        </Alert>
-      </Snackbar>
+        </NotificationCard>
+      )}
 
-      <Snackbar
-        open={!!error}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        onClose={() => setError(null)}
-      >
-        <Alert severity="error" onClose={() => setError(null)}>
+      {!!error && (
+        <NotificationCard variant="error" onClose={() => setError(null)}>
           Erro ao verificar atualizações: {error}
-        </Alert>
-      </Snackbar>
-    </>
+        </NotificationCard>
+      )}
+    </div>
   );
-}; 
+};

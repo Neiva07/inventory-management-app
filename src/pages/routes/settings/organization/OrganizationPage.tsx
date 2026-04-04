@@ -8,13 +8,9 @@ import {
   Paper,
   Alert,
   CircularProgress,
-  Autocomplete,
   FormHelperText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from '@mui/material';
+} from 'components/ui/form-compat';
+import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { useAuth } from '../../../../context/auth';
 import { updateOrganization, deleteOrganization } from '../../../../model/organization';
 import { states, citiesByState } from '../../../../model/region';
@@ -403,35 +399,39 @@ export const OrganizationPage = () => {
                 />
               </Grid>
               <Grid item xs={12} md={4}>
-                <Autocomplete
-                  options={states.map(state => state.name)}
-                  value={formData.address.state}
-                  onChange={(_, newValue) => handleStateChange(newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Estado"
-                      size="small"
-                      required
-                    />
-                  )}
-                />
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium">Estado</label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    value={formData.address.state || ''}
+                    onChange={(e) => handleStateChange(e.target.value || null)}
+                  >
+                    <option value="">Selecione</option>
+                    {states.map((state) => (
+                      <option key={state.code} value={state.name}>
+                        {state.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </Grid>
               <Grid item xs={12} md={4}>
-                <Autocomplete
-                  options={availableCities}
-                  value={formData.address.city}
-                  onChange={(_, newValue) => handleCityChange(newValue)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Cidade"
-                      size="small"
-                      required
-                      disabled={!formData.address.state}
-                    />
-                  )}
-                />
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium">Cidade</label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={formData.address.city || ''}
+                    onChange={(e) => handleCityChange(e.target.value || null)}
+                    disabled={!formData.address.state}
+                  >
+                    <option value="">Selecione</option>
+                    {availableCities.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </Grid>
               <Grid item xs={12} md={4}>
                 <TextField
@@ -666,28 +666,14 @@ export const OrganizationPage = () => {
         </Button>
       </Box>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirmar Exclusão</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Tem certeza que deseja excluir esta organização? Esta ação não pode ser desfeita.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleDelete} 
-            color="error" 
-            variant="contained"
-            disabled={deleting}
-          >
-            {deleting ? 'Excluindo...' : 'Excluir'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={() => {
+          void handleDelete();
+        }}
+        resourceName="organização"
+      />
     </Box>
   );
-}; 
+};

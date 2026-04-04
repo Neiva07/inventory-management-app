@@ -11,7 +11,7 @@ import {
   Chip,
   Paper,
   ChipProps,
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import {
   DataObject as DataIcon,
   Inventory as ProductIcon,
@@ -20,7 +20,7 @@ import {
   Category as CategoryIcon,
   CheckCircle as CheckIcon,
   Info as InfoIcon
-} from '@mui/icons-material';
+} from 'components/ui/icon-compat';
 import { useOnboarding } from '../../context/onboarding';
 
 export const SampleDataSetup: React.FC = () => {

@@ -126,7 +126,6 @@ ipcMain.handle('open-external-url', async (event, url: string) => {
     throw error;
   }
 });
-console.log(`logging all env variables: `, process.env);
 ipcMain.handle('get-env-variable', (event, key: string) => {
   return process.env[key] || '';
 });

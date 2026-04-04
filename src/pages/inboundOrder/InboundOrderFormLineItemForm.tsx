@@ -1,10 +1,26 @@
-import { Box, Button, Grid, TextField } from "@mui/material";
 import { Product, Variant } from "model/products";
 import React from "react";
 import { useFormContext, Controller } from "react-hook-form";
 import { InboundOrderFormDataInterface } from "./useInboundOrderForm";
 import { DuplicateItemDialog } from "components/DuplicateItemDialog";
 import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
+import { Button, Input } from "components/ui";
+import { cn } from "lib/utils";
+
+const Field = ({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div className={cn("space-y-1", className)}>
+    <label className="block text-sm font-medium text-foreground">{label}</label>
+    {children}
+  </div>
+);
 
 export const InboundOrderFormLineItemForm = ({ 
   productSelectRef,
@@ -46,9 +62,9 @@ export const InboundOrderFormLineItemForm = ({
 
   const isFormCompleted = formMethods.watch('pendingItem.isFormCompleted')
   
-  return <Box>
-    <Grid container spacing={1}>
-      <Grid item xs={3}>
+  return <div>
+    <div className="grid grid-cols-1 gap-2 md:grid-cols-12">
+      <div className="md:col-span-3">
         <Controller
           name="pendingItem.selectedProduct"
           control={formMethods.control}
@@ -72,8 +88,8 @@ export const InboundOrderFormLineItemForm = ({
             />
           )}
         />
-      </Grid>
-      <Grid item xs={3}>
+      </div>
+      <div className="md:col-span-3">
         <Controller
           name="pendingItem.variant"
           control={formMethods.control}
@@ -98,71 +114,63 @@ export const InboundOrderFormLineItemForm = ({
             />
           )}
         />
-      </Grid>
-      <Grid item xs={3}>
-        <TextField
-          label="Estoque"
-          fullWidth
-          variant="outlined"
-          disabled
-          value={pendingItem.inventory}
-        />
-      </Grid>
-      <Grid item xs={3}>
+      </div>
+      <div className="md:col-span-3">
+        <Field label="Estoque">
+          <Input disabled value={pendingItem.inventory ?? ""} />
+        </Field>
+      </div>
+      <div className="md:col-span-3">
         <Controller
           name="pendingItem.quantity"
           control={formMethods.control}
           render={({ field }) => (
-            <TextField
-              {...field}
-              ref={quantityRef}
-              label="Quantidade"
-              fullWidth
-              variant="outlined"
-              onChange={(e) => field.onChange(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
-              onFocus={(e) => e.target.select()}
-            />
+            <Field label="Quantidade">
+              <Input
+                {...field}
+                ref={quantityRef}
+                value={field.value ?? ""}
+                onChange={(e) => field.onChange(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
+                onFocus={(e) => e.target.select()}
+              />
+            </Field>
           )}
         />
-      </Grid>
-      <Grid item xs={3}>
+      </div>
+      <div className="md:col-span-3">
         <Controller
           name="pendingItem.unitCost"
           control={formMethods.control}
           render={({ field }) => (
-            <TextField
-              {...field}
-              ref={unitCostRef}
-              label="Custo Unitário"
-              fullWidth
-              variant="outlined"
-              onChange={(e) => field.onChange(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
-              onFocus={(e) => e.target.select()}
-            />
+            <Field label="Custo Unitário">
+              <Input
+                {...field}
+                ref={unitCostRef}
+                value={field.value ?? ""}
+                onChange={(e) => field.onChange(!isNaN(Number(e.target.value)) ? Number(e.target.value) : 0)}
+                onFocus={(e) => e.target.select()}
+              />
+            </Field>
           )}
         />
-      </Grid>
-      <Grid item xs={3}>
-        <TextField
-          label="Total do produto"
-          fullWidth
-          variant="outlined"
-          disabled
-          value={pendingItem.itemTotalCost}
-        />
-      </Grid>
-      <Grid item xs={6}>
+      </div>
+      <div className="md:col-span-3">
+        <Field label="Total do produto">
+          <Input disabled value={pendingItem.itemTotalCost ?? ""} />
+        </Field>
+      </div>
+      <div className="md:col-span-6">
+        <label className="block text-sm font-medium text-transparent">Ação</label>
         <Button 
           onClick={handleAddItem} 
-          fullWidth 
-          style={{ height: "100%" }} 
-          variant="outlined" 
+          className="h-9 w-full md:h-[calc(100%-24px)]"
+          variant="outline" 
           disabled={!isFormCompleted} 
         > 
           Adicionar Item 
         </Button>
-      </Grid>
-    </Grid>
+      </div>
+    </div>
     
     <DuplicateItemDialog
       open={showDuplicateDialog}
@@ -171,5 +179,5 @@ export const InboundOrderFormLineItemForm = ({
       productName={pendingItem.selectedProduct?.title ?? ''}
       unitName={pendingItem.variant?.unit.name ?? ''}
     />
-    </Box>
+    </div>
 } 

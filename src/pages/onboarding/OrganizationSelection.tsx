@@ -14,13 +14,13 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import {
   Search as SearchIcon,
   Add as AddIcon,
   Group as GroupIcon,
   Business as BusinessIcon,
-} from '@mui/icons-material';
+} from 'components/ui/icon-compat';
 import { getOrganization, Organization } from '../../model/organization';
 import {
   searchOrganizations,

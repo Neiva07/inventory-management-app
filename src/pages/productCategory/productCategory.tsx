@@ -1,15 +1,40 @@
-import React, { ChangeEvent, useEffect, useState } from "react"
-import { Box, Button, Grid, TextField, Typography, Paper, Container, List, ListItem, ListItemText, Divider, Skeleton, IconButton, Menu, MenuItem } from "@mui/material"
-import { useAuth } from "context/auth";
+import React, { ChangeEvent, useEffect, useState } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
-import { createProductCategories, getProductCategories, ProductCategory, updateProductCategory, deleteProductCategory } from "../../model/productCategories";
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+
+import { useAuth } from "context/auth";
+import {
+  createProductCategories,
+  deleteProductCategory,
+  getProductCategories,
+  ProductCategory,
+  updateProductCategory,
+} from "../../model/productCategories";
 import { SearchField } from "../../components/SearchField";
-import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
-import { PublicIdDisplay } from 'components/PublicIdDisplay';
+import { DeleteConfirmationDialog } from "components/DeleteConfirmationDialog";
+import { PublicIdDisplay } from "components/PublicIdDisplay";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Textarea,
+} from "components/ui";
+
+function LoadingSkeletonRows() {
+  return (
+    <div className="space-y-2">
+      {[1, 2, 3].map((index) => (
+        <div key={index} className="rounded-md border p-4">
+          <div className="mb-2 h-4 w-2/3 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-5/6 animate-pulse rounded bg-muted" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export const ProductCategories = () => {
   const { user, organization } = useAuth();
@@ -21,29 +46,30 @@ export const ProductCategories = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleChangeName = (e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value)
-  }
+    setName(e.target.value);
+  };
+
   const handleChangeDescription = (e: ChangeEvent<HTMLInputElement>) => {
-    setDescription(e.target.value)
-  }
+    setDescription(e.target.value);
+  };
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  // Filter categories based on search term
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredCategories(productCategories);
     } else {
-      const filtered = productCategories.filter(category =>
-        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      const filtered = productCategories.filter(
+        (category) =>
+          category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (category.description &&
+            category.description.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       setFilteredCategories(filtered);
     }
@@ -51,57 +77,45 @@ export const ProductCategories = () => {
 
   useEffect(() => {
     setLoading(true);
-    getProductCategories(user.id, '', organization?.id)
-      .then(queryResult => {
-        const categories = queryResult.docs.map(r => r.data() as ProductCategory);
+    getProductCategories(user.id, "", organization?.id)
+      .then((queryResult) => {
+        const categories = queryResult.docs.map((r) => r.data() as ProductCategory);
         setProductCategories(categories);
         setFilteredCategories(categories);
       })
       .finally(() => setLoading(false));
-  }, [user])
-
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, category: ProductCategory) => {
-    setMenuAnchorEl(event.currentTarget);
-    setSelectedCategory(category);
-  };
-
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-    setSelectedCategory(null);
-  };
+  }, [organization?.id, user.id]);
 
   const handleEditClick = (category: ProductCategory) => {
     setEditingCategory(category);
     setName(category.name);
     setDescription(category.description || "");
-    handleMenuClose();
   };
 
   const handleDeleteClick = (category: ProductCategory) => {
     setSelectedCategory(category);
     setDeleteDialogOpen(true);
-    handleMenuClose();
   };
 
   const handleConfirmDelete = () => {
     if (selectedCategory) {
       try {
         deleteProductCategory(selectedCategory.id);
-        toast.success('Categoria excluída com sucesso');
+        toast.success("Categoria excluída com sucesso");
         refreshCategories();
       } catch (err: unknown) {
         console.error(err);
-        toast.error('Erro ao excluir categoria');
+        toast.error("Erro ao excluir categoria");
       }
     }
     setDeleteDialogOpen(false);
     setSelectedCategory(null);
-  }
+  };
 
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
     setSelectedCategory(null);
-  }
+  };
 
   const handleCancelEdit = () => {
     setEditingCategory(null);
@@ -111,237 +125,166 @@ export const ProductCategories = () => {
 
   const submitNewProductCategory = () => {
     if (!name.trim()) {
-      toast.error('Por favor, insira um nome para a categoria');
+      toast.error("Por favor, insira um nome para a categoria");
       return;
     }
 
     try {
       if (editingCategory) {
-        updateProductCategory(editingCategory.id, { name, description, userID: user.id, organizationId: organization?.id })
-          .catch((err: Error) => {
-            console.error(err);
-            toast.error('Erro ao atualizar categoria');
-          });
-          toast.success('Categoria atualizada com sucesso');
+        updateProductCategory(editingCategory.id, {
+          name,
+          description,
+          userID: user.id,
+          organizationId: organization?.id,
+        }).catch((err: Error) => {
+          console.error(err);
+          toast.error("Erro ao atualizar categoria");
+        });
+        toast.success("Categoria atualizada com sucesso");
       } else {
-        createProductCategories({ name, description, userID: user.id, organizationId: organization?.id })
-          .catch((err: Error) => {
-            console.error(err);
-            toast.error('Erro ao criar categoria');
-          });
-      toast.success('Categoria criada com sucesso');
+        createProductCategories({
+          name,
+          description,
+          userID: user.id,
+          organizationId: organization?.id,
+        }).catch((err: Error) => {
+          console.error(err);
+          toast.error("Erro ao criar categoria");
+        });
+        toast.success("Categoria criada com sucesso");
       }
-      handleCancelEdit(); 
+      handleCancelEdit();
       refreshCategories();
     } catch (err: unknown) {
       console.error(err);
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde');
+      toast.error("Alguma coisa deu errado. Tente novamente mais tarde");
     }
   };
 
   const refreshCategories = () => {
     setLoading(true);
-    getProductCategories(user.id, '', organization?.id)
-      .then(queryResult => {
-        const categories = queryResult.docs.map(r => r.data() as ProductCategory);
+    getProductCategories(user.id, "", organization?.id)
+      .then((queryResult) => {
+        const categories = queryResult.docs.map((r) => r.data() as ProductCategory);
         setProductCategories(categories);
         setFilteredCategories(categories);
       })
       .finally(() => setLoading(false));
   };
 
-  const LoadingSkeleton = () => (
-    <>
-      {[1, 2, 3].map((index) => (
-        <React.Fragment key={index}>
-          <ListItem sx={{ py: 2 }}>
-            <ListItemText
-              primary={<Skeleton variant="text" width="60%" />}
-              secondary={<Skeleton variant="text" width="80%" />}
-            />
-          </ListItem>
-          {index < 3 && <Divider />}
-        </React.Fragment>
-      ))}
-    </>
-  );
-
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Grid container spacing={4}>
-        {/* List of Categories */}
-        <Grid item xs={12} md={6}>
-          <Paper 
-            elevation={2} 
-            sx={{ 
-              p: 3, 
-              height: '100%',
-              maxHeight: '800px',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <Typography variant="h5" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
-              Categorias Cadastradas
-            </Typography>
-            <Box sx={{ mb: 2 }}>
-              <SearchField
-                value={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="Buscar categorias..."
-              />
-            </Box>
-            <List sx={{ flex: 1, overflow: 'auto' }}>
-              {loading ? (
-                <LoadingSkeleton />
-              ) : filteredCategories.length === 0 ? (
-                <Typography color="text.secondary" align="center">
-                  {searchTerm ? 'Nenhuma categoria encontrada' : 'Nenhuma categoria cadastrada'}
-                </Typography>
-              ) : (
-                filteredCategories.map((category, index) => (
-                  <React.Fragment key={category.id}>
-                    <ListItem 
-                      sx={{ 
-                        py: 2,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                          borderRadius: 1
-                        }
-                      }}
-                      secondaryAction={
-                        <IconButton 
-                          edge="end" 
-                          aria-label="more"
-                          onClick={(e) => handleMenuClick(e, category)}
-                          color="primary"
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={
-                          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                            {category.name}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography 
-                            variant="body2" 
-                            color="text.secondary"
-                            sx={{ 
-                              mt: 0.5,
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden'
-                            }}
-                          >
-                            {category.description || 'Sem descrição'}
-                          </Typography>
-                        }
-                      />
-                    </ListItem>
-                    {index < filteredCategories.length - 1 && <Divider />}
-                  </React.Fragment>
-                ))
-              )}
-            </List>
-            <Menu
-              anchorEl={menuAnchorEl}
-              open={Boolean(menuAnchorEl)}
-              onClose={handleMenuClose}
-            >
-              <MenuItem onClick={() => selectedCategory && handleEditClick(selectedCategory)}>
-                <EditIcon fontSize="small" sx={{ mr: 1 }} />
-                Editar
-              </MenuItem>
-              <MenuItem onClick={() => selectedCategory && handleDeleteClick(selectedCategory)}>
-                <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
-                Excluir
-              </MenuItem>
-            </Menu>
-          </Paper>
-        </Grid>
-
-        {/* Create/Edit Category Form */}
-        <Grid item xs={12} md={6}>
-          <Paper 
-            elevation={2} 
-            sx={{ 
-              p: 3,
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 3 }}>
-              <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 600 }}>
-                {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
-              </Typography>
-              {editingCategory?.publicId && (
-                <PublicIdDisplay 
-                  publicId={editingCategory.publicId} 
-                />
-              )}
-            </Box>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  id="name"
-                  label="Nome da Categoria"
-                  onChange={handleChangeName}
-                  value={name}
-                  fullWidth
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="description"
-                  label="Descrição da Categoria"
-                  onChange={handleChangeDescription}
-                  value={description}
-                  multiline
-                  rows={3}
-                />
-              </Grid>
-              <Grid item xs={12} sx={{ mt: 2, display: 'flex', gap: 2 }}>
-                {editingCategory && (
-                  <Button
-                    variant="outlined"
-                    onClick={handleCancelEdit}
-                    sx={{
-                      py: 1.5,
-                      px: 4,
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                )}
-                <Button
-                  variant="contained"
-                  onClick={submitNewProductCategory}
-                  startIcon={editingCategory ? <EditIcon /> : <AddIcon />}
-                  sx={{
-                    py: 1.5,
-                    px: 4,
-                  }}
+    <div className="mx-auto grid max-w-6xl gap-6 py-4 lg:grid-cols-2">
+      <Card className="flex min-h-[520px] flex-col">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl text-primary">Categorias Cadastradas</CardTitle>
+          <SearchField
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="Buscar categorias..."
+          />
+        </CardHeader>
+        <CardContent className="flex min-h-0 flex-1 flex-col pt-0">
+          <div className="min-h-0 flex-1 space-y-2 overflow-auto pr-1">
+            {loading ? (
+              <LoadingSkeletonRows />
+            ) : filteredCategories.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {searchTerm ? "Nenhuma categoria encontrada" : "Nenhuma categoria cadastrada"}
+              </p>
+            ) : (
+              filteredCategories.map((category) => (
+                <div
+                  key={category.id}
+                  className="flex items-start justify-between gap-2 rounded-md border p-3 transition-colors hover:bg-accent/40"
                 >
-                  {editingCategory ? 'Atualizar Categoria' : 'Criar Categoria'}
-                </Button>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-      </Grid>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{category.name}</p>
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {category.description || "Sem descrição"}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditClick(category)}
+                      aria-label={`Editar categoria ${category.name}`}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteClick(category)}
+                      aria-label={`Excluir categoria ${category.name}`}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <CardTitle className="text-xl text-primary">
+              {editingCategory ? "Editar Categoria" : "Nova Categoria"}
+            </CardTitle>
+            {editingCategory?.publicId ? (
+              <PublicIdDisplay publicId={editingCategory.publicId} />
+            ) : null}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-0">
+          <div className="space-y-1">
+            <label htmlFor="category-name" className="text-sm font-medium">
+              Nome da Categoria
+            </label>
+            <Input
+              id="category-name"
+              onChange={handleChangeName}
+              value={name}
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="category-description" className="text-sm font-medium">
+              Descrição da Categoria
+            </label>
+            <Textarea
+              id="category-description"
+              onChange={(e) => setDescription(e.target.value)}
+              value={description}
+              rows={3}
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-2">
+            {editingCategory ? (
+              <Button variant="outline" onClick={handleCancelEdit}>
+                Cancelar
+              </Button>
+            ) : null}
+            <Button onClick={submitNewProductCategory}>
+              {editingCategory ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+              {editingCategory ? "Atualizar Categoria" : "Criar Categoria"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         resourceName="categoria"
       />
-    </Container>
-  )
-}
+    </div>
+  );
+};

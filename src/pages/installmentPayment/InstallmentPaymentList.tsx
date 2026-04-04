@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Grid, TextField, Box, IconButton, Tooltip } from '@mui/material';
-import { Payment, Visibility, Refresh } from '@mui/icons-material';
+import { CreditCard, Eye, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { InstallmentPayment, getInstallmentPayments, InstallmentPaymentStatus } from '../../model/installmentPayment';
@@ -9,7 +8,14 @@ import { PageTitle } from '../../components/PageTitle';
 import { DeleteConfirmationDialog } from '../../components/DeleteConfirmationDialog';
 import { PaymentModal } from '../../components/PaymentModal';
 import { formatCurrency } from 'lib/math';
-import { DatePicker } from '@mui/x-date-pickers';
+import {
+  Button,
+  DatePickerField,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from 'components/ui';
 import { useOverdueCheck } from '../../lib/overdueCheck';
 import { getDateStartTimestamp, getDateEndTimestamp } from '../../lib/date';
 import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
@@ -122,21 +128,12 @@ export const InstallmentPaymentList = () => {
       renderCell: (value) => {
         const statusInfo = value as { label: string; color: string };
         return (
-          <Box
-            sx={{
-              backgroundColor: statusInfo.color,
-              color: 'white',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              fontSize: '0.75rem',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+          <div
+            className="inline-flex min-w-[76px] items-center justify-center rounded px-2 py-1 text-xs font-bold text-white"
+            style={{ backgroundColor: statusInfo.color }}
           >
             {statusInfo.label}
-          </Box>
+          </div>
         );
       },
     },
@@ -162,34 +159,45 @@ export const InstallmentPaymentList = () => {
         const canPay = installment.status === 'pending' || installment.status === 'overdue';
         
         return (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title="Ver Detalhes">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/installment-payments/${installment.id}`);
-                }}
-              >
-                <Visibility fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            {canPay && (
-              <Tooltip title="Registrar Pagamento">
-                <IconButton
-                  size="small"
-                  color="primary"
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedInstallment(installment);
-                    setPaymentModalOpen(true);
+                    navigate(`/installment-payments/${installment.id}`);
                   }}
                 >
-                  <Payment fontSize="small" />
-                </IconButton>
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ver Detalhes</TooltipContent>
+            </Tooltip>
+            {canPay && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedInstallment(installment);
+                      setPaymentModalOpen(true);
+                    }}
+                  >
+                    <CreditCard className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Registrar Pagamento</TooltipContent>
               </Tooltip>
             )}
-          </Box>
+          </div>
         );
       },
     },
@@ -347,93 +355,98 @@ export const InstallmentPaymentList = () => {
 
   return (
     <>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <PageTitle 
-          showKeyboardHelp={true}
-          keyboardHelpTitle="Atalhos do Teclado - Parcelas"
-          helpOpen={showHelp}
-          onHelpOpenChange={setShowHelp}
-        >
-          Parcelas
-        </PageTitle>
-        <Tooltip title="Verificar vencimentos">
-          <IconButton onClick={handleRefreshOverdue} color="primary">
-            <Refresh />
-          </IconButton>
-        </Tooltip>
-      </Box>
-      
-      <Grid container spacing={1} sx={{ mb: 2 }}>
-        <Grid item xs={6} md={3}>
-          <DatePicker
-            label="Data início"
-            value={startDate}
-            onChange={setStartDate}
-            ref={startDateRef}
-            slotProps={{ 
-              textField: { 
-                fullWidth: true,
-              } 
-            }}
-          />
-        </Grid>
-        <Grid item xs={6} md={3}>
-          <DatePicker
-            label="Data fim"
-            value={endDate}
-            onChange={setEndDate}
-            ref={endDateRef}
-            slotProps={{ 
-              textField: { 
-                fullWidth: true,
-              } 
-            }}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <EnhancedAutocomplete
-            ref={statusFilterRef}
-            id="status-filter"
-            options={statuses}
-            getOptionLabel={(option: SelectField<InstallmentPaymentStatus | "">) => option.label}
-            label="Status"
-            isOptionEqualToValue={(option: SelectField<InstallmentPaymentStatus | "">, value: SelectField<InstallmentPaymentStatus | "">) =>
-              option.value === value?.value
-            }
-            onChange={handleStatusSelection}
-            onNextField={focusNavigation.focusFirstTableRow}
-            onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
-            value={statusSelected}
-          />
-        </Grid>
-      </Grid>
+      <TooltipProvider>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <PageTitle
+            showKeyboardHelp={true}
+            keyboardHelpTitle="Atalhos do Teclado - Parcelas"
+            helpOpen={showHelp}
+            onHelpOpenChange={setShowHelp}
+          >
+            Parcelas
+          </PageTitle>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-primary"
+                onClick={handleRefreshOverdue}
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Verificar vencimentos</TooltipContent>
+          </Tooltip>
+        </div>
 
-      <Grid xs={12} item style={{ minHeight: 400 }}>
-        <CustomDataTable
-          data={installmentPayments}
-          columns={columns}
-          totalCount={count}
-          loading={loading}
-          selectedRowId={selectedRowID}
-          onRowSelectionChange={handleRowSelectionChange}
-          page={page}
-          pageSize={pageSize}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-          onRowDoubleClick={(installmentPayment) => navigate(`/installment-payments/${installmentPayment.id}`)}
-          onNavigateToNextField={() => {
-            // Navigate to next component after table (could be action buttons)
-          }}
-          onNavigateToPreviousField={() => {
-            // Navigate back to status filter
-            focusNavigation.focusLastFieldBeforeTable();
-          }}
-          getRowId={(installmentPayment) => installmentPayment.id}
-          onEditSelected={handleEditSelected}
-          onDeleteSelected={handleDeleteInstallmentPayment}
-          ref={tableRef}
-        />
-      </Grid>
+        <div className="mb-2 grid grid-cols-12 gap-2">
+          <div className="col-span-6 md:col-span-3">
+            <DatePickerField
+              ref={startDateRef}
+              id="installment-payments-start-date"
+              label="Data início"
+              value={startDate}
+              onChange={setStartDate}
+              allowClear
+            />
+          </div>
+          <div className="col-span-6 md:col-span-3">
+            <DatePickerField
+              ref={endDateRef}
+              id="installment-payments-end-date"
+              label="Data fim"
+              value={endDate}
+              onChange={setEndDate}
+              allowClear
+            />
+          </div>
+          <div className="col-span-12 md:col-span-6">
+            <EnhancedAutocomplete
+              ref={statusFilterRef}
+              id="status-filter"
+              options={statuses}
+              getOptionLabel={(option: SelectField<InstallmentPaymentStatus | "">) => option.label}
+              label="Status"
+              isOptionEqualToValue={(option: SelectField<InstallmentPaymentStatus | "">, value: SelectField<InstallmentPaymentStatus | "">) =>
+                option.value === value?.value
+              }
+              onChange={handleStatusSelection}
+              onNextField={focusNavigation.focusFirstTableRow}
+              onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
+              value={statusSelected}
+            />
+          </div>
+        </div>
+
+        <div className="min-h-[400px]">
+          <CustomDataTable
+            data={installmentPayments}
+            columns={columns}
+            totalCount={count}
+            loading={loading}
+            selectedRowId={selectedRowID}
+            onRowSelectionChange={handleRowSelectionChange}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            onRowDoubleClick={(installmentPayment) => navigate(`/installment-payments/${installmentPayment.id}`)}
+            onNavigateToNextField={() => {
+              // Navigate to next component after table (could be action buttons)
+            }}
+            onNavigateToPreviousField={() => {
+              // Navigate back to status filter
+              focusNavigation.focusLastFieldBeforeTable();
+            }}
+            getRowId={(installmentPayment) => installmentPayment.id}
+            onEditSelected={handleEditSelected}
+            onDeleteSelected={handleDeleteInstallmentPayment}
+            ref={tableRef}
+          />
+        </div>
+      </TooltipProvider>
 
       <PaymentModal
         open={paymentModalOpen}

@@ -9,7 +9,7 @@ import {
   Avatar,
   Chip,
   Divider
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import {
   Business as BusinessIcon,
   Settings as SettingsIcon,
@@ -19,7 +19,7 @@ import {
   TrendingUp as TrendingIcon,
   Security as SecurityIcon,
   Speed as SpeedIcon
-} from '@mui/icons-material';
+} from 'components/ui/icon-compat';
 import logo from '../../../assets/icons/logo.png';
 
 export const OnboardingWelcome: React.FC = () => {

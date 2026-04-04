@@ -1,16 +1,22 @@
 import * as React from 'react';
 import { deleteInboundOrder, getInboundOrders, InboundOrder, InboundOrderStatus } from 'model/inboundOrder';
-import { Button, Grid, TextField, Skeleton, Typography, Box, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { Supplier, getSuppliers } from 'model/suppliers';
 import { useAuth } from 'context/auth';
 import { statuses } from './useInboundOrderForm';
-import { DatePicker } from '@mui/x-date-pickers';
 import { SelectField } from 'pages/product/useProductCreateForm';
 import { format } from "date-fns"
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import {
+  Button,
+  DatePickerField,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from 'components/ui';
 import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
 import { KeyboardListPageKeyboardHelp } from 'components/KeyboardListPageKeyboardHelp';
 import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable';
@@ -232,8 +238,9 @@ export const InboundOrderList = () => {
       >
         Compras
       </PageTitle>
-      <Grid spacing={1} container>
-        <Grid item xs={4}>
+      <TooltipProvider>
+        <div className="grid grid-cols-12 gap-2">
+          <div className="col-span-12 lg:col-span-4">
           <EnhancedAutocomplete
             ref={supplierFilterRef}
             id="supplier-filter"
@@ -249,34 +256,28 @@ export const InboundOrderList = () => {
             value={selectedSupplier}
             autoFocus
           />
-        </Grid>
-        <Grid item xs={2}>
-          <DatePicker 
-            value={startDate} 
-            label="Inicio" 
-            onChange={e => setStartDate(e ?? null)}
+          </div>
+          <div className="col-span-6 lg:col-span-2">
+          <DatePickerField
             ref={startDateRef}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-              }
-            }}
+            id="inbound-orders-start-date"
+            value={startDate}
+            label="Inicio"
+            onChange={setStartDate}
+            allowClear
           />
-        </Grid>
-        <Grid item xs={2}>
-          <DatePicker 
-            value={endDate} 
-            label="Fim" 
-            onChange={e => setEndDate(e ?? null)}
+          </div>
+          <div className="col-span-6 lg:col-span-2">
+          <DatePickerField
             ref={endDateRef}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-              }
-            }}
+            id="inbound-orders-end-date"
+            value={endDate}
+            label="Fim"
+            onChange={setEndDate}
+            allowClear
           />
-        </Grid>
-        <Grid item xs={4}>
+          </div>
+          <div className="col-span-12 lg:col-span-4">
           <EnhancedAutocomplete
             ref={statusFilterRef}
             id="status-filter"
@@ -291,70 +292,82 @@ export const InboundOrderList = () => {
             onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
             value={statusSelected ? statuses.find(s => s.value === statusSelected) : null}
           />
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + E" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={() => navigate(`/inbound-orders/${selectedRowID}`)}
-              tabIndex={-1}
-            > 
-              Editar Compra 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + D" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={handleDeleteInboundOrder}
-              tabIndex={-1}
-            > 
-              Deletar Compra 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + N" placement="top">
-            <Button 
-              fullWidth 
-              onClick={() => navigate(`/inbound-orders/create`)}
-              tabIndex={-1}
-            > 
-              Cadastrar Compra 
-            </Button>
-          </Tooltip>
-        </Grid>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={() => navigate(`/inbound-orders/${selectedRowID}`)}
+                  tabIndex={-1}
+                >
+                  Editar Compra
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + E</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={handleDeleteInboundOrder}
+                  tabIndex={-1}
+                >
+                  Deletar Compra
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + D</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  onClick={() => navigate(`/inbound-orders/create`)}
+                  tabIndex={-1}
+                >
+                  Cadastrar Compra
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + N</TooltipContent>
+            </Tooltip>
+          </div>
 
-        <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
-          <CustomDataTable
-            data={inboundOrders}
-            columns={columns}
-            totalCount={count}
-            loading={loading}
-            selectedRowId={selectedRowID}
-            onRowSelectionChange={handleRowSelectionChange}
-            page={page}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            onRowDoubleClick={(inboundOrder) => navigate(`/inbound-orders/${inboundOrder.id}`)}
-            onNavigateToNextField={() => {
-              // Navigate to next component after table (could be action buttons)
-            }}
-            onNavigateToPreviousField={() => {
-              // Navigate back to status filter
-              focusNavigation.focusLastFieldBeforeTable();
-            }}
-            getRowId={(inboundOrder) => inboundOrder.id}
-            onEditSelected={handleEditSelected}
-            onDeleteSelected={handleDeleteInboundOrder}
-            ref={tableRef}
-          />
-        </Grid>
-      </Grid>
+          <div className="col-span-12 mt-5 min-h-[400px]">
+            <CustomDataTable
+              data={inboundOrders}
+              columns={columns}
+              totalCount={count}
+              loading={loading}
+              selectedRowId={selectedRowID}
+              onRowSelectionChange={handleRowSelectionChange}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              onRowDoubleClick={(inboundOrder) => navigate(`/inbound-orders/${inboundOrder.id}`)}
+              onNavigateToNextField={() => {
+                // Navigate to next component after table (could be action buttons)
+              }}
+              onNavigateToPreviousField={() => {
+                // Navigate back to status filter
+                focusNavigation.focusLastFieldBeforeTable();
+              }}
+              getRowId={(inboundOrder) => inboundOrder.id}
+              onEditSelected={handleEditSelected}
+              onDeleteSelected={handleDeleteInboundOrder}
+              ref={tableRef}
+            />
+          </div>
+        </div>
+      </TooltipProvider>
 
       <DeleteConfirmationDialog
         open={deleteDialogOpen}

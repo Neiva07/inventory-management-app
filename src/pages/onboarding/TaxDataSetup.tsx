@@ -8,13 +8,13 @@ import {
   CardContent,
   Button,
   Alert
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import { 
   Receipt as ReceiptIcon,
   Business as BusinessIcon,
   Upload as UploadIcon,
   CheckCircle as CheckIcon
-} from '@mui/icons-material';
+} from 'components/ui/icon-compat';
 import { useOnboarding } from '../../context/onboarding';
 
 export const TaxDataSetup: React.FC = () => {

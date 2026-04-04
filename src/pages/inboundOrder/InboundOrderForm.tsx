@@ -1,5 +1,3 @@
-import { Button, Tooltip } from "@mui/material";
-import { Box } from "@mui/system";
 import { FormProvider } from "react-hook-form"
 import { useParams, useNavigate } from "react-router-dom";
 import { InboundOrderFormHeader } from "./InboundOrderFormHeader";
@@ -22,6 +20,14 @@ import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { ProductUpdateModal } from 'components/ProductUpdateModal';
 import { ProductUpdateToggle } from 'components/ProductUpdateToggle';
 import { Product } from 'model/products';
+import {
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "components/ui";
+import { cn } from "lib/utils";
 
 export const InboundOrderForm = () => {
   const { inboundOrderID } = useParams();
@@ -316,7 +322,7 @@ export const InboundOrderForm = () => {
 
   return (
     <FormProvider register={register} reset={reset} {...formMethods}>
-      <Box component="form" ref={formRef}>
+      <form ref={formRef}>
         <InboundOrderFormHeader 
           onDelete={handleDelete} 
           onBack={() => navigate(-1)}
@@ -332,7 +338,7 @@ export const InboundOrderForm = () => {
             dueDateRef,
           }}
         />
-        <Box style={{ marginTop: 40 }}>
+        <div className="mt-10">
           <InboundOrderFormLineItemForm 
             productSelectRef={productSelectRef}
             variantRef={variantRef}
@@ -350,52 +356,68 @@ export const InboundOrderForm = () => {
             handleDialogClose={handleDialogClose}
           />
           
-          <Box sx={{ mt: 2 }}>
+          <div className="mt-2">
             <ProductUpdateToggle
               shouldUpdateProduct={shouldUpdateProduct}
               onToggle={setShouldUpdateProduct}
             />
-          </Box>
-        </Box>
+          </div>
+        </div>
 
-        <Box style={{ marginTop: 40 }}>
+        <div className="mt-10">
           <InboundOrderFormLineItemList deleteLineItemFromForm={deleteLineItemFromForm} />
-        </Box>
+        </div>
         
         {inboundOrderID ? (
-          <Tooltip title="Ctrl/Cmd + Enter" placement="top">
-            <Button onClick={handleSubmit} variant="outlined" size="large" style={{ marginTop: 20}}>
-              Editar Nota
-            </Button>
-          </Tooltip>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleSubmit}
+                  variant="outline"
+                  size="lg"
+                  className="mt-5"
+                >
+                  Editar Nota
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         ) : (
           <>  
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end', marginTop: 8}}>
+          <div className="mt-8 flex items-center justify-end gap-2">
             <CreateModeToggle
               isCreateMode={isCreateMode}
               onToggle={setIsCreateMode}
               listingText="Redirecionar para listagem de compras"
               createText="Criar mais compras"
             />
-          </Box>
+          </div>
 
-            <Tooltip 
-              title={!hasItems ? "Você precisa adicionar ao menos 1 item para fechar a compra" : "Ctrl/Cmd + Enter"}
-              arrow
-            >
-              <Button 
-                onClick={hasItems ? () => setInstallmentModalOpen(true) : undefined} 
-                variant="outlined" 
-                size="large"
-                style={{ 
-                  marginTop: 20,
-                  opacity: hasItems ? 1 : 0.6,
-                  cursor: hasItems ? 'pointer' : 'not-allowed'
-                }}
-              >
-                Fechar Compra
-              </Button>
-            </Tooltip>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={hasItems ? () => setInstallmentModalOpen(true) : undefined} 
+                    variant="outline" 
+                    size="lg"
+                    aria-disabled={!hasItems}
+                    className={cn(
+                      "mt-5",
+                      !hasItems && "cursor-not-allowed opacity-60"
+                    )}
+                  >
+                    Fechar Compra
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {!hasItems
+                    ? "Você precisa adicionar ao menos 1 item para fechar a compra"
+                    : "Ctrl/Cmd + Enter"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             </>
         )}
         
@@ -436,7 +458,7 @@ export const InboundOrderForm = () => {
             { shortcut: 'Ctrl/Cmd + Y', description: 'Alternar atualização de custo do produto' }
           ]}
         />
-      </Box>
+      </form>
     </FormProvider>
   )
 } 

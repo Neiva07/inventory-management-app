@@ -1,8 +1,8 @@
-import React from "react"
-import { Button, Box, Typography, Paper, Container } from "@mui/material"
-import { useAuth } from "context/auth"
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify"
+
+import { useAuth } from "context/auth";
+import { Button, Card, CardContent } from "components/ui";
 
 export const Login = () => {
   const { user, session } = useAuth();
@@ -12,77 +12,36 @@ export const Login = () => {
     if (user) {
       navigate("/");
     }
-  }, [user]);
+  }, [navigate, user]);
 
   if (!session) {
     return (
-      <Container maxWidth="sm">
-        <Box
-          sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Paper
-            elevation={3}
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 3,
-              width: '100%',
-              maxWidth: 400,
-              borderRadius: 2,
-            }}
-          >
-            <Typography 
-              variant="h4" 
-              component="h1" 
-              sx={{ 
-                fontWeight: 600,
-                color: 'primary.main',
-                mb: 2
-              }}
-            >
-              Stockify
-            </Typography>
-
-            <Typography variant="h6" color="text.secondary" align="center" sx={{ mb: 2 }}>
+      <div className="flex min-h-screen items-center justify-center px-4 py-10">
+        <Card className="w-full max-w-md border shadow-lg">
+          <CardContent className="flex flex-col items-center gap-4 p-8">
+            <h1 className="mb-2 text-3xl font-semibold text-primary">Stockify</h1>
+            <p className="mb-2 text-center text-lg text-muted-foreground">
               Gerencie seu inventário de forma eficiente
-            </Typography>
+            </p>
 
             <Button
-              variant="contained"
-              size="large"
-              fullWidth
+              size="lg"
+              className="w-full"
               onClick={() => {
-                console.log(window.env.LOGIN_URL)
-                window.electron.openExternal(window.env.LOGIN_URL)
-              }}
-              sx={{
-                py: 1.5,
-                fontSize: '1.1rem',
-                textTransform: 'none',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                '&:hover': {
-                  boxShadow: '0 6px 8px rgba(0, 0, 0, 0.15)',
-                },
+                window.electron.openExternal(window.env.LOGIN_URL);
               }}
             >
               Entrar
             </Button>
 
-            <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+            <p className="mt-2 text-center text-sm text-muted-foreground">
               Faça login para acessar o sistema
-            </Typography>
-          </Paper>
-        </Box>
-      </Container>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return null;
-}
+};

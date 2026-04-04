@@ -1,5 +1,4 @@
 import {
-  Autocomplete,
   Box,
   Button,
   FormControl,
@@ -7,9 +6,9 @@ import {
   TextField,
   Typography,
   IconButton,
-} from "@mui/material";
+} from "components/ui/form-compat";
 import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Trash2 } from 'lucide-react';
 import React, { useEffect, useRef } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
 import {
@@ -20,8 +19,7 @@ import {
   SelectField,
   FormVariant,
 } from "./useProductCreateForm";
-import { Variant } from "../../model/products";
-import { PaymentMethod, paymentMethods } from "../../model/paymentMethods";
+import { paymentMethods } from "../../model/paymentMethods";
 import { getUnits, Unit } from "model/units";
 import { useAuth } from "context/auth";
 import { add, divide, multiply, subtract } from "lib/math";
@@ -237,7 +235,7 @@ const Price = ({ formMethods, index, parentIndex, focusNextField, focusPreviousF
           size="small"
           style={{ marginTop: '8px' }}
         >
-          <DeleteIcon fontSize="small" />
+          <Trash2 className="h-4 w-4" />
         </IconButton>
       </Grid>
     </Grid>
@@ -418,7 +416,7 @@ const VariantItem = ({ formMethods, index, focusNextField, focusPreviousField, r
             size="medium"
             style={{ marginTop: '8px' }}
           >
-            <DeleteIcon />
+            <Trash2 className="h-4 w-4" />
           </IconButton>
         </Grid>
         <Grid item xs={12}>

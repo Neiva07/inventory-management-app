@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
 import { ListPageKeyboardHelperIcon } from './KeyboardListHelperIcon';
 
 interface PageTitleProps {
@@ -24,20 +23,18 @@ export const PageTitle: React.FC<PageTitleProps> = ({
   helpOpen,
   onHelpOpenChange,
 }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-    <Box sx={{ width: 6, height: 36, bgcolor: 'primary.main', borderRadius: 2, mr: 2 }} />
-    <Typography
-      variant="h4"
-      sx={{
+  <div className="mb-3 flex items-center">
+    <div className="mr-2 h-9 w-1.5 rounded-md bg-primary" />
+    <h2
+      className="text-2xl font-semibold tracking-tight text-primary"
+      style={{
         fontFamily: '"Montserrat", "Inter", "Segoe UI", Arial, sans-serif',
-        fontWeight: 600,
         letterSpacing: '-0.5px',
-        color: 'primary.main',
-        textShadow: '0 2px 8px rgba(26,35,126,0.04)'
+        textShadow: '0 2px 8px rgba(26,35,126,0.04)',
       }}
     >
       {children}
-    </Typography>
+    </h2>
     {showKeyboardHelp && (
       <ListPageKeyboardHelperIcon
         title={keyboardHelpTitle}
@@ -47,5 +44,5 @@ export const PageTitle: React.FC<PageTitleProps> = ({
         onOpenChange={onHelpOpenChange}
       />
     )}
-  </Box>
+  </div>
 ); 

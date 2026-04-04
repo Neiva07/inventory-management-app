@@ -1,10 +1,18 @@
 import React from 'react';
-import { Box, Button, Stack, Tooltip, IconButton } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import BlockIcon from '@mui/icons-material/Block';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import HelpIcon from '@mui/icons-material/Help';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import {
+  ArrowLeft,
+  Ban,
+  CheckCircle2,
+  HelpCircle,
+  Trash2,
+} from 'lucide-react';
+import {
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from 'components/ui';
 
 interface FormActionsProps {
   onDelete?: () => void;
@@ -34,63 +42,94 @@ export const FormActions: React.FC<FormActionsProps> = ({
   absolute = false,
 }) => {
   if (!showDelete && !showInactivate && !showActivate && !showHelp && !showBack) return null;
+
+  const containerStyle: React.CSSProperties = absolute
+    ? { position: 'absolute', top: 24, right: 24, zIndex: 10 }
+    : { display: 'flex', alignItems: 'center' };
+
   return (
-    <Box sx={absolute ? { position: 'absolute', top: 24, right: 24, zIndex: 10 } : { display: 'flex', alignItems: 'center' }}>
-      <Stack direction="row" spacing={2}>
-        {showBack && onBack && (
-          <Tooltip title="Voltar (Ctrl/Cmd + ←)" placement="top">
-            <IconButton onClick={onBack} color="primary" size="large">
-              <ArrowBackIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-        {showDelete && (
-          <Tooltip title="Ctrl/Cmd + D" placement="top">
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={onDelete}
-              sx={{ fontWeight: 600 }}
-            >
-              Deletar
-            </Button>
-          </Tooltip>
-        )}
-        {showInactivate && (
-          <Tooltip title="Ctrl/Cmd + I" placement="top">
-            <Button
-              variant="outlined"
-              color="warning"
-              startIcon={<BlockIcon />}
-              onClick={onInactivate}
-              sx={{ fontWeight: 600 }}
-            >
-              Inativar
-            </Button>
-          </Tooltip>
-        )}
-        {showActivate && (
-          <Tooltip title="Ctrl/Cmd + I" placement="top">
-            <Button
-              variant="outlined"
-              color="success"
-              startIcon={<CheckCircleIcon />}
-              onClick={onActivate}
-              sx={{ fontWeight: 600 }}
-            >
-              Ativar
-            </Button>
-          </Tooltip>
-        )}
-        {showHelp && onShowHelp && (
-          <Tooltip title="F1 - Ajuda" placement="top">
-            <IconButton onClick={onShowHelp} color="primary" size="large">
-              <HelpIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-      </Stack>
-    </Box>
+    <div style={containerStyle}>
+      <TooltipProvider>
+        <div className="flex flex-row gap-4">
+          {showBack && onBack && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onBack}
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 text-primary"
+                  aria-label="Voltar"
+                >
+                  <ArrowLeft />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Voltar (Ctrl/Cmd + ←)</TooltipContent>
+            </Tooltip>
+          )}
+          {showDelete && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={onDelete}
+                  className="font-semibold border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                >
+                  <Trash2 />
+                  Deletar
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + D</TooltipContent>
+            </Tooltip>
+          )}
+          {showInactivate && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={onInactivate}
+                  className="font-semibold border-amber-400/60 text-amber-700 hover:bg-amber-500 hover:text-white dark:text-amber-300"
+                >
+                  <Ban />
+                  Inativar
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + I</TooltipContent>
+            </Tooltip>
+          )}
+          {showActivate && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={onActivate}
+                  className="font-semibold border-emerald-400/60 text-emerald-700 hover:bg-emerald-500 hover:text-white dark:text-emerald-300"
+                >
+                  <CheckCircle2 />
+                  Ativar
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + I</TooltipContent>
+            </Tooltip>
+          )}
+          {showHelp && onShowHelp && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onShowHelp}
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 text-primary"
+                  aria-label="Ajuda"
+                >
+                  <HelpCircle />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">F1 - Ajuda</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </TooltipProvider>
+    </div>
   );
 }; 

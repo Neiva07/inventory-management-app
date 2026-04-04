@@ -18,7 +18,7 @@ import {
   IconButton,
   Tooltip,
   Fab,
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageTitle } from '../../components/PageTitle';
 import { SupplierBill, getSupplierBill } from '../../model/supplierBill';
@@ -26,9 +26,7 @@ import { InstallmentPayment, getInstallmentPayments } from '../../model/installm
 import { useAuth } from '../../context/auth';
 import { formatCurrency } from 'lib/math';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CheckIcon from '@mui/icons-material/Check';
+import { OpenInNewIcon, ContentCopyIcon, CheckIcon } from 'components/ui/icon-compat';
 
 // Helper function to format date
 const formatDate = (timestamp: number): string => {

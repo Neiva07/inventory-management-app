@@ -1,13 +1,13 @@
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
-  Typography,
-  Box,
-} from '@mui/material';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from 'components/ui';
 
 interface DuplicateItemDialogProps {
   open: boolean;
@@ -27,54 +27,39 @@ export const DuplicateItemDialog: React.FC<DuplicateItemDialogProps> = ({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
-      aria-labelledby="duplicate-item-dialog-title"
-      aria-describedby="duplicate-item-dialog-description"
-      disableRestoreFocus
-      maxWidth="sm"
-      fullWidth
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
     >
-      <DialogTitle id="duplicate-item-dialog-title">
-        Item já existe
-      </DialogTitle>
-      <DialogContent>
-        <Box sx={{ mb: 2 }}>
-          <Typography id="duplicate-item-dialog-description" variant="body1">
-            O produto <strong>{productName}</strong> na unidade <strong>{unitName}</strong> já foi adicionado.
-          </Typography>
-        </Box>
-        <Typography variant="body2" color="text.secondary">
+      <DialogContent
+        className="sm:max-w-lg"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle id="duplicate-item-dialog-title">Item já existe</DialogTitle>
+          <DialogDescription
+            id="duplicate-item-dialog-description"
+            className="text-sm text-foreground"
+          >
+            O produto <strong>{productName}</strong> na unidade{' '}
+            <strong>{unitName}</strong> já foi adicionado.
+          </DialogDescription>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
           Você pode sobrescrever o item existente ou cancelar a operação.
-        </Typography>
+        </p>
+        <DialogFooter className="pt-2">
+          <Button onClick={onClose} autoFocus variant="outline">
+            Cancelar
+          </Button>
+          <Button
+            onClick={onOverride}
+            className="bg-amber-500 text-white hover:bg-amber-600"
+          >
+            Sobrescrever
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button 
-          onClick={onClose} 
-          autoFocus
-          variant="outlined"
-          sx={{
-            '&:focus': {
-              outline: '2px solid #1976d2',
-              outlineOffset: '2px',
-              boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
-            },
-            '&:focus-visible': {
-              outline: '2px solid #1976d2',
-              outlineOffset: '2px',
-              boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
-            }
-          }}
-        >
-          Cancelar
-        </Button>
-        <Button 
-          onClick={onOverride} 
-          variant="contained"
-          color="warning"
-        >
-          Sobrescrever
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 }; 

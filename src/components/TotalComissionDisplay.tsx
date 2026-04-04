@@ -1,6 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import PercentIcon from '@mui/icons-material/Percent';
+import { Percent } from 'lucide-react';
 
 interface TotalComissionDisplayProps {
   value: number;
@@ -58,47 +57,38 @@ export const TotalComissionDisplay: React.FC<TotalComissionDisplayProps> = ({
   const sizeStyles = getSizeStyles();
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        bgcolor: 'background.paper',
-        borderRadius: 1,
-        px: sizeStyles.paddingX,
-        py: sizeStyles.paddingY,
-        boxShadow: 'none',
-        border: 'none',
-        minWidth: 0,
-        gap: 1,
+    <div
+      className="flex min-w-0 items-center gap-1 rounded-md bg-card"
+      style={{
+        paddingInline: `${sizeStyles.paddingX * 8}px`,
+        paddingBlock: `${sizeStyles.paddingY * 8}px`,
       }}
     >
-      <PercentIcon sx={{ fontSize: sizeStyles.iconSize, color: 'warning.main', mr: 0.5 }} />
-      <Box sx={{ textAlign: 'left' }}>
-        <Typography
-          variant={sizeStyles.titleVariant}
-          sx={{
-            fontWeight: 600,
-            color: 'text.secondary',
-            lineHeight: 1.2,
-            letterSpacing: 0,
+      <Percent
+        className="shrink-0 text-amber-600"
+        style={{ width: sizeStyles.iconSize, height: sizeStyles.iconSize }}
+        aria-hidden="true"
+      />
+      <div className="text-left">
+        <div
+          className="font-semibold leading-tight text-muted-foreground"
+          style={{
+            fontSize: sizeStyles.titleVariant === 'subtitle2' ? '0.875rem' : '1rem',
           }}
         >
           {label}
-        </Typography>
-        <Typography
-          variant={sizeStyles.valueVariant}
-          sx={{
-            fontWeight: 700,
-            lineHeight: 1.1,
-            letterSpacing: 0,
-            transition: 'transform 0.3s cubic-bezier(.4,1.3,.5,1), color 0.3s',
+        </div>
+        <div
+          className="font-bold leading-tight transition-[transform,color] duration-300"
+          style={{
+            fontSize: sizeStyles.valueVariant === 'h6' ? '1.25rem' : '1rem',
             transform: animate ? 'scale(1.15)' : 'scale(1)',
-            color: animate ? 'primary.main' : 'warning.main',
+            color: animate ? 'var(--color-primary)' : '#d97706',
           }}
         >
           {formatCurrency(value)}
-        </Typography>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }; 
