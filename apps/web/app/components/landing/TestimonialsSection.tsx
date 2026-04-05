@@ -49,7 +49,7 @@ export default function TestimonialsSection() {
                 ))}
               </div>
               <Text className="text-gray-700 mb-6 italic">
-                "{testimonial.content}"
+                &ldquo;{testimonial.content}&rdquo;
               </Text>
               <div>
                 <Title className="text-lg font-semibold text-gray-900">
