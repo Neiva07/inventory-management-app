@@ -15,6 +15,10 @@ jobs:
 
     runs-on: ${{ matrix.os.image }}
 
+    defaults:
+      run:
+        working-directory: apps/desktop
+
     steps:
       - name: Github checkout
         uses: actions/checkout@v3
@@ -30,7 +34,7 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
-          cache-dependency-path: pnpm-lock.yaml
+          cache-dependency-path: apps/desktop/pnpm-lock.yaml
 
       - name: Install dependencies
         run: |
