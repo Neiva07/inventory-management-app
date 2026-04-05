@@ -1,10 +1,8 @@
-import { FormControl, Grid, Box } from "@mui/material"
 import { Supplier, getSuppliers } from "model/suppliers";
 import { SelectField } from "pages/product/useProductCreateForm";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form"
 import { InboundOrderFormDataInterface } from "./useInboundOrderForm";
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useAuth } from "context/auth";
 import { PageTitle } from 'components/PageTitle';
 import { useParams } from 'react-router-dom';
@@ -14,6 +12,7 @@ import { InboundOrder } from 'model/inboundOrder';
 import { statuses } from './useInboundOrderForm';
 import { TotalCostDisplay } from 'components/TotalCostDisplay';
 import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
+import { DatePickerField } from "components/ui";
 
 interface InboundOrderFormHeaderProps {
   onDelete?: () => void;
@@ -53,18 +52,18 @@ export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFi
   }, [formMethods, organization?.id, user.id]);
 
   return (
-    <Box sx={{ pt: 8 }}>
+    <div className="pt-8">
       {/* Header Row: Title, PublicId, TotalCost, Delete */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 4, flexWrap: 'wrap' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <PageTitle>
             {inboundOrderID ? "Editar Nota de Compra" : "Cadastro de Compra"}
           </PageTitle>
           {inboundOrder?.publicId && (
             <PublicIdDisplay publicId={inboundOrder.publicId} />
           )}
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+        </div>
+        <div className="flex min-w-0 items-center gap-2">
           <TotalCostDisplay
             value={totalCost || 0}
             label="Total da Nota"
@@ -77,11 +76,11 @@ export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFi
             onShowHelp={onShowHelp}
             absolute={true}
           />
-        </Box>
-      </Box>
-      <Grid container spacing={2}>
-        <Grid item xs={4}>
-          <FormControl fullWidth>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+        <div className="md:col-span-4">
+          <div className="w-full">
             <Controller
               control={formMethods.control}
               render={({ field: { value: supplier, ...props } }) => {
@@ -114,18 +113,18 @@ export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFi
                       error={!!formMethods.formState.errors.supplier}
                       helperText={formMethods.formState.errors.supplier?.label?.message}
                       ref={firstFieldRef || headerRefs?.supplierRef}
-                      onNextField={() => focusNextField(headerRefs?.supplierRef!)}
-                      onPreviousField={() => focusPreviousField(headerRefs?.supplierRef!)}
+                      onNextField={focusNextField ? () => focusNextField(headerRefs?.supplierRef!) : undefined}
+                      onPreviousField={focusPreviousField ? () => focusPreviousField(headerRefs?.supplierRef!) : undefined}
                     />
                   </>
                 );
               }}
               name="supplier"
             />
-          </FormControl>
-        </Grid>
-        <Grid item xs={4}>
-          <FormControl fullWidth>
+          </div>
+        </div>
+        <div className="md:col-span-4">
+          <div className="w-full">
             <Controller
               control={formMethods.control}
               render={({ field: { value: status, ...props } }) => {
@@ -152,64 +151,60 @@ export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFi
                       }
                       onChange={handleChange}
                       ref={headerRefs?.statusRef}
-                      onNextField={() => focusNextField(headerRefs?.statusRef!)}
-                      onPreviousField={() => focusPreviousField(headerRefs?.statusRef!)}
+                      onNextField={focusNextField ? () => focusNextField(headerRefs?.statusRef!) : undefined}
+                      onPreviousField={focusPreviousField ? () => focusPreviousField(headerRefs?.statusRef!) : undefined}
                     />
                   </>
                 );
               }}
               name="status"
             />
-          </FormControl>
-        </Grid>
-        <Grid item xs={4}>
-          <FormControl fullWidth>
+          </div>
+        </div>
+        <div className="md:col-span-4">
+          <div className="w-full">
             <Controller
               name="orderDate"
               control={formMethods.control}
               render={({ field }) => {
                 return (
-                  <DatePicker 
-                    {...field} 
-                    label="Data da Compra" 
-                    ref={headerRefs?.orderDateRef}
-                    slotProps={{
-                      textField: {
-                        error: !!formMethods.formState.errors.orderDate,
-                        helperText: formMethods.formState.errors.orderDate?.message,
-                      }
-                    }}
+                  <DatePickerField
+                    id="inbound-order-date"
+                    label="Data da Compra"
+                    value={field.value}
+                    onChange={(value) => field.onChange(value)}
+                    inputRef={headerRefs?.orderDateRef}
+                    error={!!formMethods.formState.errors.orderDate}
+                    helperText={formMethods.formState.errors.orderDate?.message}
                   />
                 );
               }}
             />
-          </FormControl>
-        </Grid>
-        <Grid item xs={6}>
-          <FormControl fullWidth>
+          </div>
+        </div>
+        <div className="md:col-span-6">
+          <div className="w-full">
             <Controller
               name="dueDate"
               control={formMethods.control}
               render={({ field }) => {
                 return (
-                  <DatePicker 
-                    {...field} 
-                    label="Data de Vencimento" 
-                    slotProps={{
-                      textField: {
-                        error: !!formMethods.formState.errors.dueDate,
-                        helperText: formMethods.formState.errors.dueDate?.message,
-                        ref: headerRefs?.dueDateRef,
-                        onFocus: (e) => e.target.select(),
-                      }
-                    }}
+                  <DatePickerField
+                    id="inbound-due-date"
+                    label="Data de Vencimento"
+                    value={field.value}
+                    onChange={(value) => field.onChange(value)}
+                    inputRef={headerRefs?.dueDateRef}
+                    error={!!formMethods.formState.errors.dueDate}
+                    helperText={formMethods.formState.errors.dueDate?.message}
+                    onFocus={(e) => e.target.select()}
                   />
                 );
               }}
             />
-          </FormControl>
-        </Grid>
-      </Grid>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 } 

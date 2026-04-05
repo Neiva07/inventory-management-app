@@ -12,7 +12,6 @@ import { ProductForm } from "./pages/product/productForm";
 import { SupplierForm } from "./pages/supplier/supplierForm";
 import { ProductCategories } from "./pages/productCategory/productCategory";
 import { Units } from "./pages/unit/Unit";
-import { Box } from "@mui/system";
 import { ProductList } from "./pages/product/ProductList";
 import { SupplierList } from "./pages/supplier/supplierList";
 import { CustomerForm } from "./pages/customer/customerForm";
@@ -22,12 +21,8 @@ import { AuthContextProvider, useAuth } from "./context/auth";
 import { OnboardingProvider } from "./context/onboarding";
 import { Login } from "pages/auth/Login";
 import { OrderForm } from "pages/order/OrderForm";
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { OrderList } from "pages/order/OrderList";
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Home } from "home";
-import ptBRDateFns from 'date-fns/locale/pt-BR';
 import { UpdateNotification } from './components/UpdateNotification';
 import { SettingsRouter } from "pages/routes/settings/index";
 import { UIContextProvider, useUI } from './context/ui';
@@ -45,275 +40,6 @@ import { GlobalKeyboardHelp } from "./components/GlobalKeyboardHelp";
 import { OnboardingRouter } from "./pages/onboarding/OnboardingRouter";
 import { bootstrapDatabase } from "./db/bootstrap";
 import { startSyncRuntime, stopSyncRuntime } from "./db/syncRuntime";
-
-declare module '@mui/material/styles' {
-  interface Components {
-    MuiDataGrid?: {
-      styleOverrides?: {
-        root?: {
-          fontFamily?: string;
-          border?: string;
-          height?: string;
-          width?: string;
-          '& .MuiDataGrid-cell'?: {
-            fontWeight?: number;
-            borderBottom?: string;
-            padding?: string;
-          };
-          '& .MuiDataGrid-columnHeader'?: {
-            fontWeight?: number;
-            backgroundColor?: string;
-            borderBottom?: string;
-            padding?: string;
-            justifyContent?: string;
-            textAlign?: string;
-          };
-          '& .MuiDataGrid-row:hover'?: {
-            backgroundColor?: string;
-          };
-          '& .MuiDataGrid-columnHeaders'?: {
-            minHeight?: string;
-          };
-          '& .MuiDataGrid-virtualScroller'?: {
-            overflowX?: string;
-          };
-          '& .MuiDataGrid-virtualScrollerContent'?: {
-            minWidth?: string;
-          };
-          '& .MuiDataGrid-virtualScrollerRenderZone'?: {
-            minWidth?: string;
-          };
-        };
-      };
-    };
-  }
-}
-
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1A237E', // Deep Indigo
-      light: '#534BAE',
-      dark: '#000051',
-      contrastText: '#ffffff',
-    },
-    secondary: {
-      main: '#00897B', // Teal
-      light: '#4DB6AC',
-      dark: '#005B4F',
-      contrastText: '#ffffff',
-    },
-    background: {
-      default: '#F5F5F5',
-      paper: '#FFFFFF',
-    },
-    text: {
-      primary: '#1E293B',
-      secondary: '#64748B',
-    },
-    error: {
-      main: '#EF4444',
-      light: '#FCA5A5',
-      dark: '#B91C1C',
-    },
-    warning: {
-      main: '#F59E0B',
-      light: '#FCD34D',
-      dark: '#B45309',
-    },
-    success: {
-      main: '#10B981',
-      light: '#34D399',
-      dark: '#059669',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    h1: {
-      fontWeight: 700,
-      letterSpacing: '-0.01562em',
-      fontSize: '2.5rem',
-    },
-    h2: {
-      fontWeight: 700,
-      letterSpacing: '-0.00833em',
-      fontSize: '2rem',
-    },
-    h3: {
-      fontWeight: 600,
-      letterSpacing: '0em',
-      fontSize: '1.75rem',
-    },
-    h4: {
-      fontWeight: 600,
-      letterSpacing: '0.00735em',
-      fontSize: '1.5rem',
-    },
-    h5: {
-      fontWeight: 600,
-      letterSpacing: '0em',
-      fontSize: '1.25rem',
-    },
-    h6: {
-      fontWeight: 600,
-      letterSpacing: '0.0075em',
-      fontSize: '1rem',
-    },
-    subtitle1: {
-      fontWeight: 500,
-      letterSpacing: '0.00938em',
-      fontSize: '1rem',
-    },
-    subtitle2: {
-      fontWeight: 500,
-      letterSpacing: '0.00714em',
-      fontSize: '0.875rem',
-    },
-    body1: {
-      fontWeight: 400,
-      letterSpacing: '0.00938em',
-      fontSize: '1rem',
-      lineHeight: 1.5,
-    },
-    body2: {
-      fontWeight: 400,
-      letterSpacing: '0.01071em',
-      fontSize: '0.875rem',
-      lineHeight: 1.43,
-    },
-    button: {
-      fontWeight: 500,
-      letterSpacing: '0.02857em',
-      textTransform: 'none',
-      fontSize: '0.875rem',
-    },
-  },
-  shape: {
-    borderRadius: 12,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          fontWeight: 500,
-          borderRadius: 8,
-          padding: '8px 16px',
-          transition: 'all 0.2s ease-in-out',
-          '&:hover': {
-            transform: 'translateY(-1px)',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          },
-        },
-        contained: {
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          backdropFilter: 'blur(8px)',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          borderRadius: 0,
-        },
-      },
-    },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-          transition: 'all 0.2s ease-in-out',
-          '&:hover': {
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          },
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-        },
-        elevation1: {
-          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-        },
-      },
-    },
-    MuiDataGrid: {
-      styleOverrides: {
-        root: {
-          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-          border: 'none',
-          width: '100%',
-          '& .MuiDataGrid-cell': {
-            fontWeight: 400,
-            borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
-            padding: '16px',
-          },
-          '& .MuiDataGrid-columnHeader': {
-            fontWeight: 600,
-            backgroundColor: 'rgba(0, 0, 0, 0.02)',
-            borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-            padding: '16px',
-            justifyContent: 'flex-start',
-            textAlign: 'left',
-          },
-          '& .MuiDataGrid-row:hover': {
-            backgroundColor: 'rgba(0, 0, 0, 0.02)',
-          },
-          //@ts-ignore: Advanced selector for DataGrid row selection highlight
-          '& .MuiDataGrid-row.Mui-selected': {
-            backgroundColor: 'primary.100', 
-            '&:hover': {
-              backgroundColor: 'primary.200',
-            },
-          },
-          '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
-            outline: 'none',
-          },
-          '& .MuiDataGrid-columnHeaders': {
-            minHeight: '52px !important',
-          },
-          '& .MuiDataGrid-virtualScroller': {
-            overflowX: 'hidden',
-          },
-          '& .MuiDataGrid-virtualScrollerContent': {
-            minWidth: '100% !important',
-          },
-          '& .MuiDataGrid-virtualScrollerRenderZone': {
-            minWidth: '100% !important',
-          },
-        },
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 8,
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'rgba(0, 0, 0, 0.2)',
-              },
-            },
-          },
-        },
-      },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          borderRadius: 6,
-          fontWeight: 500,
-        },
-      },
-    },
-	},
-});
 
 const initialOverdueChecksStarted = new Set<string>();
 
@@ -365,23 +91,12 @@ const App = () => {
   });
   
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="flex min-h-screen">
       <OfflineIndicator />
       {layout === 'navbar' ? <Navbar /> : <Sidebar />}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 0.5,
-          width: { sm: '100%' },
-          ml: { sm: 0 },
-          transition: 'margin 0.2s',
-          mt: layout === 'navbar' ? '60px' : 0,
-          maxWidth: '100%',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
+      <main
+        className="flex max-w-full flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6 sm:py-4"
+        style={{ marginTop: layout === "navbar" ? 60 : 0, transition: "margin 0.2s" }}
       >
         <ToastContainer
           position="bottom-right"
@@ -404,8 +119,8 @@ const App = () => {
           open={showGlobalHelp}
           onClose={() => setShowGlobalHelp(false)}
         />
-      </Box>
-    </Box>
+      </main>
+    </div>
   );
 };
 
@@ -481,17 +196,13 @@ function render() {
   root.render(
     <React.StrictMode>
       <AuthContextProvider>
-        <ThemeProvider theme={theme}>
-          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBRDateFns}>
-            <UIContextProvider>
-              <OnboardingProvider>
-                <OnboardingRouter>
-                  <AppRouter />
-                </OnboardingRouter>
-              </OnboardingProvider>
-            </UIContextProvider>
-          </LocalizationProvider>
-        </ThemeProvider>
+        <UIContextProvider>
+          <OnboardingProvider>
+            <OnboardingRouter>
+              <AppRouter />
+            </OnboardingRouter>
+          </OnboardingProvider>
+        </UIContextProvider>
       </AuthContextProvider>
     </React.StrictMode>
   );

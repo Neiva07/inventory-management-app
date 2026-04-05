@@ -11,12 +11,12 @@ import {
   CircularProgress,
   Divider,
   IconButton,
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import {
-  PhotoCamera as PhotoCameraIcon,
-  Save as SaveIcon,
-  Edit as EditIcon,
-} from '@mui/icons-material';
+  PhotoCameraIcon,
+  SaveIcon,
+  EditIcon,
+} from 'components/ui/icon-compat';
 import { useAuth } from '../../../../context/auth';
 import { User } from '../../../../model/auth';
 

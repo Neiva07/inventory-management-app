@@ -16,7 +16,7 @@ import {
   Paper,
   Avatar,
   ChipProps,
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import { 
   Add as AddIcon, 
   Close as CloseIcon,
@@ -25,7 +25,7 @@ import {
   Business as BusinessIcon,
   Visibility as VisibilityIcon,
   Email as EmailIcon
-} from '@mui/icons-material';
+} from 'components/ui/icon-compat';
 import { useOnboarding } from '../../context/onboarding';
 import { isValidEmail } from '../../lib/email';
 

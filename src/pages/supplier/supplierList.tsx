@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { GridSearchIcon } from '@mui/x-data-grid';
-import { Button, Grid, InputAdornment, TextField, Tooltip } from '@mui/material';
+import { SearchField } from 'components/SearchField';
+import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from 'components/ui';
 import { ProductCategory, getProductCategories } from 'model/productCategories';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
@@ -257,27 +257,19 @@ export const SupplierList = () => {
       >
         Fornecedores
       </PageTitle>
-      <Grid spacing={1} container>
-
-        <Grid item xs={4}>
-          <TextField
+      <TooltipProvider>
+        <div className="grid grid-cols-12 gap-2">
+          <div className="col-span-12 lg:col-span-4">
+            <SearchField
             ref={searchFieldRef}
             value={searchTitle}
-            fullWidth
             onChange={handleSearchTitle}
             placeholder={"Busque pelo nome do fornecedor..."}
             autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <GridSearchIcon />
-                </InputAdornment>
-              ),
-            }}
           />
-        </Grid>
-        <Grid item xs={4}>
-          <EnhancedAutocomplete
+          </div>
+          <div className="col-span-12 lg:col-span-4">
+            <EnhancedAutocomplete
             ref={categoryFilterRef}
             id="category-filter"
             options={categories}
@@ -291,9 +283,9 @@ export const SupplierList = () => {
             onPreviousField={() => focusNavigation.focusPreviousField(categoryFilterRef)}
             value={categorySelected}
           />
-        </Grid>
-        <Grid item xs={4}>
-          <EnhancedAutocomplete
+          </div>
+          <div className="col-span-12 lg:col-span-4">
+            <EnhancedAutocomplete
             ref={statusFilterRef}
             id="status-filter"
             options={statuses}
@@ -307,82 +299,98 @@ export const SupplierList = () => {
             onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
             value={statusSelected}
           />
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + E" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={() => navigate(`/suppliers/${selectedRowID}`)}
-              tabIndex={-1}
-            > 
-              Editar Fornecedor 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + D" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={handleDeleteSupplier}
-              tabIndex={-1}
-            > 
-              Deletar Fornecedor 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + I" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={handleDeactivateSupplier}
-              tabIndex={-1}
-            > 
-              Desativar Fornecedor 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + N" placement="top">
-            <Button 
-              fullWidth 
-              onClick={() => navigate(`/suppliers/create`)}
-              tabIndex={-1}
-            > 
-              Cadastrar Fornecedor 
-            </Button>
-          </Tooltip>
-        </Grid>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={() => navigate(`/suppliers/${selectedRowID}`)}
+                  tabIndex={-1}
+                >
+                  Editar Fornecedor
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + E</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={handleDeleteSupplier}
+                  tabIndex={-1}
+                >
+                  Deletar Fornecedor
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + D</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full border-amber-400/60 text-amber-700 hover:bg-amber-500 hover:text-white dark:text-amber-300"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={handleDeactivateSupplier}
+                  tabIndex={-1}
+                >
+                  Desativar Fornecedor
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + I</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  onClick={() => navigate(`/suppliers/create`)}
+                  tabIndex={-1}
+                >
+                  Cadastrar Fornecedor
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + N</TooltipContent>
+            </Tooltip>
+          </div>
 
-        <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
-          <CustomDataTable
-            data={suppliers}
-            columns={columns}
-            totalCount={count}
-            loading={loading}
-            selectedRowId={selectedRowID}
-            onRowSelectionChange={handleRowSelectionChange}
-            page={page}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            onRowDoubleClick={(supplier) => navigate(`/suppliers/${supplier.id}`)}
-            onNavigateToNextField={() => {
-              // Navigate to next component after table (could be action buttons)
-            }}
-            onNavigateToPreviousField={() => {
-              // Navigate back to status filter
-              focusNavigation.focusLastFieldBeforeTable();
-            }}
-            getRowId={(supplier) => supplier.id}
-            onEditSelected={handleEditSelected}
-            onDeleteSelected={handleDeleteSupplier}
-            ref={tableRef}
-          />
-        </Grid>
-      </Grid>
+          <div className="col-span-12 mt-5 min-h-[400px]">
+            <CustomDataTable
+              data={suppliers}
+              columns={columns}
+              totalCount={count}
+              loading={loading}
+              selectedRowId={selectedRowID}
+              onRowSelectionChange={handleRowSelectionChange}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              onRowDoubleClick={(supplier) => navigate(`/suppliers/${supplier.id}`)}
+              onNavigateToNextField={() => {
+                // Navigate to next component after table (could be action buttons)
+              }}
+              onNavigateToPreviousField={() => {
+                // Navigate back to status filter
+                focusNavigation.focusLastFieldBeforeTable();
+              }}
+              getRowId={(supplier) => supplier.id}
+              onEditSelected={handleEditSelected}
+              onDeleteSelected={handleDeleteSupplier}
+              ref={tableRef}
+            />
+          </div>
+        </div>
+      </TooltipProvider>
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onClose={handleCancelDelete}

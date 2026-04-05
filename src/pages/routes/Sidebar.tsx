@@ -1,55 +1,110 @@
-import React, { useState } from 'react';
-import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, Collapse, IconButton, Divider, Toolbar, Box } from '@mui/material';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import PeopleIcon from '@mui/icons-material/People';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import CategoryIcon from '@mui/icons-material/Category';
-import ScaleIcon from '@mui/icons-material/Scale';
-import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-import MenuIcon from '@mui/icons-material/Menu';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import ReceiptIcon from '@mui/icons-material/Receipt';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import PaidIcon from '@mui/icons-material/Paid';
-import MoneyOffIcon from '@mui/icons-material/MoneyOff';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import HistoryIcon from '@mui/icons-material/History';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import SettingsIcon from '@mui/icons-material/Settings';
+import React, { useMemo, useState } from 'react';
+import {
+  Building2,
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Grid3X3,
+  HandCoins,
+  History,
+  LayoutGrid,
+  Menu,
+  PanelLeftClose,
+  Receipt,
+  Scale,
+  Settings,
+  ShoppingCart,
+  TrendingUp,
+  Users,
+  Wallet,
+  CreditCard,
+  ArrowLeftRight,
+  CircleDollarSign,
+} from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+import { Button } from 'components/ui';
+import { cn } from 'lib/utils';
 import logo from '../../../assets/icons/logo.png';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useTheme } from '@mui/material/styles';
 
 const drawerWidth = 270;
+const collapsedWidth = 64;
 
 const cadastros = [
-  { text: 'Produtos', icon: <InventoryIcon />, path: '/products/create' },
-  { text: 'Clientes', icon: <PeopleIcon />, path: '/customers/create' },
-  { text: 'Fornecedores', icon: <PeopleIcon />, path: '/suppliers/create' },
-  { text: 'Funcionários', icon: <PeopleIcon />, path: '/employees/create' }, // Placeholder
-  { text: 'Categoria de Produtos', icon: <CategoryIcon />, path: '/productCategories' },
-  { text: 'Unidades', icon: <ScaleIcon />, path: '/units' },
+  { text: 'Produtos', icon: <LayoutGrid className="h-4 w-4" />, path: '/products/create' },
+  { text: 'Clientes', icon: <Users className="h-4 w-4" />, path: '/customers/create' },
+  { text: 'Fornecedores', icon: <Users className="h-4 w-4" />, path: '/suppliers/create' },
+  { text: 'Funcionários', icon: <Users className="h-4 w-4" />, path: '/employees/create' },
+  { text: 'Categoria de Produtos', icon: <Grid3X3 className="h-4 w-4" />, path: '/productCategories' },
+  { text: 'Unidades', icon: <Scale className="h-4 w-4" />, path: '/units' },
 ];
 
 const movimentos = [
-  { text: 'Lista de Compras', icon: <AssignmentIcon />, path: '/purchase-list' }, // Placeholder
-  { text: 'Compras de Mercadorias', icon: <ShoppingCartIcon />, path: '/inbound-orders' },
-  { text: 'Requisição de Clientes', icon: <AssignmentIcon />, path: '/customer-requests' },
-  { text: 'Vendas de Mercadorias', icon: <ShoppingCartIcon />, path: '/orders' },
-  { text: 'Emissão de Recibos', icon: <ReceiptIcon />, path: '/receipts' }, // Placeholder
-  { text: 'Vales e Adiantamentos', icon: <PaidIcon />, path: '/advances' }, // Placeholder
-  { text: 'Contas a Receber', icon: <AccountBalanceWalletIcon />, path: '/accounts-receivable' }, // Placeholder
-  { text: 'Contas a Pagar', icon: <MoneyOffIcon />, path: '/supplier-bills' }, 
-  { text: 'Movimento Financeiro', icon: <SwapHorizIcon />, path: '/financial-movements' }, // Placeholder
-  { text: 'Fluxo das Contas', icon: <AccountBalanceIcon />, path: '/account-flows' }, // Placeholder
-  { text: 'Caixa Diário', icon: <CalendarTodayIcon />, path: '/daily-cash' }, // Placeholder
-  { text: 'Caixa Retroativo', icon: <HistoryIcon />, path: '/retroactive-cash' }, // Placeholder
-  { text: 'Fluxo de Caixa', icon: <TrendingUpIcon />, path: '/cash-flow' }, // Placeholder
+  { text: 'Lista de Compras', icon: <FileText className="h-4 w-4" />, path: '/purchase-list' },
+  { text: 'Compras de Mercadorias', icon: <ShoppingCart className="h-4 w-4" />, path: '/inbound-orders' },
+  { text: 'Requisição de Clientes', icon: <FileText className="h-4 w-4" />, path: '/customer-requests' },
+  { text: 'Vendas de Mercadorias', icon: <ShoppingCart className="h-4 w-4" />, path: '/orders' },
+  { text: 'Emissão de Recibos', icon: <Receipt className="h-4 w-4" />, path: '/receipts' },
+  { text: 'Vales e Adiantamentos', icon: <HandCoins className="h-4 w-4" />, path: '/advances' },
+  { text: 'Contas a Receber', icon: <Wallet className="h-4 w-4" />, path: '/accounts-receivable' },
+  { text: 'Contas a Pagar', icon: <CircleDollarSign className="h-4 w-4" />, path: '/supplier-bills' },
+  { text: 'Movimento Financeiro', icon: <ArrowLeftRight className="h-4 w-4" />, path: '/financial-movements' },
+  { text: 'Fluxo das Contas', icon: <Building2 className="h-4 w-4" />, path: '/account-flows' },
+  { text: 'Caixa Diário', icon: <CalendarDays className="h-4 w-4" />, path: '/daily-cash' },
+  { text: 'Caixa Retroativo', icon: <History className="h-4 w-4" />, path: '/retroactive-cash' },
+  { text: 'Fluxo de Caixa', icon: <TrendingUp className="h-4 w-4" />, path: '/cash-flow' },
 ];
+
+function Section({
+  title,
+  items,
+  open,
+  expanded,
+  toggle,
+  isActive,
+  navigate,
+}: {
+  title: string;
+  items: Array<{ text: string; icon: React.ReactNode; path: string }>;
+  open: boolean;
+  expanded: boolean;
+  toggle: () => void;
+  isActive: (path: string) => boolean;
+  navigate: (path: string) => void;
+}) {
+  return (
+    <div className="py-1">
+      <button
+        type="button"
+        onClick={toggle}
+        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm font-semibold hover:bg-white/10"
+      >
+        <span className={cn(!open && 'sr-only')}>{title}</span>
+        {open ? (expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />) : null}
+      </button>
+      {expanded ? (
+        <div className="mt-1 space-y-0.5">
+          {items.map((item) => (
+            <button
+              key={item.text}
+              type="button"
+              onClick={() => navigate(item.path)}
+              className={cn(
+                'flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-white/10',
+                isActive(item.path) && 'bg-primary-foreground/15'
+              )}
+              title={!open ? item.text : undefined}
+            >
+              <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center">{item.icon}</span>
+              {open ? <span className="truncate">{item.text}</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export const Sidebar = () => {
   const [open, setOpen] = useState(true);
@@ -57,144 +112,80 @@ export const Sidebar = () => {
   const [openMovimentos, setOpenMovimentos] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
 
+  const width = open ? drawerWidth : collapsedWidth;
   const isActive = (path: string) => location.pathname === path;
 
-  return (
-    <Drawer
-      variant="permanent"
-      open={open}
-      sx={{
-        width: open ? drawerWidth : 64,
-        flexShrink: 0,
-        position: 'fixed',
-        '& .MuiDrawer-paper': {
-          width: open ? drawerWidth : 64,
-          boxSizing: 'border-box',
-          transition: 'width 0.2s',
-          overflowX: 'hidden',
-          backgroundColor: theme.palette.primary.main,
-          color: theme.palette.primary.contrastText,
-          borderRight: 0,
-          position: 'fixed',
-          height: '100vh',
-        },
-      }}
-    >
-      <Toolbar
-        sx={{
-          flexDirection: open ? 'row' : 'column',
-          justifyContent: open ? 'space-between' : 'center',
-          alignItems: 'center',
-          px: 1,
-          minHeight: 64,
-          py: open ? 0 : 1.5,
-          gap: open ? 0 : 1.5,
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            width: open ? '100%' : 'auto',
-            justifyContent: open ? 'flex-start' : 'center',
-            cursor: 'pointer',
-          }}
-          onClick={() => navigate('/')}
-        >
-          <img src={logo} alt="Logo" style={{ height: 36, marginRight: open ? 10 : 0, marginTop: open ? 0 : 24, marginBottom: open ? 0 : -18, transition: 'margin 0.2s' }} />
-          {open && (
-            <Box sx={{ fontWeight: 700, fontSize: 20, color: theme.palette.primary.contrastText, letterSpacing: 1 }}>
-              Stockify
-            </Box>
-          )}
-        </Box>
-        <IconButton
-          onClick={() => setOpen(!open)}
-          sx={{
-            color: theme.palette.primary.contrastText,
-            ml: open ? 1 : 0,
-            mt: open ? 0 : 1.5,
-          }}
-        >
-          {open ? <MenuOpenIcon /> : <MenuIcon />}
-        </IconButton>
-      </Toolbar>
-      <Divider sx={{ borderColor: theme.palette.primary.light, opacity: 0.2 }} />
-      <List>
-        <ListItemButton onClick={() => setOpenCadastros(!openCadastros)} sx={{ color: theme.palette.primary.contrastText }}>
-          <ListItemText primary={open ? 'Cadastros' : ''} primaryTypographyProps={{ fontWeight: 700 }} />
-          {open ? (openCadastros ? <ExpandLess /> : <ExpandMore />) : null}
-        </ListItemButton>
-        <Collapse in={openCadastros} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {cadastros.map((item) => (
-              <ListItemButton
-                key={item.text}
-                sx={{
-                  pl: open ? 4 : 2,
-                  color: theme.palette.primary.contrastText,
-                  '&:hover': {
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                  },
-                  backgroundColor: isActive(item.path) ? theme.palette.primary.dark : 'inherit',
-                }}
-                selected={isActive(item.path)}
-                onClick={() => navigate(item.path)}
-              >
-                <ListItemIcon sx={{ color: theme.palette.primary.contrastText, minWidth: 36 }}>{item.icon}</ListItemIcon>
-                {open && <ListItemText primary={item.text} />}
-              </ListItemButton>
-            ))}
-          </List>
-        </Collapse>
-        <Divider sx={{ my: 1, borderColor: theme.palette.primary.light, opacity: 0.2 }} />
-        <ListItemButton onClick={() => setOpenMovimentos(!openMovimentos)} sx={{ color: theme.palette.primary.contrastText }}>
-          <ListItemText primary={open ? 'Movimentos' : ''} primaryTypographyProps={{ fontWeight: 700 }} />
-          {open ? (openMovimentos ? <ExpandLess /> : <ExpandMore />) : null}
-        </ListItemButton>
-        <Collapse in={openMovimentos} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {movimentos.map((item) => (
-              <ListItemButton
-                key={item.text}
-                sx={{
-                  pl: open ? 4 : 2,
-                  color: theme.palette.primary.contrastText,
-                  '&:hover': {
-                    backgroundColor: 'rgba(255,255,255,0.08)',
-                  },
-                  backgroundColor: isActive(item.path) ? theme.palette.primary.dark : 'inherit',
-                }}
-                selected={isActive(item.path)}
-                onClick={() => navigate(item.path)}
-              >
-                <ListItemIcon sx={{ color: theme.palette.primary.contrastText, minWidth: 36 }}>{item.icon}</ListItemIcon>
-                {open && <ListItemText primary={item.text} />}
-              </ListItemButton>
-            ))}
-          </List>
-        </Collapse>
-      </List>
-      <Box sx={{ flexGrow: 1 }} />
-      <List sx={{ mb: 2 }}>
-        <ListItemButton
-          sx={{
-            color: theme.palette.primary.contrastText,
-            '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-            backgroundColor: isActive('/settings') ? theme.palette.primary.dark : 'inherit',
-            pl: open ? 4 : 2,
-          }}
-          selected={isActive('/settings')}
-          onClick={() => navigate('/settings')}
-        >
-          <ListItemIcon sx={{ color: theme.palette.primary.contrastText, minWidth: 36 }}>
-            <SettingsIcon />
-          </ListItemIcon>
-          {open && <ListItemText primary="Configurações" />}
-        </ListItemButton>
-      </List>
-    </Drawer>
+  const footerItem = useMemo(
+    () => ({ text: 'Configurações', icon: <Settings className="h-4 w-4" />, path: '/settings' }),
+    []
   );
-}; 
+
+  return (
+    <div style={{ width }} className="shrink-0">
+      <aside
+        className="fixed inset-y-0 left-0 z-30 flex flex-col border-r bg-primary text-primary-foreground"
+        style={{ width }}
+      >
+        <div className={cn('flex items-center border-b border-white/15 p-2', open ? 'justify-between' : 'flex-col gap-2')}>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className={cn('flex min-w-0 items-center rounded-md hover:bg-white/10', open ? 'gap-2 px-1 py-1' : 'justify-center p-1')}
+          >
+            <img src={logo} alt="Logo" className="h-9 w-auto" />
+            {open ? <span className="truncate text-lg font-semibold">Stockify</span> : null}
+          </button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpen((value) => !value)}
+            className="text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+            aria-label={open ? 'Recolher menu' : 'Expandir menu'}
+          >
+            {open ? <PanelLeftClose className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-2">
+          <Section
+            title="Cadastros"
+            items={cadastros}
+            open={open}
+            expanded={openCadastros}
+            toggle={() => setOpenCadastros((v) => !v)}
+            isActive={isActive}
+            navigate={navigate}
+          />
+          <div className="my-2 h-px bg-white/15" />
+          <Section
+            title="Movimentos"
+            items={movimentos}
+            open={open}
+            expanded={openMovimentos}
+            toggle={() => setOpenMovimentos((v) => !v)}
+            isActive={isActive}
+            navigate={navigate}
+          />
+        </div>
+
+        <div className="border-t border-white/15 p-2">
+          <button
+            type="button"
+            onClick={() => navigate(footerItem.path)}
+            className={cn(
+              'flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-white/10',
+              isActive(footerItem.path) && 'bg-primary-foreground/15'
+            )}
+            title={!open ? footerItem.text : undefined}
+          >
+            {footerItem.icon}
+            {open ? <span>{footerItem.text}</span> : null}
+          </button>
+        </div>
+      </aside>
+    </div>
+  );
+};

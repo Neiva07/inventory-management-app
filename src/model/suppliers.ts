@@ -223,7 +223,7 @@ export const createSupplier = async (supplierInfo: Supplier) => {
           categoryId: category.id,
           createdAt: timestamp,
           updatedAt: timestamp,
-          deletedAt: null,
+          deletedAt: null as number | null,
         }))
     );
   }
@@ -349,7 +349,7 @@ export const updateSupplier = async (supplierID: string, supplierInfo: Partial<S
           categoryId: category.id,
           createdAt: timestamp,
           updatedAt: timestamp,
-          deletedAt: null,
+          deletedAt: null as number | null,
         }))
       );
     }

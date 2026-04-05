@@ -7,7 +7,7 @@ import {
   CardContent, 
   Grid, 
   Chip,
-} from '@mui/material';
+} from 'components/ui/form-compat';
 import { 
   CheckCircle as CheckCircleIcon,
   Business as BusinessIcon,
@@ -16,7 +16,7 @@ import {
   Email as EmailIcon,
   Phone as PhoneIcon,
   LocationOn as LocationIcon
-} from '@mui/icons-material';
+} from 'components/ui/icon-compat';
 import { useOnboarding } from '../../context/onboarding';
 
 export const OnboardingComplete: React.FC = () => {

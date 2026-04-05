@@ -1,8 +1,7 @@
-import { Button, FormControl, Grid, TextField, Typography, Box, Tooltip } from '@mui/material';
+import { Button, FormControl, Grid, TextField, Box, Tooltip, MaskedTextField } from 'components/ui/form-compat';
 import { useSupplierCreateForm } from './useSupplierCreateForm';
 import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
-import ReactInputMask from 'react-input-mask';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -202,22 +201,15 @@ export const SupplierForm = () => {
                 control={form.control}
                 render={({ field }) => {
                   return (
-                    // @ts-ignore
-                    <ReactInputMask
+                    <MaskedTextField
                       {...field}
+                      ref={entityIDRef}
                       mask={"99.999.999/9999-99"}
-                    >
-                      {() =>
-                        <TextField
-                          {...field}
-                          ref={entityIDRef}
-                          variant="outlined"
-                          label="CNPJ"
-                          error={!!form.formState.errors.entityID}
-                          helperText={form.formState.errors.entityID?.message}
-                        />
-                      }
-                    </ReactInputMask>
+                      variant="outlined"
+                      label="CNPJ"
+                      error={!!form.formState.errors.entityID}
+                      helperText={form.formState.errors.entityID?.message}
+                    />
                   );
                 }}
                 name="entityID"
@@ -251,23 +243,15 @@ export const SupplierForm = () => {
                 control={form.control}
                 render={({ field }) => {
                   return (
-                    // @ts-ignore
-                    <ReactInputMask
+                    <MaskedTextField
                       {...field}
+                      ref={postalCodeRef}
                       mask={"99.999-999"}
-                    >
-                      {/* @ts-ignore */}
-                      {() =>
-                        <TextField
-                          {...field}
-                          ref={postalCodeRef}
-                          variant="outlined"
-                          label="CEP"
-                          error={!!form.formState.errors.address?.postalCode}
-                          helperText={form.formState.errors.address?.postalCode?.message}
-                        />
-                      }
-                    </ReactInputMask>
+                      variant="outlined"
+                      label="CEP"
+                      error={!!form.formState.errors.address?.postalCode}
+                      helperText={form.formState.errors.address?.postalCode?.message}
+                    />
                   );
                 }}
                 name="address.postalCode"
@@ -361,23 +345,15 @@ export const SupplierForm = () => {
 
                   // const mask = field.value?.length < 10 ? "(99) 9999-9999" : "(99) 99999-9999"
                   return (
-                    // @ts-ignore
-                    <ReactInputMask
+                    <MaskedTextField
                       {...field}
+                      ref={companyPhoneRef}
                       mask={"(99) 9999-99999"}
-                    >
-                      {() =>
-
-                        <TextField
-                          {...field}
-                          ref={companyPhoneRef}
-                          variant="outlined"
-                          label="Telefone da Empresa"
-                          error={!!form.formState.errors.companyPhone}
-                          helperText={form.formState.errors.companyPhone?.message}
-                        />
-                      }
-                    </ReactInputMask>
+                      variant="outlined"
+                      label="Telefone da Empresa"
+                      error={!!form.formState.errors.companyPhone}
+                      helperText={form.formState.errors.companyPhone?.message}
+                    />
                   );
                 }}
                 name="companyPhone"
@@ -392,24 +368,15 @@ export const SupplierForm = () => {
                 render={({ field: { ref, ...field } }) => {
 
                   return (
-                    // @ts-ignore
-                    <ReactInputMask
+                    <MaskedTextField
                       {...field}
+                      ref={contactPhoneRef}
                       mask={"(99) 9999-99999"}
-                    >
-                      {/* @ts-ignore */}
-                      {() =>
-
-                        <TextField
-                          {...field}
-                          ref={contactPhoneRef}
-                          variant="outlined"
-                          label="Telefone do Contato"
-                          error={!!form.formState.errors.contactPhone}
-                          helperText={form.formState.errors.contactPhone?.message}
-                        />
-                      }
-                    </ReactInputMask>
+                      variant="outlined"
+                      label="Telefone do Contato"
+                      error={!!form.formState.errors.contactPhone}
+                      helperText={form.formState.errors.contactPhone?.message}
+                    />
                   );
                 }}
                 name="contactPhone"

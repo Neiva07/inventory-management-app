@@ -1,5 +1,3 @@
-import { Button, Tooltip } from "@mui/material";
-import { Box } from "@mui/system";
 import { FormProvider } from "react-hook-form"
 import { useParams, useNavigate } from "react-router-dom";
 import { OrderFormHeader } from "./OrderFormHeader";
@@ -13,6 +11,14 @@ import { integerDivide, multiply } from "lib/math";
 import { subtract } from "lib/math";
 import { useFormWrapper } from '../../hooks/forms/useFormWrapper';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
+import {
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "components/ui";
+import { cn } from "lib/utils";
 
 export const OrderForm = () => {
   const { orderID } = useParams();
@@ -187,9 +193,9 @@ export const OrderForm = () => {
     formMethods.setValue('totalCost', subtract(prevTotalCost, itemToDelete.itemTotalCost))
   }
 
-    return (
+  return (
     <FormProvider register={register} reset={reset} {...formMethods}>
-      <Box component="form" ref={formRef}>
+      <form ref={formRef}>
         <OrderFormHeader 
           onDelete={handleDelete} 
           onBack={() => navigate(-1)}
@@ -205,7 +211,7 @@ export const OrderForm = () => {
             dueDateRef,
           }}
         />
-        <Box style={{ marginTop: 40 }}>
+        <div className="mt-10">
           <OrderFormLineItemForm 
             productSelectRef={productSelectRef}
             variantRef={variantRef}
@@ -224,46 +230,62 @@ export const OrderForm = () => {
             focusNextField={focusNextField}
             focusPreviousField={focusPreviousField}
           />
-        </Box>
+        </div>
 
-        <Box style={{ marginTop: 40 }}>
+        <div className="mt-10">
           <OrderFormLineItemList deleteLineItemFromForm={deleteLineItemFromForm} />
-        </Box>
+        </div>
         
           {orderID ? (
-            <Tooltip title="Ctrl/Cmd + Enter" placement="top">
-              <Button onClick={handleSubmit} variant="outlined" size="large" style={{ marginTop: 20}}>
-                Editar Nota
-              </Button>
-            </Tooltip>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleSubmit}
+                    variant="outline"
+                    size="lg"
+                    className="mt-5"
+                  >
+                    Editar Nota
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : (
             <>  
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end', marginTop: 8}}>
+            <div className="mt-8 flex items-center justify-end gap-2">
               <CreateModeToggle
                 isCreateMode={isCreateMode}
                 onToggle={setIsCreateMode}
                 listingText="Redirecionar para listagem de vendas"
                 createText="Criar mais vendas"
               />
-            </Box>
+            </div>
 
-              <Tooltip 
-                title={!hasItems ? "Você precisa adicionar ao menos 1 item para fechar a nota" : "Ctrl/Cmd + Enter"}
-                placement="top"
-              >
-                <Button 
-                  onClick={hasItems ? handleSubmit : undefined} 
-                  variant="outlined" 
-                  size="large"
-                  style={{ 
-                    marginTop: 20,
-                    opacity: hasItems ? 1 : 0.6,
-                    cursor: hasItems ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  Fechar Nota
-                </Button>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      onClick={hasItems ? handleSubmit : undefined} 
+                      variant="outline" 
+                      size="lg"
+                      aria-disabled={!hasItems}
+                      className={cn(
+                        "mt-5",
+                        !hasItems && "cursor-not-allowed opacity-60"
+                      )}
+                    >
+                      Fechar Nota
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {!hasItems
+                      ? "Você precisa adicionar ao menos 1 item para fechar a nota"
+                      : "Ctrl/Cmd + Enter"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </>
           )}
         
@@ -283,7 +305,7 @@ export const OrderForm = () => {
             { shortcut: 'Ctrl/Cmd + P', description: 'Adicionar item (quando disponível)' }
           ]}
         />
-      </Box>
+      </form>
     </FormProvider>
   );
 };

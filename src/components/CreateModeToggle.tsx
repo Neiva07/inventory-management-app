@@ -1,5 +1,11 @@
 import React from 'react';
-import { FormControlLabel, Switch, Typography, Box, Tooltip } from '@mui/material';
+import {
+  Switch,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from 'components/ui';
 
 interface CreateModeToggleProps {
   isCreateMode: boolean;
@@ -15,22 +21,22 @@ export const CreateModeToggle: React.FC<CreateModeToggleProps> = ({
   createText,
 }) => {
   return (
-    <Tooltip title="Ctrl/Cmd + T" placement="top">
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 'fit-content' }}>
-        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-          {isCreateMode ? createText : listingText}
-        </Typography>
-        <FormControlLabel
-          control={
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex min-w-fit items-center gap-2">
+            <span className="whitespace-nowrap text-sm text-muted-foreground">
+              {isCreateMode ? createText : listingText}
+            </span>
             <Switch
               checked={isCreateMode}
-              onChange={(e) => onToggle(e.target.checked)}
-              size="medium"
+              onCheckedChange={onToggle}
+              aria-label="Alternar modo de criação"
             />
-          }
-          label=""
-        />
-      </Box>
-    </Tooltip>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top">Ctrl/Cmd + T</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }; 

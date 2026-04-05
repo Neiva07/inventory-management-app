@@ -1,16 +1,14 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import Button from "@mui/material/Button";
-import { Box } from "@mui/material";
-
 import {
-  Autocomplete,
+  Box,
+  Button,
   Divider,
   FormControl,
   Grid,
   TextField,
   Typography,
   Tooltip,
-} from "@mui/material";
+} from "components/ui/form-compat";
 import { Controller, FormProvider } from "react-hook-form";
 import { SelectField, useProductCreateForm } from "./useProductCreateForm";
 import { Variants } from "./Variants";

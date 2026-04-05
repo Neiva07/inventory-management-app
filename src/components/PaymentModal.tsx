@@ -1,21 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Button,
-  Grid,
-  Box,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+} from 'components/ui';
 import { paymentMethods } from '../model/paymentMethods';
 import { InstallmentPayment } from '../model/installmentPayment';
 import { recordPayment } from '../model/installmentPayment';
@@ -28,6 +21,10 @@ interface PaymentModalProps {
   installment: InstallmentPayment | null;
 }
 
+const selectClassName =
+  'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
+
 export const PaymentModal: React.FC<PaymentModalProps> = ({
   open,
   onClose,
@@ -39,7 +36,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  // Reset form when modal opens/closes or installment changes
   useEffect(() => {
     if (open && installment) {
       setPaymentAmount(installment.amount);
@@ -57,7 +53,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
-  const handlePaymentMethodChange = (event: any) => {
+  const handlePaymentMethodChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedPaymentMethod(event.target.value);
   };
 
@@ -70,7 +66,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const validateForm = (): boolean => {
     if (!installment) {
-      setError('Parcela não encontrada');
+      setError('Parcela nao encontrada');
       return false;
     }
 
@@ -94,7 +90,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     if (!validateForm() || !installment) {
       return;
     }
@@ -103,22 +99,23 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setError('');
 
     try {
-      const paymentMethod = paymentMethods.find(m => m.id === selectedPaymentMethod);
-      
+      const paymentMethod = paymentMethods.find((m) => m.id === selectedPaymentMethod);
+
       await recordPayment(
         installment.id,
         paymentAmount,
-        paymentMethod ? {
-          id: paymentMethod.id,
-          label: paymentMethod.label,
-        } : undefined
+        paymentMethod
+          ? {
+              id: paymentMethod.id,
+              label: paymentMethod.label,
+            }
+          : undefined
       );
 
       onPaymentRecorded();
       handleClose();
     } catch (err: any) {
       console.error('Error recording payment:', err);
-      // Show specific error message if available
       const errorMessage = err?.message || 'Erro ao registrar pagamento. Tente novamente.';
       setError(errorMessage);
     } finally {
@@ -131,90 +128,110 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   }
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={handleClose} 
-      maxWidth="sm" 
-      fullWidth
-      disableRestoreFocus
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          handleClose();
+        }
+      }}
     >
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>
-          Registrar Pagamento
-        </DialogTitle>
-        
-        <DialogContent>
-          <Box mb={3}>
-            <Typography variant="h6" gutterBottom>
+      <DialogContent
+        className="sm:max-w-md"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <DialogHeader>
+            <DialogTitle>Registrar Pagamento</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-1 rounded-md border bg-muted/30 p-4">
+            <p className="text-lg font-semibold">
               Parcela #{installment.installmentNumber}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Vencimento: {new Date(installment.dueDate).toLocaleDateString('pt-BR')}
-            </Typography>
-            <Typography variant="h5" color="primary" fontWeight="bold">
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Vencimento:{' '}
+              {new Date(installment.dueDate).toLocaleDateString('pt-BR')}
+            </p>
+            <p className="text-xl font-bold text-primary">
               Valor: {formatCurrency(installment.amount)}
-            </Typography>
-          </Box>
+            </p>
+          </div>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <div
+              role="alert"
+              className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
               {error}
-            </Alert>
+            </div>
           )}
 
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                label="Valor do Pagamento"
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <label
+                htmlFor="payment-amount"
+                className="text-sm font-medium text-foreground"
+              >
+                Valor do Pagamento
+              </label>
+              <Input
+                id="payment-amount"
                 type="number"
                 value={paymentAmount}
                 onChange={handleAmountChange}
-                fullWidth
                 disabled={loading}
-                inputProps={{
-                  step: 0.01,
-                  min: 0,
-                }}
-                helperText={`Valor fixo: ${formatCurrency(installment.amount)}`}
+                min={0}
+                step={0.01}
               />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <FormControl fullWidth disabled={loading}>
-                <InputLabel>Forma de Pagamento</InputLabel>
-                <Select
-                  value={selectedPaymentMethod}
-                  onChange={handlePaymentMethodChange}
-                  label="Forma de Pagamento"
-                >
-                  {paymentMethods.map((method) => (
-                    <MenuItem key={method.id} value={method.id}>
-                      {method.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
+              <p className="text-xs text-muted-foreground">
+                Valor fixo: {formatCurrency(installment.amount)}
+              </p>
+            </div>
 
-        <DialogActions>
-          <Button 
-            onClick={handleClose} 
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={loading || !selectedPaymentMethod || paymentAmount <= 0}
-            startIcon={loading ? <CircularProgress size={16} /> : null}
-          >
-            {loading ? 'Registrando...' : 'Registrar Pagamento'}
-          </Button>
-        </DialogActions>
-      </form>
+            <div className="space-y-2">
+              <label
+                htmlFor="payment-method"
+                className="text-sm font-medium text-foreground"
+              >
+                Forma de Pagamento
+              </label>
+              <select
+                id="payment-method"
+                value={selectedPaymentMethod}
+                onChange={handlePaymentMethodChange}
+                disabled={loading}
+                className={selectClassName}
+              >
+                <option value="">Selecione...</option>
+                {paymentMethods.map((method) => (
+                  <option key={method.id} value={method.id}>
+                    {method.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading || !selectedPaymentMethod || paymentAmount <= 0}
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {loading ? 'Registrando...' : 'Registrar Pagamento'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
-}; 
+};

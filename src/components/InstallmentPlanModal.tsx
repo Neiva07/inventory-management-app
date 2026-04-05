@@ -1,28 +1,26 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Button,
-  Grid,
-  Box,
-  Typography,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
+  Calendar,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
+  TableHeader,
   TableRow,
-  Paper,
-  FormHelperText
-} from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+} from 'components/ui';
+import { cn } from 'lib/utils';
 import { paymentMethods } from '../model/paymentMethods';
 import { add, subtract, divide } from '../lib/math';
 
@@ -52,7 +50,69 @@ interface InstallmentRow {
   };
 }
 
-export const InstallmentPlanModal: React.FC<InstallmentPlanModalProps> = ({ open, onClose, onSubmit, totalValue, orderDate }) => {
+type DateFieldProps = {
+  value: Date | null | undefined;
+  onChange: (value: Date) => void;
+  className?: string;
+  placeholder?: string;
+};
+
+const selectClassName =
+  'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
+
+const compactSelectClassName =
+  'flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-sm shadow-sm transition-colors ' +
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
+
+const helperTextClassName = 'text-xs text-muted-foreground';
+const labelClassName = 'text-sm font-medium text-foreground';
+
+const DateField: React.FC<DateFieldProps> = ({
+  value,
+  onChange,
+  className,
+  placeholder = 'Selecione uma data',
+}) => {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className={cn(
+            'w-full justify-start text-left font-normal',
+            !value && 'text-muted-foreground',
+            className
+          )}
+        >
+          <CalendarIcon className="h-4 w-4 shrink-0" />
+          {value ? format(value, 'dd/MM/yyyy') : <span>{placeholder}</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={value ?? undefined}
+          onSelect={(nextDate) => {
+            if (nextDate) {
+              onChange(nextDate);
+            }
+          }}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+export const InstallmentPlanModal: React.FC<InstallmentPlanModalProps> = ({
+  open,
+  onClose,
+  onSubmit,
+  totalValue,
+  orderDate,
+}) => {
   const [numberOfInstallments, setNumberOfInstallments] = useState(1);
   const [interval, setInterval] = useState(7);
   const [intervalUnit, setIntervalUnit] = useState('days');
@@ -65,51 +125,53 @@ export const InstallmentPlanModal: React.FC<InstallmentPlanModalProps> = ({ open
     setStartDate(orderDate);
   }, [orderDate]);
 
-  // Helper to add interval to a date
-  const addInterval = (date: Date, interval: number, unit: string) => {
-    const d = new Date(date);
-    if (unit === 'days') d.setDate(d.getDate() + interval);
-    if (unit === 'weeks') d.setDate(d.getDate() + interval * 7);
-    if (unit === 'months') d.setMonth(d.getMonth() + interval);
-    return d;
+  const addInterval = (date: Date, intervalValue: number, unit: string) => {
+    const nextDate = new Date(date);
+    if (unit === 'days') {
+      nextDate.setDate(nextDate.getDate() + intervalValue);
+    }
+    if (unit === 'weeks') {
+      nextDate.setDate(nextDate.getDate() + intervalValue * 7);
+    }
+    if (unit === 'months') {
+      nextDate.setMonth(nextDate.getMonth() + intervalValue);
+    }
+    return nextDate;
   };
 
-  // Regenerate rows when numberOfInstallments, interval, intervalUnit, startDate, globalPaymentMethod, or initialCashInstallment changes
   useEffect(() => {
-    const remainingValue = subtract(totalValue, initialCashInstallment);
-    const baseAmount = divide(remainingValue, numberOfInstallments);
-    setRows(prevRows => {
+    const remaining = subtract(totalValue, initialCashInstallment);
+    const baseAmount = divide(remaining, numberOfInstallments);
+
+    setRows((prevRows) => {
       const newRows: InstallmentRow[] = [];
       let runningTotal = 0;
-      
+
       for (let i = 0; i < numberOfInstallments; i++) {
         const isLastInstallment = i === numberOfInstallments - 1;
         let amount: number;
-        
+
         if (isLastInstallment) {
-          // For the last installment, use the remaining amount to ensure exact total
-          amount = subtract(remainingValue, runningTotal);
+          amount = subtract(remaining, runningTotal);
         } else {
           amount = baseAmount;
           runningTotal = add(runningTotal, amount);
         }
-        
-        // Calculate due date for this installment
-        let installmentDueDate: Date;
-        if (i === 0) {
-          // First installment always uses startDate
-          installmentDueDate = new Date(startDate);
-        } else {
-          // Subsequent installments add intervals to startDate
-          installmentDueDate = addInterval(new Date(startDate), interval * i, intervalUnit);
-        }
-        
+
+        const installmentDueDate =
+          i === 0
+            ? new Date(startDate)
+            : addInterval(new Date(startDate), interval * i, intervalUnit);
+
         const prev = prevRows[i];
         newRows.push({
           number: i + 1,
           dueDate: prev && prev.locked.dueDate ? prev.dueDate : installmentDueDate,
           amount: prev && prev.locked.amount ? prev.amount : amount,
-          paymentMethod: prev && prev.locked.paymentMethod ? prev.paymentMethod : globalPaymentMethod,
+          paymentMethod:
+            prev && prev.locked.paymentMethod
+              ? prev.paymentMethod
+              : globalPaymentMethod,
           locked: {
             dueDate: prev?.locked.dueDate || false,
             amount: prev?.locked.amount || false,
@@ -117,26 +179,40 @@ export const InstallmentPlanModal: React.FC<InstallmentPlanModalProps> = ({ open
           },
         });
       }
+
       return newRows;
     });
     // eslint-disable-next-line
-  }, [numberOfInstallments, interval, intervalUnit, startDate, globalPaymentMethod, totalValue, initialCashInstallment]);
+  }, [
+    numberOfInstallments,
+    interval,
+    intervalUnit,
+    startDate,
+    globalPaymentMethod,
+    totalValue,
+    initialCashInstallment,
+  ]);
 
-  // Calculate sum of all values
   const totalPlanned = useMemo(() => rows.reduce((sum, r) => add(sum, r.amount), 0), [rows]);
   const remainingValue = subtract(totalValue, initialCashInstallment);
   const totalDiff = Math.abs(subtract(totalPlanned, remainingValue));
 
-  const handleRowChange = (idx: number, field: keyof Omit<InstallmentRow, 'number' | 'locked'>, value: string | Date | number) => {
-    setRows(rows => rows.map((row, i) =>
-      i === idx
-        ? {
-            ...row,
-            [field]: field === 'amount' ?  Number(value) : value,
-            locked: { ...row.locked, [field]: true },
-          }
-        : row
-    ));
+  const handleRowChange = (
+    idx: number,
+    field: keyof Omit<InstallmentRow, 'number' | 'locked'>,
+    value: string | Date | number
+  ) => {
+    setRows((currentRows) =>
+      currentRows.map((row, i) =>
+        i === idx
+          ? {
+              ...row,
+              [field]: field === 'amount' ? Number(value) : value,
+              locked: { ...row.locked, [field]: true },
+            }
+          : row
+      )
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -148,218 +224,249 @@ export const InstallmentPlanModal: React.FC<InstallmentPlanModalProps> = ({ open
       startDate,
       initialCashInstallment,
       plannedPayments: rows.map(({ locked, ...rest }) => {
-        const paymentMethod = paymentMethods.find(m => m.id === rest.paymentMethod);
+        const paymentMethod = paymentMethods.find((m) => m.id === rest.paymentMethod);
         return {
           ...rest,
           dueDate: rest.dueDate,
           paymentMethod: {
             id: rest.paymentMethod,
-            label: paymentMethod?.label ?? rest.paymentMethod
-          }
+            label: paymentMethod?.label ?? rest.paymentMethod,
+          },
         };
       }),
     });
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth disableRestoreFocus>
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>Plano de Parcelamento</DialogTitle>
-        <DialogContent>
-          <Box mb={2}>
-            <Typography color="success.main" fontWeight="bold">
-              Valor Total: {totalValue}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Valor restante para parcelamento: {subtract(totalValue, initialCashInstallment)}
-            </Typography>
-          </Box>
-          <Grid container spacing={2} mb={2}>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                label="Pagamento Inicial (à vista)"
-                value={initialCashInstallment}
-                onChange={e => {
-                    const value = e.target.value;
-                    const isNumber = !isNaN(Number(value));
-                    if (isNumber) {
-                        const newValue = Math.max(0, Math.min(totalValue, Number(value)));
-                        setInitialCashInstallment(newValue);
-                        if (newValue === 0 && value === '') {
-                            setTimeout(() => e.target.select(), 0);
-                        }
-                    } else {
-                        setInitialCashInstallment(0);
-                    }
-                }}
-                fullWidth
-                onFocus={e => e.target.select()}
-                size="small"
-                helperText="Pago imediatamente"
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                label="Nº de Parcelas"
-                value={numberOfInstallments}
-                onChange={e => {
-                    const value = e.target.value;
-                    const isNumber = !isNaN(Number(value));
-                    if (isNumber) {
-                        const newNumberOfInstallments = Math.max(1, Math.min(12, Number(value)));
-                        setNumberOfInstallments(newNumberOfInstallments);
-                        // Select text if value becomes minimum (1) after backspace
-                        if (newNumberOfInstallments === 1 && value === '') {
-                            setTimeout(() => e.target.select(), 0);
-                        }
-                    } else {
-                        setNumberOfInstallments(1)
-                    }
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent
+        className="max-h-[90vh] w-[95vw] overflow-y-auto p-0 sm:max-w-5xl"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4 p-6">
+          <DialogHeader>
+            <DialogTitle>Plano de Parcelamento</DialogTitle>
+          </DialogHeader>
 
-                }}
-                fullWidth
-                onFocus={e => e.target.select()}
-                size="small"
-                autoFocus
-              />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <TextField
-                label="Intervalo"
-                value={interval}
-                onChange={e => {
-                    const value = e.target.value;
-                    const isNumber = !isNaN(Number(value));
-                    if (isNumber) {
-                        const newInterval = Math.max(1, Number(value));
-                        setInterval(newInterval);
-                        if (newInterval === 1 && value === '') {
-                            setTimeout(() => e.target.select(), 0);
-                        }
-                    } else {
-                        setInterval(1);
+          <div className="rounded-md border bg-muted/30 p-4">
+            <p className="text-base font-semibold text-green-700 dark:text-green-400">
+              Valor Total: {totalValue}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Valor restante para parcelamento: {remainingValue}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-2">
+              <label htmlFor="initial-cash-installment" className={labelClassName}>
+                Pagamento Inicial (à vista)
+              </label>
+              <Input
+                id="initial-cash-installment"
+                value={initialCashInstallment}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const isNumber = !isNaN(Number(value));
+                  if (isNumber) {
+                    const newValue = Math.max(0, Math.min(totalValue, Number(value)));
+                    setInitialCashInstallment(newValue);
+                    if (newValue === 0 && value === '') {
+                      setTimeout(() => e.target.select(), 0);
                     }
-                }}
-                fullWidth
-                size="small"
-                onFocus={e => e.target.select()}
-              />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel id="interval-unit-label">Unidade</InputLabel>
-                <Select
-                  labelId="interval-unit-label"
-                  value={intervalUnit}
-                  label="Unidade"
-                  onChange={e => setIntervalUnit(e.target.value)}
-                >
-                  {INTERVAL_UNITS.map(unit => (
-                    <MenuItem key={unit.value} value={unit.value}>{unit.label}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <DatePicker
-                label="Data Inicial"
-                value={startDate}
-                onChange={(newValue) => setStartDate(newValue ?? new Date())}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    size: "small"
+                  } else {
+                    setInitialCashInstallment(0);
                   }
                 }}
+                onFocus={(e) => e.target.select()}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel id="payment-method-label">Forma de Pagamento (Padrão)</InputLabel>
-                <Select
-                  labelId="payment-method-label"
-                  value={globalPaymentMethod}
-                  label="Forma de Pagamento (Padrão)"
-                  onChange={e => setGlobalPaymentMethod(e.target.value)}
-                  
-                >
-                  {paymentMethods.map(method => (
-                    <MenuItem key={method.id} value={method.id}>{method.label}</MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>Você pode alterar a forma de pagamento de cada parcela abaixo.</FormHelperText>
-              </FormControl>
-            </Grid>
-          </Grid>
-          <Box mt={2}>
-            <Typography variant="subtitle1" fontWeight="bold" mb={1}>Parcelas Planejadas</Typography>
-            <TableContainer component={Paper}>
-              <Table size="small">
-                <TableHead>
+              <p className={helperTextClassName}>Pago imediatamente</p>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="number-of-installments" className={labelClassName}>
+                Nº de Parcelas
+              </label>
+              <Input
+                id="number-of-installments"
+                value={numberOfInstallments}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const isNumber = !isNaN(Number(value));
+                  if (isNumber) {
+                    const nextNumber = Math.max(1, Math.min(12, Number(value)));
+                    setNumberOfInstallments(nextNumber);
+                    if (nextNumber === 1 && value === '') {
+                      setTimeout(() => e.target.select(), 0);
+                    }
+                  } else {
+                    setNumberOfInstallments(1);
+                  }
+                }}
+                onFocus={(e) => e.target.select()}
+                autoFocus
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="installment-interval" className={labelClassName}>
+                Intervalo
+              </label>
+              <Input
+                id="installment-interval"
+                value={interval}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const isNumber = !isNaN(Number(value));
+                  if (isNumber) {
+                    const nextInterval = Math.max(1, Number(value));
+                    setInterval(nextInterval);
+                    if (nextInterval === 1 && value === '') {
+                      setTimeout(() => e.target.select(), 0);
+                    }
+                  } else {
+                    setInterval(1);
+                  }
+                }}
+                onFocus={(e) => e.target.select()}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="interval-unit" className={labelClassName}>
+                Unidade
+              </label>
+              <select
+                id="interval-unit"
+                value={intervalUnit}
+                onChange={(e) => setIntervalUnit(e.target.value)}
+                className={selectClassName}
+              >
+                {INTERVAL_UNITS.map((unit) => (
+                  <option key={unit.value} value={unit.value}>
+                    {unit.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <label htmlFor="start-date" className={labelClassName}>
+                Data Inicial
+              </label>
+              <DateField
+                value={startDate}
+                onChange={(newValue) => setStartDate(newValue ?? new Date())}
+                className="h-9"
+              />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <label htmlFor="global-payment-method" className={labelClassName}>
+                Forma de Pagamento (Padrão)
+              </label>
+              <select
+                id="global-payment-method"
+                value={globalPaymentMethod}
+                onChange={(e) => setGlobalPaymentMethod(e.target.value)}
+                className={selectClassName}
+              >
+                {paymentMethods.map((method) => (
+                  <option key={method.id} value={method.id}>
+                    {method.label}
+                  </option>
+                ))}
+              </select>
+              <p className={helperTextClassName}>
+                Você pode alterar a forma de pagamento de cada parcela abaixo.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold tracking-tight">Parcelas Planejadas</h3>
+
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell>Parcela</TableCell>
-                    <TableCell>Vencimento</TableCell>
-                    <TableCell>Valor</TableCell>
-                    <TableCell>Forma de Pagamento</TableCell>
+                    <TableHead className="w-20">Parcela</TableHead>
+                    <TableHead className="min-w-[180px]">Vencimento</TableHead>
+                    <TableHead className="min-w-[120px]">Valor</TableHead>
+                    <TableHead className="min-w-[220px]">Forma de Pagamento</TableHead>
                   </TableRow>
-                </TableHead>
+                </TableHeader>
                 <TableBody>
                   {rows.map((row, idx) => (
                     <TableRow key={idx}>
                       <TableCell>{row.number}</TableCell>
                       <TableCell>
-                        <DatePicker
+                        <DateField
                           value={row.dueDate}
-                          onChange={(newValue) => handleRowChange(idx, 'dueDate', newValue ?? new Date())}
-                          slotProps={{
-                            textField: {
-                              size: "small"
-                            }
-                          }}
+                          onChange={(newValue) => handleRowChange(idx, 'dueDate', newValue)}
+                          className="h-8 min-w-[170px] justify-start px-2 text-xs"
                         />
                       </TableCell>
                       <TableCell>
-                        <TextField
+                        <Input
                           value={row.amount}
-                          onChange={e => handleRowChange(idx, 'amount', e.target.value)}
-                          onFocus={e => e.target.select()}
-                          size="small"
+                          onChange={(e) => handleRowChange(idx, 'amount', e.target.value)}
+                          onFocus={(e) => e.target.select()}
                           type="text"
+                          className="h-8"
                         />
                       </TableCell>
                       <TableCell>
-                        <FormControl fullWidth size="small">
-                          <Select
-                            value={row.paymentMethod}
-                            onChange={e => handleRowChange(idx, 'paymentMethod', e.target.value)}
-                          >
-                            {paymentMethods.map(method => (
-                              <MenuItem key={method.id} value={method.id}>{method.label}</MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
+                        <select
+                          value={row.paymentMethod}
+                          onChange={(e) => handleRowChange(idx, 'paymentMethod', e.target.value)}
+                          className={compactSelectClassName}
+                        >
+                          {paymentMethods.map((method) => (
+                            <option key={method.id} value={method.id}>
+                              {method.label}
+                            </option>
+                          ))}
+                        </select>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </TableContainer>
-            <Box mt={1} display="flex" alignItems="center" gap={2}>
-              <Typography variant="body2">Total das Parcelas: <b>R$ {totalPlanned}</b></Typography>
-              <Typography variant="body2">Valor para Parcelamento: <b>R$ {remainingValue}</b></Typography>
+            </div>
+
+            <div className="flex flex-col gap-1 text-sm md:flex-row md:flex-wrap md:items-center md:gap-4">
+              <p>
+                Total das Parcelas: <b>R$ {totalPlanned}</b>
+              </p>
+              <p>
+                Valor para Parcelamento: <b>R$ {remainingValue}</b>
+              </p>
               {totalDiff > 0.009 && (
-                <Typography variant="body2" color="error">A soma das parcelas difere do valor para parcelamento!</Typography>
+                <p className="font-medium text-destructive">
+                  A soma das parcelas difere do valor para parcelamento!
+                </p>
               )}
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} color="error" variant="contained">Cancelar</Button>
-          <Button type="submit" color="success" variant="contained">Salvar</Button>
-        </DialogActions>
-      </form>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button type="submit">Salvar</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 };
 
-export default InstallmentPlanModal; 
+export default InstallmentPlanModal;

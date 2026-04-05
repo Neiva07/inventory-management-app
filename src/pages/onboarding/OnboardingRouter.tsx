@@ -3,7 +3,7 @@ import { useAuth } from '../../context/auth';
 import { useOnboarding } from '../../context/onboarding';
 import { OnboardingFlow } from './OnboardingFlow';
 import { OrganizationSelection } from './OrganizationSelection';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress } from 'components/ui/form-compat';
 
 interface OnboardingRouterProps {
   children: React.ReactNode;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FormControlLabel, Switch, Typography, Box } from '@mui/material';
+import { Switch } from 'components/ui';
 
 interface ProductUpdateToggleProps {
   shouldUpdateProduct: boolean;
@@ -11,20 +11,15 @@ export const ProductUpdateToggle: React.FC<ProductUpdateToggleProps> = ({
   onToggle,
 }) => {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 'fit-content', mt: 2 }}>
-      <FormControlLabel
-        control={
-          <Switch
-            checked={shouldUpdateProduct}
-            onChange={(e) => onToggle(e.target.checked)}
-            size="medium"
-          />
-        }
-        label=""
+    <div className="mt-4 flex min-w-fit items-center gap-2">
+      <Switch
+        checked={shouldUpdateProduct}
+        onCheckedChange={onToggle}
+        aria-label="Alternar atualização do produto"
       />
-      <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+      <span className="whitespace-nowrap text-sm text-muted-foreground">
         {shouldUpdateProduct ? 'atualizar produto ao mudar o custo' : 'manter o produto original'}
-      </Typography>
-    </Box>
+      </span>
+    </div>
   );
 }; 

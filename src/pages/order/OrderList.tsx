@@ -1,16 +1,22 @@
 import * as React from 'react';
 import { deleteOrder, getOrders, Order, OrderStatus } from 'model/orders';
-import { Button, Grid, TextField, Skeleton, Typography, Box, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { Customer, getCustomers } from 'model/customer';
 import { useAuth } from 'context/auth';
 import { statuses } from './useOrderForm';
-import { DatePicker } from '@mui/x-date-pickers';
 import { SelectField } from 'pages/product/useProductCreateForm';
 import { format } from "date-fns"
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import {
+  Button,
+  DatePickerField,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from 'components/ui';
 import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
 import { KeyboardListPageKeyboardHelp } from 'components/KeyboardListPageKeyboardHelp';
 import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable';
@@ -232,8 +238,9 @@ export const OrderList = () => {
       >
         Vendas
       </PageTitle>
-      <Grid spacing={1} container>
-        <Grid item xs={4}>
+      <TooltipProvider>
+        <div className="grid grid-cols-12 gap-2">
+          <div className="col-span-12 lg:col-span-4">
           <EnhancedAutocomplete
             ref={customerFilterRef}
             id="customer-filter"
@@ -249,34 +256,28 @@ export const OrderList = () => {
             value={selectedCustomer}
             autoFocus
           />
-        </Grid>
-        <Grid item xs={2}>
-          <DatePicker 
-            value={startDate} 
-            label="Inicio" 
+          </div>
+          <div className="col-span-6 lg:col-span-2">
+          <DatePickerField
             ref={startDateRef}
-            onChange={e => setStartDate(e ?? null)}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-              }
-            }}
+            id="orders-start-date"
+            value={startDate}
+            label="Inicio"
+            onChange={setStartDate}
+            allowClear
           />
-        </Grid>
-        <Grid item xs={2}>
-          <DatePicker 
-            value={endDate} 
+          </div>
+          <div className="col-span-6 lg:col-span-2">
+          <DatePickerField
             ref={endDateRef}
-            label="Fim" 
-            onChange={e => setEndDate(e ?? null)}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-              }
-            }}
+            id="orders-end-date"
+            value={endDate}
+            label="Fim"
+            onChange={setEndDate}
+            allowClear
           />
-        </Grid>
-        <Grid item xs={4}>
+          </div>
+          <div className="col-span-12 lg:col-span-4">
           <EnhancedAutocomplete
             ref={statusFilterRef}
             id="status-filter"
@@ -291,70 +292,82 @@ export const OrderList = () => {
             onPreviousField={() => focusNavigation.focusPreviousField(statusFilterRef)}
             value={statusSelected ? statuses.find(s => s.value === statusSelected) : null}
           />
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + E" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={() => navigate(`/orders/${selectedRowID}`)}
-              tabIndex={-1}
-            > 
-              Editar Venda 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + D" placement="top">
-            <Button 
-              fullWidth 
-              disabled={!selectedRowID} 
-              onClick={handleDeleteOrder}
-              tabIndex={-1}
-            > 
-              Deletar Venda 
-            </Button>
-          </Tooltip>
-        </Grid>
-        <Grid item xs={3}>
-          <Tooltip title="Ctrl/Cmd + N" placement="top">
-            <Button 
-              fullWidth 
-              onClick={() => navigate(`/orders/create`)}
-              tabIndex={-1}
-            > 
-              Cadastrar Venda 
-            </Button>
-          </Tooltip>
-        </Grid>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={() => navigate(`/orders/${selectedRowID}`)}
+                  tabIndex={-1}
+                >
+                  Editar Venda
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + E</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  disabled={!selectedRowID}
+                  onClick={handleDeleteOrder}
+                  tabIndex={-1}
+                >
+                  Deletar Venda
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + D</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full"
+                  onClick={() => navigate(`/orders/create`)}
+                  tabIndex={-1}
+                >
+                  Cadastrar Venda
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Ctrl/Cmd + N</TooltipContent>
+            </Tooltip>
+          </div>
 
-        <Grid xs={12} item marginTop="20px" style={{ minHeight: 400 }}>
-          <CustomDataTable
-            data={orders}
-            columns={columns}
-            totalCount={count}
-            loading={loading}
-            selectedRowId={selectedRowID}
-            onRowSelectionChange={handleRowSelectionChange}
-            page={page}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            onRowDoubleClick={(order) => navigate(`/orders/${order.id}`)}
-            onNavigateToNextField={() => {
-              // Navigate to next component after table (could be action buttons)
-            }}
-            onNavigateToPreviousField={() => {
-              // Navigate back to status filter
-              focusNavigation.focusLastFieldBeforeTable();
-            }}
-            getRowId={(order) => order.id}
-            onEditSelected={handleEditSelected}
-            onDeleteSelected={handleDeleteOrder}
-            ref={tableRef}
-          />
-        </Grid>
-      </Grid>
+          <div className="col-span-12 mt-5 min-h-[400px]">
+            <CustomDataTable
+              data={orders}
+              columns={columns}
+              totalCount={count}
+              loading={loading}
+              selectedRowId={selectedRowID}
+              onRowSelectionChange={handleRowSelectionChange}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              onRowDoubleClick={(order) => navigate(`/orders/${order.id}`)}
+              onNavigateToNextField={() => {
+                // Navigate to next component after table (could be action buttons)
+              }}
+              onNavigateToPreviousField={() => {
+                // Navigate back to status filter
+                focusNavigation.focusLastFieldBeforeTable();
+              }}
+              getRowId={(order) => order.id}
+              onEditSelected={handleEditSelected}
+              onDeleteSelected={handleDeleteOrder}
+              ref={tableRef}
+            />
+          </div>
+        </div>
+      </TooltipProvider>
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
         onClose={handleCancelDelete}
