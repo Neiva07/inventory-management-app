@@ -32,6 +32,19 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
+      - name: Exclude Electron vendor binaries from Windows Defender
+        if: matrix.os.name == 'windows'
+        run: |
+          Set-MpPreference -DisableRealtimeMonitoring $true
+          Set-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE"
+        shell: powershell
+
+      - name: Enable long paths on Windows
+        if: matrix.os.name == 'windows'
+        run: |
+          reg add "HKLM\SYSTEM\CurrentControlSet\Control\FileSystem" /v LongPathsEnabled /t REG_DWORD /d 1 /f
+        shell: powershell
+
       - name: Install dependencies
         run: |
           pnpm install --frozen-lockfile
