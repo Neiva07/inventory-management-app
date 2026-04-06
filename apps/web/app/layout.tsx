@@ -2,7 +2,7 @@ import './globals.css';
 
 import { Analytics } from '@vercel/analytics/react';
 import { Suspense } from 'react';
-import { ClerkProvider } from '@clerk/nextjs'
+import { ClerkProvider } from '@clerk/nextjs';
 import { ptBR } from '@clerk/localizations';
 import Navbar from './navbar';
 
@@ -24,15 +24,15 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider localization={ptBR}>
-    <html lang="pt-BR" className="h-full bg-gray-50">
-      <body className="h-full">
-        <Suspense>
-          <Navbar />
-        </Suspense>
-        {children}
-        <Analytics />
-      </body>
-    </html>
+      <html lang="pt-BR" className="h-full">
+        <body className="h-full">
+          <Suspense>
+            <Navbar />
+          </Suspense>
+          {children}
+          <Analytics />
+        </body>
+      </html>
     </ClerkProvider>
   );
 }
