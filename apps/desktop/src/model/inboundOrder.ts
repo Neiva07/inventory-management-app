@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gt, gte, inArray, isNull, lte } from "drizzle-orm";
+import { and, asc, count, eq, gt, gte, inArray, lte } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { resolveOrganizationId } from "../db/scope";
@@ -48,10 +48,6 @@ export interface InboundOrder {
   supplier: InboundOrderSupplier;
   createdAt: number;
   updatedAt?: number;
-  deleted: {
-    date: number;
-    isDeleted: boolean;
-  };
   payments: Array<InboundOrderPayment>;
   orderDate: number;
   dueDate: number;
@@ -153,10 +149,6 @@ const mapInboundOrder = (
         },
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    deleted: {
-      isDeleted: row.deletedAt !== null,
-      date: row.deletedAt ?? 0,
-    },
     orderDate: row.orderDate,
     dueDate: row.dueDate ?? row.orderDate,
     status: row.status as InboundOrderStatus,
@@ -239,7 +231,7 @@ export const getInboundOrders = async (searchParams: InboundOrderSearchParams) =
     organizationId: searchParams.organizationId,
   });
 
-  const filters = [eq(inboundOrders.organizationId, scopeOrganizationId), isNull(inboundOrders.deletedAt)];
+  const filters = [eq(inboundOrders.organizationId, scopeOrganizationId)];
 
   if (searchParams.supplierID) {
     filters.push(eq(inboundOrders.supplierId, searchParams.supplierID));
@@ -270,7 +262,7 @@ export const getInboundOrders = async (searchParams: InboundOrderSearchParams) =
     .orderBy(asc(inboundOrders.createdAt))
     .limit(searchParams.pageSize);
 
-  const countFilters = [eq(inboundOrders.organizationId, scopeOrganizationId), isNull(inboundOrders.deletedAt)];
+  const countFilters = [eq(inboundOrders.organizationId, scopeOrganizationId)];
 
   if (searchParams.supplierID) {
     countFilters.push(eq(inboundOrders.supplierId, searchParams.supplierID));
@@ -361,7 +353,6 @@ export const createInboundOrder = async (inboundOrderInfo: Partial<InboundOrder>
     totalCostCents: (converted.totalCost as number) ?? 0,
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
   });
 
   for (const item of converted.items ?? []) {
@@ -379,7 +370,6 @@ export const createInboundOrder = async (inboundOrderInfo: Partial<InboundOrder>
       productBaseUnitInventory: item.productBaseUnitInventory,
       createdAt: timestamp,
       updatedAt: timestamp,
-      deletedAt: null,
     });
   }
 
@@ -393,7 +383,6 @@ export const createInboundOrder = async (inboundOrderInfo: Partial<InboundOrder>
       dueDate: payment.dueDate,
       createdAt: timestamp,
       updatedAt: timestamp,
-      deletedAt: null,
     });
   }
 
@@ -419,15 +408,9 @@ export const deleteInboundOrder = async (inboundOrderID: string) => {
     return;
   }
 
-  await db
-    .update(inboundOrders)
-    .set({
-      deletedAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-    .where(eq(inboundOrders.id, inboundOrderID));
-
   await applyInventoryDeltaFromItems(currentOrder.items ?? [], -1);
+
+  await db.delete(inboundOrders).where(eq(inboundOrders.id, inboundOrderID));
 
   await trackPendingSyncChange({
     organizationId: currentOrder.organizationId,
@@ -476,7 +459,6 @@ export const updateInboundOrder = async (inboundOrderID: string, currentInboundO
       productBaseUnitInventory: item.productBaseUnitInventory,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      deletedAt: null,
     });
   }
 
@@ -491,7 +473,6 @@ export const updateInboundOrder = async (inboundOrderID: string, currentInboundO
       dueDate: payment.dueDate,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      deletedAt: null,
     });
   }
 

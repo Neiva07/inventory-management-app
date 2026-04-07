@@ -3,7 +3,7 @@ export interface CrudRepository<TEntity, TCreate, TUpdate = Partial<TEntity>> {
   getById(id: string): Promise<TEntity | null>;
   create(data: TCreate): Promise<TEntity>;
   update(id: string, data: TUpdate): Promise<TEntity>;
-  softDelete(id: string, deletedAt?: number): Promise<void>;
+  delete(id: string): Promise<void>;
 }
 
 export interface ProductsRepository extends CrudRepository<unknown, unknown> {

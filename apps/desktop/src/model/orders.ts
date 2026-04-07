@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gt, gte, inArray, isNull, lte } from "drizzle-orm";
+import { and, asc, count, eq, gt, gte, inArray, lte } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { resolveOrganizationId } from "../db/scope";
@@ -42,10 +42,6 @@ export interface Order {
   customer: OrderCustomer;
   createdAt: number;
   updatedAt?: number;
-  deleted: {
-    date: number;
-    isDeleted: boolean;
-  };
   paymentMethod: {
     label: string;
     id: string;
@@ -141,10 +137,6 @@ const mapOrder = (row: typeof orders.$inferSelect, rowItems: typeof orderItems.$
         },
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    deleted: {
-      isDeleted: row.deletedAt !== null,
-      date: row.deletedAt ?? 0,
-    },
     paymentMethod: {
       id: row.paymentMethodId ?? "",
       label: row.paymentMethodLabel ?? "",
@@ -207,7 +199,7 @@ export const getOrders = async (searchParams: OrderSearchParams) => {
     organizationId: searchParams.organizationId,
   });
 
-  const filters = [eq(orders.organizationId, scopeOrganizationId), isNull(orders.deletedAt)];
+  const filters = [eq(orders.organizationId, scopeOrganizationId)];
 
   if (searchParams.customerID) {
     filters.push(eq(orders.customerId, searchParams.customerID));
@@ -238,7 +230,7 @@ export const getOrders = async (searchParams: OrderSearchParams) => {
     .orderBy(asc(orders.createdAt))
     .limit(searchParams.pageSize);
 
-  const countFilters = [eq(orders.organizationId, scopeOrganizationId), isNull(orders.deletedAt)];
+  const countFilters = [eq(orders.organizationId, scopeOrganizationId)];
   if (searchParams.customerID) {
     countFilters.push(eq(orders.customerId, searchParams.customerID));
   }
@@ -322,7 +314,6 @@ export const createOrder = async (orderInfo: Partial<Order>) => {
     totalCostCents: (converted.totalCost as number) ?? 0,
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
   });
 
   for (const item of converted.items ?? []) {
@@ -343,7 +334,6 @@ export const createOrder = async (orderInfo: Partial<Order>) => {
       productBaseUnitInventory: item.productBaseUnitInventory,
       createdAt: timestamp,
       updatedAt: timestamp,
-      deletedAt: null,
     });
   }
 
@@ -367,15 +357,9 @@ export const deleteOrder = async (orderID: string) => {
     return;
   }
 
-  await db
-    .update(orders)
-    .set({
-      deletedAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-    .where(eq(orders.id, orderID));
-
   await applyInventoryDeltaFromItems(currentOrder.items ?? [], 1);
+
+  await db.delete(orders).where(eq(orders.id, orderID));
 
   await trackPendingSyncChange({
     organizationId: currentOrder.organizationId,
@@ -430,7 +414,6 @@ export const updateOrder = async (orderID: string, currentOrder: Partial<Order>)
       productBaseUnitInventory: item.productBaseUnitInventory,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      deletedAt: null,
     });
   }
 

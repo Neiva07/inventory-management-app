@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gt, isNull, lte, gte, lt } from "drizzle-orm";
+import { and, asc, count, eq, gt, lte, gte, lt } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { resolveOrganizationId } from "../db/scope";
@@ -28,10 +28,6 @@ export interface InstallmentPayment {
   paidAmount?: number;
   createdAt: number;
   updatedAt?: number;
-  deleted: {
-    date: number;
-    isDeleted: boolean;
-  };
 }
 
 interface InstallmentPaymentSearchParams {
@@ -92,10 +88,6 @@ const mapInstallment = (row: typeof installmentPayments.$inferSelect): Installme
     paidAmount: row.paidAmountCents ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    deleted: {
-      isDeleted: row.deletedAt !== null,
-      date: row.deletedAt ?? 0,
-    },
   } as InstallmentPayment;
 
   return convertInstallmentPaymentUnitsDisplay(installment) as InstallmentPayment;
@@ -108,7 +100,7 @@ export const getInstallmentPayments = async (searchParams: InstallmentPaymentSea
     organizationId: searchParams.organizationId,
   });
 
-  const filters = [eq(installmentPayments.organizationId, scopeOrganizationId), isNull(installmentPayments.deletedAt)];
+  const filters = [eq(installmentPayments.organizationId, scopeOrganizationId)];
 
   if (searchParams.supplierBillID) {
     filters.push(eq(installmentPayments.supplierBillId, searchParams.supplierBillID));
@@ -137,7 +129,7 @@ export const getInstallmentPayments = async (searchParams: InstallmentPaymentSea
     .orderBy(asc(installmentPayments.dueDate))
     .limit(searchParams.pageSize);
 
-  const countFilters = [eq(installmentPayments.organizationId, scopeOrganizationId), isNull(installmentPayments.deletedAt)];
+  const countFilters = [eq(installmentPayments.organizationId, scopeOrganizationId)];
 
   if (searchParams.supplierBillID) {
     countFilters.push(eq(installmentPayments.supplierBillId, searchParams.supplierBillID));
@@ -219,7 +211,6 @@ export const createInstallmentPayment = async (installmentPaymentInfo: Partial<I
     paymentMethodLabel: installmentPaymentInfo.paymentMethod?.label,
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
   });
 
   await trackPendingSyncChange({
@@ -260,7 +251,6 @@ export const createMultipleInstallmentPayments = async (installments: Partial<In
       paymentMethodLabel: installment.paymentMethod?.label,
       createdAt: timestamp,
       updatedAt: timestamp,
-      deletedAt: null,
     });
 
     await trackPendingSyncChange({
@@ -371,13 +361,7 @@ export const deleteInstallmentPayment = async (installmentPaymentID: string) => 
     .where(eq(installmentPayments.id, installmentPaymentID))
     .limit(1);
 
-  await db
-    .update(installmentPayments)
-    .set({
-      deletedAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-    .where(eq(installmentPayments.id, installmentPaymentID));
+  await db.delete(installmentPayments).where(eq(installmentPayments.id, installmentPaymentID));
 
   await trackPendingSyncChange({
     organizationId: existing[0]?.organizationId,
@@ -402,8 +386,7 @@ export const updateOverdueInstallments = async (userID: string, organizationId?:
       and(
         eq(installmentPayments.organizationId, scopeOrganizationId),
         eq(installmentPayments.status, "pending"),
-        lt(installmentPayments.dueDate, todayTimestamp),
-        isNull(installmentPayments.deletedAt)
+        lt(installmentPayments.dueDate, todayTimestamp)
       )
     );
 

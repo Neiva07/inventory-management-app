@@ -18,10 +18,6 @@ export interface User {
   photoURL: string;
   createdAt?: number;
   updatedAt?: number;
-  deleted: {
-    date?: number;
-    isDeleted: boolean;
-  };
 }
 
 const USERS_COLLECTION = "users"
@@ -50,9 +46,6 @@ export const upsertUserFromSession = async (session: Session): Promise<User> => 
     photoURL: clerkUser.image_url || '',
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    deleted: {
-      isDeleted: false,
-    },
   };
   
   if (!dbUser.exists()) {

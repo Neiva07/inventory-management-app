@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gt, isNull, like } from "drizzle-orm";
+import { and, asc, count, eq, gt, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { resolveOrganizationId } from "../db/scope";
@@ -47,10 +47,6 @@ export interface Product {
   ncm?: string;
   createdAt?: Date | number;
   updatedAt?: Date | number;
-  deleted: {
-    date: Date | number;
-    isDeleted: boolean;
-  };
   status: string;
   inventory: number;
   baseUnit: ProductUnit;
@@ -128,10 +124,6 @@ const mapProductRow = (row: typeof products.$inferSelect): Product => {
     ncm: row.sku ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    deleted: {
-      isDeleted: row.deletedAt !== null,
-      date: row.deletedAt ?? 0,
-    },
     status: row.status,
     inventory: row.inventoryBaseUnit,
     baseUnit,
@@ -157,7 +149,6 @@ export const getProducts = async (searchParams: ProductSearchParams) => {
 
   const filters = [
     eq(products.organizationId, scopeOrganizationId),
-    isNull(products.deletedAt),
     like(products.title, `${title}%`),
   ];
 
@@ -182,7 +173,6 @@ export const getProducts = async (searchParams: ProductSearchParams) => {
 
   const countFilters = [
     eq(products.organizationId, scopeOrganizationId),
-    isNull(products.deletedAt),
     like(products.title, `${title}%`),
   ];
 
@@ -242,7 +232,6 @@ export const createProduct = async (productInfo: Partial<Product>) => {
     variantsJson: JSON.stringify(converted.variants ?? []),
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
   });
 
   await trackPendingSyncChange({
@@ -257,13 +246,8 @@ export const createProduct = async (productInfo: Partial<Product>) => {
 export const deleteProduct = async (productID: string) => {
   const db = createAppDb();
   const existing = await db.select({ organizationId: products.organizationId }).from(products).where(eq(products.id, productID)).limit(1);
-  await db
-    .update(products)
-    .set({
-      deletedAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-    .where(eq(products.id, productID));
+
+  await db.delete(products).where(eq(products.id, productID));
 
   await trackPendingSyncChange({
     organizationId: existing[0]?.organizationId,

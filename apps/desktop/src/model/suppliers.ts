@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gt, inArray, isNull, like } from "drizzle-orm";
+import { and, asc, count, eq, gt, inArray, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { makeDocSnapshot, makeQuerySnapshot } from "../db/firestoreCompat";
@@ -28,10 +28,6 @@ export interface Supplier {
   description?: string;
   createdAt?: Date | number;
   updatedAt?: Date | number;
-  deleted?: {
-    date: Date | number;
-    isDeleted: boolean;
-  }
   status: string;
   address?: Address;
   daysToPay?: number;
@@ -64,10 +60,6 @@ const mapSupplierBase = (row: typeof suppliers.$inferSelect): Supplier => ({
   description: row.notes ?? undefined,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
-  deleted: {
-    isDeleted: row.deletedAt !== null,
-    date: row.deletedAt ?? 0,
-  },
   status: row.status,
   address: row.addressJson ? (JSON.parse(row.addressJson) as Address) : undefined,
   daysToPay: row.daysToPay ?? undefined,
@@ -113,7 +105,6 @@ export const getSuppliers = async (searchParams: SuppliersSearchParams) => {
   const title = searchParams.tradeName ?? "";
   const filters = [
     eq(suppliers.organizationId, scopeOrganizationId),
-    isNull(suppliers.deletedAt),
     like(suppliers.tradeName, `${title}%`),
   ];
 
@@ -147,7 +138,6 @@ export const getSuppliers = async (searchParams: SuppliersSearchParams) => {
 
   const countFilters = [
     eq(suppliers.organizationId, scopeOrganizationId),
-    isNull(suppliers.deletedAt),
     like(suppliers.tradeName, `${title}%`),
   ];
 
@@ -210,7 +200,6 @@ export const createSupplier = async (supplierInfo: Supplier) => {
     addressJson: supplierInfo.address ? JSON.stringify(supplierInfo.address) : null,
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
   });
 
   if (supplierInfo.productCategories?.length) {
@@ -223,7 +212,6 @@ export const createSupplier = async (supplierInfo: Supplier) => {
           categoryId: category.id,
           createdAt: timestamp,
           updatedAt: timestamp,
-          deletedAt: null as number | null,
         }))
     );
   }
@@ -256,13 +244,7 @@ export const deleteSupplier = async (supplierID: string) => {
   const db = createAppDb();
   const existing = await db.select({ organizationId: suppliers.organizationId }).from(suppliers).where(eq(suppliers.id, supplierID)).limit(1);
 
-  await db
-    .update(suppliers)
-    .set({
-      deletedAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-    .where(eq(suppliers.id, supplierID));
+  await db.delete(suppliers).where(eq(suppliers.id, supplierID));
 
   await trackPendingSyncChange({
     organizationId: existing[0]?.organizationId,
@@ -349,7 +331,6 @@ export const updateSupplier = async (supplierID: string, supplierInfo: Partial<S
           categoryId: category.id,
           createdAt: timestamp,
           updatedAt: timestamp,
-          deletedAt: null as number | null,
         }))
       );
     }

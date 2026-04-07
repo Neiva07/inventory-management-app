@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull, like } from "drizzle-orm";
+import { and, asc, eq, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { makeQuerySnapshot } from "../db/firestoreCompat";
@@ -18,10 +18,6 @@ export interface Unit {
   userID: string;
   organizationId?: string;
   status?: string;
-  deleted?: {
-    date: Date | number;
-    isDeleted: boolean;
-  };
 }
 
 const UNIT_COLLECTION = COLLECTION_NAMES.UNITS;
@@ -33,7 +29,7 @@ export const getUnits = async (userID: string, name = "", organizationId?: strin
   const rows = await db
     .select()
     .from(units)
-    .where(and(eq(units.organizationId, scopeOrganizationId), isNull(units.deletedAt), like(units.name, `${name}%`)))
+    .where(and(eq(units.organizationId, scopeOrganizationId), like(units.name, `${name}%`)))
     .orderBy(asc(units.name));
 
   const unitRows: Unit[] = rows.map((row) => ({
@@ -46,10 +42,6 @@ export const getUnits = async (userID: string, name = "", organizationId?: strin
     status: row.status,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    deleted: {
-      isDeleted: row.deletedAt !== null,
-      date: row.deletedAt ?? 0,
-    },
   }));
 
   return makeQuerySnapshot(unitRows);
@@ -74,7 +66,6 @@ export const createUnit = async (unitInfo: Partial<Unit>) => {
     status: unitInfo.status ?? "active",
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
   });
 
   await trackPendingSyncChange({
@@ -112,13 +103,7 @@ export const deleteUnit = async (id: string) => {
   const db = createAppDb();
   const existing = await db.select({ organizationId: units.organizationId }).from(units).where(eq(units.id, id)).limit(1);
 
-  await db
-    .update(units)
-    .set({
-      deletedAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-    .where(eq(units.id, id));
+  await db.delete(units).where(eq(units.id, id));
 
   await trackPendingSyncChange({
     organizationId: existing[0]?.organizationId,

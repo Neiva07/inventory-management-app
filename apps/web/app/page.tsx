@@ -12,7 +12,7 @@ export default function IndexPage() {
     if (isSignedIn) {
       router.push('/download');
     } else {
-      router.push('/app-sign-in');
+      router.push('/landing');
     }
   }, [isSignedIn, router]);
 

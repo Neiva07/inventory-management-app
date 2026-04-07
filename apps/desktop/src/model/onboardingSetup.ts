@@ -96,7 +96,7 @@ export const seedOnboardingSampleData = async (
     userID,
     organizationId,
     createdAt: now,
-    deleted: { isDeleted: false },
+
     source: "onboarding_sample",
   });
   batch.set(doc(db, COLLECTION_NAMES.UNITS, unitBox.id), {
@@ -105,7 +105,7 @@ export const seedOnboardingSampleData = async (
     userID,
     organizationId,
     createdAt: now,
-    deleted: { isDeleted: false },
+
     source: "onboarding_sample",
   });
 
@@ -126,7 +126,7 @@ export const seedOnboardingSampleData = async (
     userID,
     organizationId,
     createdAt: now,
-    deleted: { isDeleted: false },
+
     source: "onboarding_sample",
   });
   batch.set(doc(db, COLLECTION_NAMES.PRODUCT_CATEGORIES, beverageCategory.id), {
@@ -135,7 +135,7 @@ export const seedOnboardingSampleData = async (
     userID,
     organizationId,
     createdAt: now,
-    deleted: { isDeleted: false },
+
     source: "onboarding_sample",
   });
 
@@ -162,7 +162,7 @@ export const seedOnboardingSampleData = async (
     companyPhone: "(11) 98888-0001",
     contactPhone: "(11) 98888-0002",
     createdAt: now,
-    deleted: { isDeleted: false },
+
     source: "onboarding_sample",
   });
   batch.set(doc(db, COLLECTION_NAMES.SUPPLIERS, supplierTwo.id), {
@@ -177,7 +177,7 @@ export const seedOnboardingSampleData = async (
     companyPhone: "(21) 97777-0001",
     contactPhone: "(21) 97777-0002",
     createdAt: now,
-    deleted: { isDeleted: false },
+
     source: "onboarding_sample",
   });
 
@@ -197,7 +197,7 @@ export const seedOnboardingSampleData = async (
       contactName: customer.name,
       companyPhone: "(11) 90000-0000",
       createdAt: now,
-      deleted: { isDeleted: false },
+  
       source: "onboarding_sample",
     });
   });
@@ -255,7 +255,7 @@ export const seedOnboardingSampleData = async (
       status: "active",
       createdAt: now,
       updatedAt: now,
-      deleted: { isDeleted: false },
+  
       inventory: product.inventory,
       minInventory: product.minInventory,
       baseUnit: {

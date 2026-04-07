@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull, like } from "drizzle-orm";
+import { and, asc, eq, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { makeQuerySnapshot } from "../db/firestoreCompat";
@@ -18,10 +18,6 @@ export interface ProductCategory {
   userID: string;
   organizationId?: string;
   status?: string;
-  deleted?: {
-    date: Date | number;
-    isDeleted: boolean;
-  };
 }
 
 const PRODUCT_CATEGORIES_COLLECTION = COLLECTION_NAMES.PRODUCT_CATEGORIES;
@@ -36,7 +32,6 @@ export const getProductCategories = async (userID: string, name = "", organizati
     .where(
       and(
         eq(productCategories.organizationId, scopeOrganizationId),
-        isNull(productCategories.deletedAt),
         like(productCategories.name, `${name}%`)
       )
     )
@@ -52,10 +47,6 @@ export const getProductCategories = async (userID: string, name = "", organizati
     status: row.status,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    deleted: {
-      isDeleted: row.deletedAt !== null,
-      date: row.deletedAt ?? 0,
-    },
   }));
 
   return makeQuerySnapshot(categories);
@@ -80,7 +71,6 @@ export const createProductCategories = async (productCategoryInfo: Partial<Produ
     status: productCategoryInfo.status ?? "active",
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
   });
 
   await trackPendingSyncChange({
@@ -126,13 +116,7 @@ export const deleteProductCategory = async (id: string) => {
     .where(eq(productCategories.id, id))
     .limit(1);
 
-  await db
-    .update(productCategories)
-    .set({
-      deletedAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-    .where(eq(productCategories.id, id));
+  await db.delete(productCategories).where(eq(productCategories.id, id));
 
   await trackPendingSyncChange({
     organizationId: existing[0]?.organizationId,

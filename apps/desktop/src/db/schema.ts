@@ -8,7 +8,6 @@ const lifecycleColumns = {
   updatedAt: integer("updated_at", { mode: "number" })
     .notNull()
     .default(sql`(unixepoch() * 1000)`),
-  deletedAt: integer("deleted_at", { mode: "number" }),
 };
 
 export const users = sqliteTable(
@@ -107,7 +106,7 @@ export const onboardingSessions = sqliteTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").references(() => organizations.id, { onDelete: "set null" }),
+    organizationId: text("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
     status: text("status").notNull().default("in_progress"),
     step: integer("step").notNull().default(0),
     payloadJson: text("payload_json"),
@@ -125,7 +124,7 @@ export const appSettings = sqliteTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    organizationId: text("organization_id").references(() => organizations.id, { onDelete: "set null" }),
+    organizationId: text("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
     settingsJson: text("settings_json").notNull().default("{}"),
     ...lifecycleColumns,
   },

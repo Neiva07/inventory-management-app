@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gt, isNull, lte, gte } from "drizzle-orm";
+import { and, count, desc, eq, gt, lte, gte } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { resolveOrganizationId } from "../db/scope";
@@ -30,10 +30,6 @@ export interface SupplierBill {
   startDate: number;
   createdAt: number;
   updatedAt?: number;
-  deleted: {
-    date: number;
-    isDeleted: boolean;
-  };
   status: SupplierBillStatus;
 }
 
@@ -95,10 +91,6 @@ const mapSupplierBill = (row: typeof supplierBills.$inferSelect): SupplierBill =
     startDate: row.dueDate ?? row.createdAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
-    deleted: {
-      isDeleted: row.deletedAt !== null,
-      date: row.deletedAt ?? 0,
-    },
     status: row.status as SupplierBillStatus,
   } as SupplierBill;
 
@@ -112,7 +104,7 @@ export const getSupplierBills = async (searchParams: SupplierBillSearchParams) =
     organizationId: searchParams.organizationId,
   });
 
-  const filters = [eq(supplierBills.organizationId, scopeOrganizationId), isNull(supplierBills.deletedAt)];
+  const filters = [eq(supplierBills.organizationId, scopeOrganizationId)];
 
   if (searchParams.supplierID) {
     filters.push(eq(supplierBills.supplierId, searchParams.supplierID));
@@ -141,7 +133,7 @@ export const getSupplierBills = async (searchParams: SupplierBillSearchParams) =
     .orderBy(desc(supplierBills.createdAt))
     .limit(searchParams.pageSize);
 
-  const countFilters = [eq(supplierBills.organizationId, scopeOrganizationId), isNull(supplierBills.deletedAt)];
+  const countFilters = [eq(supplierBills.organizationId, scopeOrganizationId)];
 
   if (searchParams.supplierID) {
     countFilters.push(eq(supplierBills.supplierId, searchParams.supplierID));
@@ -219,7 +211,6 @@ export const createSupplierBill = async (supplierBillInfo: Partial<SupplierBill>
     paidAmountCents: (converted.initialCashInstallment as number) ?? 0,
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
   });
 
   await trackPendingSyncChange({
@@ -266,13 +257,7 @@ export const deleteSupplierBill = async (supplierBillID: string) => {
   const db = createAppDb();
   const existing = await db.select({ organizationId: supplierBills.organizationId }).from(supplierBills).where(eq(supplierBills.id, supplierBillID)).limit(1);
 
-  await db
-    .update(supplierBills)
-    .set({
-      deletedAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-    .where(eq(supplierBills.id, supplierBillID));
+  await db.delete(supplierBills).where(eq(supplierBills.id, supplierBillID));
 
   await trackPendingSyncChange({
     organizationId: existing[0]?.organizationId,

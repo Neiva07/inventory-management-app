@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gt, isNull, like } from "drizzle-orm";
+import { and, asc, count, eq, gt, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { makeDocSnapshot, makeQuerySnapshot } from "../db/firestoreCompat";
@@ -19,10 +19,6 @@ export interface Customer {
   rg?: string;
   createdAt?: Date | number;
   updatedAt?: Date | number;
-  deleted?: {
-    date: Date | number;
-    isDeleted: boolean;
-  }
   status: string;
   address?: Address;
   companyPhone?: string;
@@ -56,10 +52,6 @@ const mapCustomer = (row: typeof customers.$inferSelect): Customer => ({
   contactName: row.contactName ?? undefined,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
-  deleted: {
-    isDeleted: row.deletedAt !== null,
-    date: row.deletedAt ?? 0,
-  },
 });
 
 export const getCustomers = async (searchParams: CustomerSearchParams) => {
@@ -72,7 +64,6 @@ export const getCustomers = async (searchParams: CustomerSearchParams) => {
   const namePrefix = searchParams.name ?? "";
   const filters = [
     eq(customers.organizationId, scopeOrganizationId),
-    isNull(customers.deletedAt),
     like(customers.name, `${namePrefix}%`),
   ];
 
@@ -93,7 +84,6 @@ export const getCustomers = async (searchParams: CustomerSearchParams) => {
 
   const countFilters = [
     eq(customers.organizationId, scopeOrganizationId),
-    isNull(customers.deletedAt),
     like(customers.name, `${namePrefix}%`),
   ];
 
@@ -125,10 +115,6 @@ export const createCustomer = async (customerInfo: Customer) => {
     organizationId,
     createdAt: timestamp,
     updatedAt: timestamp,
-    deleted: {
-      isDeleted: false,
-      date: 0,
-    },
   };
 
   await db.insert(customers).values({
@@ -146,7 +132,6 @@ export const createCustomer = async (customerInfo: Customer) => {
     addressJson: customerInfo.address ? JSON.stringify(customerInfo.address) : null,
     createdAt: timestamp,
     updatedAt: timestamp,
-    deletedAt: null,
   });
 
   await trackPendingSyncChange({
@@ -171,13 +156,7 @@ export const deleteCustomer = async (customerID: string) => {
   const db = createAppDb();
   const existing = await db.select({ organizationId: customers.organizationId }).from(customers).where(eq(customers.id, customerID)).limit(1);
 
-  await db
-    .update(customers)
-    .set({
-      deletedAt: Date.now(),
-      updatedAt: Date.now(),
-    })
-    .where(eq(customers.id, customerID));
+  await db.delete(customers).where(eq(customers.id, customerID));
 
   await trackPendingSyncChange({
     organizationId: existing[0]?.organizationId,
