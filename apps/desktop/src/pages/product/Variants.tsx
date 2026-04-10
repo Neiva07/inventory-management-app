@@ -344,10 +344,11 @@ const VariantItem = ({ formMethods, index, focusNextField, focusPreviousField, r
                     id={`variants.${index}.unit`}
                     options={units.map((c) => {
                       return {
-                        label: c.name,
+                        label: c.description ? `${c.name} (${c.description})` : c.name,
                         value: c.id,
                       } as SelectField;
                     })}
+                    getOptionLabel={(option: SelectField) => option.label}
                     isOptionEqualToValue={(option: SelectField, value: SelectField | null) =>
                       option.value === value?.value
                     }

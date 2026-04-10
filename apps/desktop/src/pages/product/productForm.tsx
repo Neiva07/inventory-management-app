@@ -397,10 +397,11 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                       value={baseUnit}
                       options={units.map((c) => {
                         return {
-                          label: c.name,
+                          label: c.description ? `${c.name} (${c.description})` : c.name,
                           value: c.id,
                         } as SelectField;
                       })}
+                      getOptionLabel={(option: SelectField) => option.label}
                       isOptionEqualToValue={(option: SelectField, value: SelectField) =>
                         option.value === value?.value
                       }
