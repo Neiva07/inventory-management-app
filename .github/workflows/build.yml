@@ -37,11 +37,12 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: |
-          pnpm install --frozen-lockfile
+        working-directory: .
+        run: pnpm install --frozen-lockfile --filter stockify-app...
 
       - name: Prepare Squirrel vendor binaries (7z.exe)
         if: matrix.os.name == 'windows'
+        working-directory: .
         run: |
           Copy-Item "node_modules/electron-winstaller/vendor/7z-x64.exe" "node_modules/electron-winstaller/vendor/7z.exe"
           Copy-Item "node_modules/electron-winstaller/vendor/7z-x64.dll" "node_modules/electron-winstaller/vendor/7z.dll"
