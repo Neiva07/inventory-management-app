@@ -1,6 +1,5 @@
-import { doc, writeBatch } from "firebase/firestore";
-import { db } from "../firebase";
-import { COLLECTION_NAMES } from "./index";
+import { createAppDb } from "../db/client";
+import { joinRequests, productCategories, units } from "../db/schema";
 import { UserRole } from "./userMembership";
 
 interface OnboardingInvitation {
@@ -9,12 +8,15 @@ interface OnboardingInvitation {
   role: string;
 }
 
-const JOIN_REQUESTS_COLLECTION = "join_requests";
+export interface CadastrosBasicosPayload {
+  units: { name: string; description?: string }[];
+  categories: { name: string; description?: string }[];
+  acceptedPaymentMethodIds: string[];
+  skipped?: boolean;
+}
 
 const sanitizeKey = (value: string): string =>
   value.toLowerCase().replace(/[^a-z0-9]/g, "_");
-
-const toCents = (value: number): number => Math.round(value * 100);
 
 const buildPublicId = (prefix: string, userID: string, key: string): string =>
   `${prefix}-${sanitizeKey(userID).slice(0, 8)}-${sanitizeKey(key)}`.slice(0, 40);
@@ -32,7 +34,7 @@ export const persistOnboardingTeamInvitations = async (
   invitations: OnboardingInvitation[]
 ): Promise<void> => {
   const now = Date.now();
-  const batch = writeBatch(db);
+  const db = createAppDb();
 
   const dedupedInvites = Array.from(
     new Map(
@@ -42,281 +44,101 @@ export const persistOnboardingTeamInvitations = async (
     ).values()
   );
 
-  dedupedInvites.forEach((invitation) => {
+  if (dedupedInvites.length === 0) {
+    return;
+  }
+
+  const rows = dedupedInvites.map((invitation) => {
     const normalizedEmail = invitation.email.trim().toLowerCase();
     const invitationId =
       `onb_${sanitizeKey(organizationId).slice(0, 20)}_${sanitizeKey(normalizedEmail).slice(0, 20)}`;
-    const invitationRef = doc(db, JOIN_REQUESTS_COLLECTION, invitationId);
 
-    batch.set(
-      invitationRef,
-      {
-        id: invitationId,
-        organizationId,
-        issuedBy: invitedBy,
-        userEmail: normalizedEmail,
-        invitedName: invitation.name?.trim() || normalizedEmail,
-        requestedRole: normalizeRole(invitation.role),
-        userMessage: `Convite enviado no onboarding para a função ${normalizeRole(invitation.role)}.`,
-        status: "pending",
-        requestedAt: now,
-        source: "onboarding",
-      },
-      { merge: true }
-    );
+    return {
+      id: invitationId,
+      organizationId,
+      userId: invitedBy,
+      message: `Convite enviado no onboarding para a função ${normalizeRole(invitation.role)}.`,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    };
   });
 
-  if (dedupedInvites.length > 0) {
-    await batch.commit();
+  for (const row of rows) {
+    await db
+      .insert(joinRequests)
+      .values(row)
+      .onConflictDoUpdate({
+        target: joinRequests.id,
+        set: {
+          message: row.message,
+          status: row.status,
+          updatedAt: now,
+        },
+      });
   }
 };
 
-export const seedOnboardingSampleData = async (
+export const seedCadastrosBasicos = async (
   userID: string,
-  organizationId: string
+  organizationId: string,
+  payload: CadastrosBasicosPayload
 ): Promise<void> => {
+  const db = createAppDb();
   const now = Date.now();
-  const key = sanitizeKey(userID).slice(0, 20);
-  const batch = writeBatch(db);
 
-  const unitUn = {
-    id: `sample_unit_un_${key}`,
-    name: "Unidade",
-    description: "Unidade padrão de venda",
-  };
-  const unitBox = {
-    id: `sample_unit_box_${key}`,
-    name: "Caixa",
-    description: "Caixa com múltiplas unidades",
-  };
+  const trimmedUnits = payload.units
+    .map((unit) => ({
+      name: unit.name.trim(),
+      description: unit.description?.trim() || undefined,
+    }))
+    .filter((unit) => unit.name.length > 0);
 
-  batch.set(doc(db, COLLECTION_NAMES.UNITS, unitUn.id), {
-    ...unitUn,
-    publicId: buildPublicId("unit", userID, "un"),
-    userID,
-    organizationId,
-    createdAt: now,
+  const trimmedCategories = payload.categories
+    .map((category) => ({
+      name: category.name.trim(),
+      description: category.description?.trim() || undefined,
+    }))
+    .filter((category) => category.name.length > 0);
 
-    source: "onboarding_sample",
-  });
-  batch.set(doc(db, COLLECTION_NAMES.UNITS, unitBox.id), {
-    ...unitBox,
-    publicId: buildPublicId("unit", userID, "box"),
-    userID,
-    organizationId,
-    createdAt: now,
-
-    source: "onboarding_sample",
-  });
-
-  const foodCategory = {
-    id: `sample_category_food_${key}`,
-    name: "Alimentos",
-    description: "Produtos alimentícios",
-  };
-  const beverageCategory = {
-    id: `sample_category_beverage_${key}`,
-    name: "Bebidas",
-    description: "Bebidas e líquidos",
-  };
-
-  batch.set(doc(db, COLLECTION_NAMES.PRODUCT_CATEGORIES, foodCategory.id), {
-    ...foodCategory,
-    publicId: buildPublicId("pcat", userID, "food"),
-    userID,
-    organizationId,
-    createdAt: now,
-
-    source: "onboarding_sample",
-  });
-  batch.set(doc(db, COLLECTION_NAMES.PRODUCT_CATEGORIES, beverageCategory.id), {
-    ...beverageCategory,
-    publicId: buildPublicId("pcat", userID, "beverage"),
-    userID,
-    organizationId,
-    createdAt: now,
-
-    source: "onboarding_sample",
-  });
-
-  const supplierOne = {
-    id: `sample_supplier_one_${key}`,
-    tradeName: "Distribuidora Central",
-    legalName: "Distribuidora Central LTDA",
-  };
-  const supplierTwo = {
-    id: `sample_supplier_two_${key}`,
-    tradeName: "Atacado Norte",
-    legalName: "Atacado Norte SA",
-  };
-
-  batch.set(doc(db, COLLECTION_NAMES.SUPPLIERS, supplierOne.id), {
-    ...supplierOne,
-    publicId: buildPublicId("supp", userID, "supplier1"),
-    userID,
-    organizationId,
-    status: "active",
-    description: "Fornecedor de exemplo do onboarding",
-    productCategories: [{ id: foodCategory.id, name: foodCategory.name }],
-    contactName: "João Silva",
-    companyPhone: "(11) 98888-0001",
-    contactPhone: "(11) 98888-0002",
-    createdAt: now,
-
-    source: "onboarding_sample",
-  });
-  batch.set(doc(db, COLLECTION_NAMES.SUPPLIERS, supplierTwo.id), {
-    ...supplierTwo,
-    publicId: buildPublicId("supp", userID, "supplier2"),
-    userID,
-    organizationId,
-    status: "active",
-    description: "Fornecedor de bebidas de exemplo",
-    productCategories: [{ id: beverageCategory.id, name: beverageCategory.name }],
-    contactName: "Maria Souza",
-    companyPhone: "(21) 97777-0001",
-    contactPhone: "(21) 97777-0002",
-    createdAt: now,
-
-    source: "onboarding_sample",
-  });
-
-  const customers = [
-    { id: `sample_customer_one_${key}`, name: "Mercado São José" },
-    { id: `sample_customer_two_${key}`, name: "Restaurante Sabor Caseiro" },
-    { id: `sample_customer_three_${key}`, name: "Loja da Esquina" },
-  ];
-
-  customers.forEach((customer, index) => {
-    batch.set(doc(db, COLLECTION_NAMES.CUSTOMERS, customer.id), {
-      ...customer,
-      publicId: buildPublicId("cust", userID, `customer${index + 1}`),
-      userID,
-      organizationId,
-      status: "active",
-      contactName: customer.name,
-      companyPhone: "(11) 90000-0000",
-      createdAt: now,
-  
-      source: "onboarding_sample",
+  if (trimmedUnits.length > 0) {
+    const unitRows = trimmedUnits.map((unit, index) => {
+      const key = `${sanitizeKey(unit.name)}_${index}`;
+      return {
+        id: `unit_${sanitizeKey(organizationId).slice(0, 20)}_${key}`,
+        publicId: buildPublicId("unit", userID, key),
+        userId: userID,
+        organizationId,
+        name: unit.name,
+        description: unit.description,
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+      };
     });
-  });
 
-  const pixPaymentMethod = { id: "pix", label: "Pix" };
-  const cardPaymentMethod = { id: "cartao_credito", label: "Cartão de Crédito" };
+    await db.insert(units).values(unitRows).onConflictDoNothing({ target: units.id });
+  }
 
-  const products = [
-    {
-      id: `sample_product_rice_${key}`,
-      title: "Arroz Branco 5kg",
-      description: "Pacote de arroz branco tipo 1",
-      category: foodCategory,
-      supplier: supplierOne,
-      cost: 22.4,
-      unitPrice: 29.9,
-      inventory: 120,
-      minInventory: 20,
-      weight: 5,
-    },
-    {
-      id: `sample_product_beans_${key}`,
-      title: "Feijão Carioca 1kg",
-      description: "Feijão carioca para varejo",
-      category: foodCategory,
-      supplier: supplierOne,
-      cost: 7.2,
-      unitPrice: 9.9,
-      inventory: 180,
-      minInventory: 30,
-      weight: 1,
-    },
-    {
-      id: `sample_product_soda_${key}`,
-      title: "Refrigerante Cola 2L",
-      description: "Garrafa PET 2 litros",
-      category: beverageCategory,
-      supplier: supplierTwo,
-      cost: 4.5,
-      unitPrice: 6.9,
-      inventory: 240,
-      minInventory: 40,
-      weight: 2,
-    },
-  ];
-
-  products.forEach((product, index) => {
-    batch.set(doc(db, COLLECTION_NAMES.PRODUCTS, product.id), {
-      id: product.id,
-      publicId: buildPublicId("prod", userID, `product${index + 1}`),
-      userID,
-      organizationId,
-      title: product.title,
-      description: product.description,
-      status: "active",
-      createdAt: now,
-      updatedAt: now,
-  
-      inventory: product.inventory,
-      minInventory: product.minInventory,
-      baseUnit: {
-        id: unitUn.id,
-        name: unitUn.name,
-      },
-      variants: [
-        {
-          unit: {
-            id: unitUn.id,
-            name: unitUn.name,
-          },
-          conversionRate: 1,
-          unitCost: toCents(product.cost),
-          prices: [
-            {
-              paymentMethod: pixPaymentMethod,
-              value: toCents(product.unitPrice),
-              profit: toCents(product.unitPrice - product.cost),
-            },
-            {
-              paymentMethod: cardPaymentMethod,
-              value: toCents(product.unitPrice + 0.5),
-              profit: toCents(product.unitPrice + 0.5 - product.cost),
-            },
-          ],
-        },
-        {
-          unit: {
-            id: unitBox.id,
-            name: unitBox.name,
-          },
-          conversionRate: 12,
-          unitCost: toCents(product.cost * 12),
-          prices: [
-            {
-              paymentMethod: pixPaymentMethod,
-              value: toCents(product.unitPrice * 12),
-              profit: toCents((product.unitPrice - product.cost) * 12),
-            },
-          ],
-        },
-      ],
-      weight: product.weight,
-      cost: toCents(product.cost),
-      sailsmanComission: toCents(2),
-      suppliers: [
-        {
-          supplierID: product.supplier.id,
-          name: product.supplier.tradeName,
-          description: "Fornecedor de exemplo",
-          status: "active",
-        },
-      ],
-      productCategory: {
-        id: product.category.id,
-        name: product.category.name,
-      },
-      source: "onboarding_sample",
+  if (trimmedCategories.length > 0) {
+    const categoryRows = trimmedCategories.map((category, index) => {
+      const key = `${sanitizeKey(category.name)}_${index}`;
+      return {
+        id: `pcat_${sanitizeKey(organizationId).slice(0, 20)}_${key}`,
+        publicId: buildPublicId("pcat", userID, key),
+        userId: userID,
+        organizationId,
+        name: category.name,
+        description: category.description,
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+      };
     });
-  });
 
-  await batch.commit();
+    await db
+      .insert(productCategories)
+      .values(categoryRows)
+      .onConflictDoNothing({ target: productCategories.id });
+  }
 };

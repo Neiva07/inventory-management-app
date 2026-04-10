@@ -1,23 +1,27 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Stepper,
-  Step,
-  StepLabel,
-  Card,
-  CardContent,
-  Button,
-  Typography,
-  LinearProgress,
-} from 'components/ui/form-compat';
+import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { cn } from 'lib/utils';
+import { Card, CardContent } from 'components/ui/card';
+import { Button } from 'components/ui/button';
 import { useOnboarding } from '../../context/onboarding';
 import { OnboardingWelcome } from './OnboardingWelcome';
 import { OrganizationSetup } from './OrganizationSetup';
 import { InviteTeamSetup } from './InviteTeamSetup';
 import { OnboardingComplete } from './OnboardingComplete';
 import { TaxDataSetup } from './TaxDataSetup';
-import { SampleDataSetup } from './SampleDataSetup';
+import { CadastrosBasicosSetup } from './CadastrosBasicosSetup';
 import { OnboardingExitDialog } from './OnboardingExitDialog';
+
+const OPTIONAL_STEP = 5;
+
+const STEP_LABELS = [
+  'Bem-vindo',
+  'Organização',
+  'Dados Fiscais',
+  'Equipe',
+  'Cadastros Básicos',
+  'Concluído',
+];
 
 export const OnboardingFlow: React.FC<{ onShowOnboarding: (show: boolean) => void }> = ({ onShowOnboarding }) => {
   const {
@@ -32,48 +36,48 @@ export const OnboardingFlow: React.FC<{ onShowOnboarding: (show: boolean) => voi
     onboardingData,
     deleteOnboardingSession,
   } = useOnboarding();
-  
-  const [showExitDialog, setShowExitDialog] = useState(false);
 
-  // Check if current step is valid
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [attemptedNext, setAttemptedNext] = useState(false);
+
   const isCurrentStepValid = () => {
-    return stepValidation[currentStep] !== false; // Default to true if not set
+    return stepValidation[currentStep] !== false;
   };
 
-  // Check if user has filled any data in the onboarding
   const hasFilledData = () => {
-    const { organization, taxData, setup, invitations } = onboardingData;
-    
-    // Check organization data
+    const { organization, taxData, setup, cadastrosBasicos, invitations } = onboardingData;
+
     if (organization) {
       const orgFields = Object.values(organization).filter(value => value && value !== '');
       if (orgFields.length > 0) return true;
     }
-    
-    // Check tax data
+
     if (taxData) {
       const taxFields = Object.values(taxData).filter(value => value && value !== '');
       if (taxFields.length > 0) return true;
     }
-    
-    // Check setup data
+
     if (setup) {
       const hasEnabledSetupOption =
-        Boolean(setup.importSampleData) ||
         Boolean(setup.enableNotifications) ||
         Boolean(setup.enableAnalytics);
       if (hasEnabledSetupOption) return true;
     }
-    
-    // Check invitations
+
+    if (cadastrosBasicos && !cadastrosBasicos.skipped) {
+      const hasCadastros =
+        cadastrosBasicos.units.length > 0 ||
+        cadastrosBasicos.categories.length > 0 ||
+        cadastrosBasicos.acceptedPaymentMethodIds.length > 0;
+      if (hasCadastros) return true;
+    }
+
     if (invitations && invitations.length > 0) return true;
-    
+
     return false;
   };
 
-  // Handle back button click
   const handleBackClick = () => {
-    // If we're on the welcome page (step 1) and user has filled data, show confirmation dialog
     if(currentStep === 1) {
         if (hasFilledData()) {
             setShowExitDialog(true);
@@ -82,11 +86,10 @@ export const OnboardingFlow: React.FC<{ onShowOnboarding: (show: boolean) => voi
         }
         return;
     }
-    // Normal back navigation
+    setAttemptedNext(false);
     previousStep();
   };
 
-  // Handle exit confirmation
   const handleExitConfirm = async () => {
     setShowExitDialog(false);
     await deleteOnboardingSession();
@@ -94,90 +97,144 @@ export const OnboardingFlow: React.FC<{ onShowOnboarding: (show: boolean) => voi
   };
 
   const getStepContent = () => {
-    // Organization onboarding steps
     if (currentStep === 1) return <OnboardingWelcome />;
-    if (currentStep === 2) return <OrganizationSetup />;
-    if (currentStep === 3) return <SampleDataSetup />;
-    if (currentStep === 4) return <TaxDataSetup />;
-    if (currentStep === 5) return <InviteTeamSetup />;
+    if (currentStep === 2) return <OrganizationSetup showErrors={attemptedNext} />;
+    if (currentStep === 3) return <TaxDataSetup showErrors={attemptedNext} />;
+    if (currentStep === 4) return <InviteTeamSetup />;
+    if (currentStep === 5) return <CadastrosBasicosSetup />;
     if (currentStep === 6) return <OnboardingComplete />;
     return <OnboardingWelcome />;
-  };
-
-  const getStepLabels = () => {
-    // Organization onboarding labels
-    return [
-      'Bem-vindo',
-      'Configuração da Organização',
-      'Dados de Exemplo',
-      'Dados Tributários',
-      'Convidar Equipe',
-      'Concluído',
-    ];
   };
 
   if (isComplete) {
     return <OnboardingComplete />;
   }
 
+  const progressPercent = (currentStep / totalSteps) * 100;
+
   return (
     <>
-      <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-        <Typography variant="h4" gutterBottom align="center">
+      <div className="mx-auto max-w-[800px] p-6">
+        <h2 className="mb-4 text-center text-2xl font-bold tracking-tight">
           Bem-vindo ao Stockify
-        </Typography>
-        
-        <LinearProgress 
-          variant="determinate" 
-          value={(currentStep / totalSteps) * 100} 
-          sx={{ mb: 3 }}
-        />
+        </h2>
 
-        <Stepper activeStep={currentStep - 1} sx={{ mb: 4 }}>
-          {getStepLabels().map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+        {/* Progress bar */}
+        <div className="mb-6 h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        {/* Step indicator */}
+        <div className="mb-6 flex items-start justify-between">
+          {STEP_LABELS.map((label, index) => {
+            const stepNumber = index + 1;
+            const isActive = stepNumber === currentStep;
+            const isCompleted = stepNumber < currentStep;
+            const isOptional = stepNumber === OPTIONAL_STEP;
+
+            return (
+              <React.Fragment key={label}>
+                {/* Connector line (before each step except the first) — sits at the
+                    vertical center of the 8x8 circles (mt-4 = 16px). */}
+                {index > 0 && (
+                  <div
+                    className={cn(
+                      'mt-4 flex-1',
+                      isOptional
+                        ? cn(
+                            'border-t border-dashed',
+                            isCompleted || isActive ? 'border-primary' : 'border-border'
+                          )
+                        : cn('h-px', isCompleted || isActive ? 'bg-primary' : 'bg-border')
+                    )}
+                  />
+                )}
+
+                {/* Step circle + label */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div
+                    className={cn(
+                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors',
+                      isCompleted && 'bg-primary text-primary-foreground',
+                      isActive && 'bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background',
+                      !isCompleted && !isActive && 'border border-border bg-muted text-muted-foreground',
+                      isOptional && !isCompleted && !isActive && 'border-dashed'
+                    )}
+                  >
+                    {isCompleted ? <Check className="h-4 w-4" /> : stepNumber}
+                  </div>
+                  <span
+                    className={cn(
+                      'text-center text-[11px] leading-tight whitespace-nowrap',
+                      isActive ? 'font-medium text-foreground' : 'text-muted-foreground'
+                    )}
+                  >
+                    {label}
+                  </span>
+                  {isOptional && (
+                    <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-muted-foreground">
+                      Opcional
+                    </span>
+                  )}
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
 
         <Card>
-          <CardContent>
+          <CardContent className="p-6">
             {getStepContent()}
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+            <div className="mt-6 flex items-center justify-between">
               <Button
+                variant="ghost"
                 onClick={handleBackClick}
                 disabled={isLoading}
               >
+                <ArrowLeft className="h-4 w-4" />
                 Anterior
               </Button>
 
-              <Box>
+              <div>
                 {currentStep === totalSteps ? (
                   <Button
-                    variant="contained"
                     onClick={completeOnboarding}
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Concluindo...' : 'Concluir Configuração'}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Concluindo...
+                      </>
+                    ) : (
+                      'Concluir Configuração'
+                    )}
                   </Button>
                 ) : (
                   <Button
-                    variant="contained"
                     onClick={() => {
+                      if (!isCurrentStepValid()) {
+                        setAttemptedNext(true);
+                        return;
+                      }
+                      setAttemptedNext(false);
                       nextStep();
                     }}
-                    disabled={isLoading || !isCurrentStepValid()}
+                    disabled={isLoading}
                   >
                     Próximo
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 )}
-              </Box>
-            </Box>
+              </div>
+            </div>
           </CardContent>
         </Card>
-      </Box>
+      </div>
 
       <OnboardingExitDialog
         open={showExitDialog}
@@ -186,4 +243,4 @@ export const OnboardingFlow: React.FC<{ onShowOnboarding: (show: boolean) => voi
       />
     </>
   );
-}; 
+};

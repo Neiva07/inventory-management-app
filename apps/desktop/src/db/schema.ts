@@ -30,6 +30,7 @@ export const organizations = sqliteTable(
     name: text("name").notNull(),
     createdBy: text("created_by").notNull(),
     status: text("status").notNull().default("active"),
+    settingsJson: text("settings_json").notNull().default("{}"),
     ...lifecycleColumns,
   },
   (table) => ({

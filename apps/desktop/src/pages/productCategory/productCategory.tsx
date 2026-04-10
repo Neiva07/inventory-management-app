@@ -25,11 +25,10 @@ import {
 
 function LoadingSkeletonRows() {
   return (
-    <div className="space-y-2">
-      {[1, 2, 3].map((index) => (
-        <div key={index} className="rounded-md border p-4">
-          <div className="mb-2 h-4 w-2/3 animate-pulse rounded bg-muted" />
-          <div className="h-3 w-5/6 animate-pulse rounded bg-muted" />
+    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+      {[1, 2, 3, 4, 5, 6].map((index) => (
+        <div key={index} className="flex items-center gap-3 rounded-md border px-3 py-2.5">
+          <div className="h-4 flex-1 animate-pulse rounded bg-muted" />
         </div>
       ))}
     </div>
@@ -173,111 +172,130 @@ export const ProductCategories = () => {
   };
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 py-4 lg:grid-cols-2">
-      <Card className="flex min-h-[520px] flex-col">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl text-primary">Categorias Cadastradas</CardTitle>
-          <SearchField
-            value={searchTerm}
-            onChange={handleSearchChange}
-            placeholder="Buscar categorias..."
-          />
-        </CardHeader>
-        <CardContent className="flex min-h-0 flex-1 flex-col pt-0">
-          <div className="min-h-0 flex-1 space-y-2 overflow-auto pr-1">
-            {loading ? (
-              <LoadingSkeletonRows />
-            ) : filteredCategories.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                {searchTerm ? "Nenhuma categoria encontrada" : "Nenhuma categoria cadastrada"}
-              </p>
-            ) : (
-              filteredCategories.map((category) => (
-                <div
+    <div className="grid gap-6 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-lg font-semibold">Categorias</h1>
+          <span className="text-xs text-muted-foreground">
+            {loading
+              ? ""
+              : `${filteredCategories.length}${
+                  searchTerm && filteredCategories.length !== productCategories.length
+                    ? ` de ${productCategories.length}`
+                    : ""
+                }`}
+          </span>
+        </div>
+
+        <SearchField
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Buscar categorias..."
+        />
+
+        {loading ? (
+          <LoadingSkeletonRows />
+        ) : filteredCategories.length === 0 ? (
+          <div className="rounded-md border border-dashed py-12 text-center text-sm text-muted-foreground">
+            {searchTerm ? "Nenhuma categoria encontrada" : "Nenhuma categoria cadastrada"}
+          </div>
+        ) : (
+          <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {filteredCategories.map((category) => {
+              const isEditing = editingCategory?.id === category.id;
+              return (
+                <li
                   key={category.id}
-                  className="flex items-start justify-between gap-2 rounded-md border p-3 transition-colors hover:bg-accent/40"
+                  className={`group flex items-center gap-2 rounded-md border px-3 py-2 transition-colors ${
+                    isEditing ? "border-primary/50 bg-accent/60" : "hover:bg-accent/40"
+                  }`}
                 >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{category.name}</p>
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                      {category.description || "Sem descrição"}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium leading-tight">{category.name}</p>
+                    {category.description ? (
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {category.description}
+                      </p>
+                    ) : null}
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
+                  <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-7 w-7"
                       onClick={() => handleEditClick(category)}
                       aria-label={`Editar categoria ${category.name}`}
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => handleDeleteClick(category)}
                       aria-label={`Excluir categoria ${category.name}`}
-                      className="text-destructive hover:text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <CardTitle className="text-xl text-primary">
-              {editingCategory ? "Editar Categoria" : "Nova Categoria"}
-            </CardTitle>
-            {editingCategory?.publicId ? (
-              <PublicIdDisplay publicId={editingCategory.publicId} />
-            ) : null}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-0">
-          <div className="space-y-1">
-            <label htmlFor="category-name" className="text-sm font-medium">
-              Nome da Categoria
-            </label>
-            <Input
-              id="category-name"
-              onChange={handleChangeName}
-              value={name}
-              required
-            />
-          </div>
+      <div className="lg:sticky lg:top-4 lg:self-start">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-base">
+                {editingCategory ? "Editar categoria" : "Nova categoria"}
+              </CardTitle>
+              {editingCategory?.publicId ? (
+                <PublicIdDisplay publicId={editingCategory.publicId} />
+              ) : null}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-0">
+            <div className="space-y-1">
+              <label htmlFor="category-name" className="text-xs font-medium text-muted-foreground">
+                Nome
+              </label>
+              <Input
+                id="category-name"
+                onChange={handleChangeName}
+                value={name}
+                required
+              />
+            </div>
 
-          <div className="space-y-1">
-            <label htmlFor="category-description" className="text-sm font-medium">
-              Descrição da Categoria
-            </label>
-            <Textarea
-              id="category-description"
-              onChange={(e) => setDescription(e.target.value)}
-              value={description}
-              rows={3}
-            />
-          </div>
+            <div className="space-y-1">
+              <label htmlFor="category-description" className="text-xs font-medium text-muted-foreground">
+                Descrição
+              </label>
+              <Textarea
+                id="category-description"
+                onChange={(e) => setDescription(e.target.value)}
+                value={description}
+                rows={3}
+              />
+            </div>
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            {editingCategory ? (
-              <Button variant="outline" onClick={handleCancelEdit}>
-                Cancelar
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button onClick={submitNewProductCategory} className="flex-1">
+                {editingCategory ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                {editingCategory ? "Atualizar" : "Criar"}
               </Button>
-            ) : null}
-            <Button onClick={submitNewProductCategory}>
-              {editingCategory ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-              {editingCategory ? "Atualizar Categoria" : "Criar Categoria"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              {editingCategory ? (
+                <Button variant="outline" onClick={handleCancelEdit}>
+                  Cancelar
+                </Button>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <DeleteConfirmationDialog
         open={deleteDialogOpen}

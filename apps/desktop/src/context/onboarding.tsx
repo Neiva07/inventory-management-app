@@ -11,7 +11,8 @@ import {
 } from 'model/organizationOnboardingSession';
 import { createOrganization } from 'model/organization';
 import { createUserMembership } from 'model/userMembership';
-import { persistOnboardingTeamInvitations, seedOnboardingSampleData } from 'model/onboardingSetup';
+import { persistOnboardingTeamInvitations, seedCadastrosBasicos } from 'model/onboardingSetup';
+import { DEFAULT_ACCEPTED_PAYMENT_METHOD_IDS } from '../pages/onboarding/cadastrosBasicosDefaults';
 import { useAuth } from './auth';
 
 export interface OnboardingStep {
@@ -69,7 +70,6 @@ const getDefaultOnboardingData = (): OrganizationOnboardingData => ({
     a1Certificate: '',
   },
   setup: {
-    importSampleData: false,
     enableNotifications: false,
     enableAnalytics: false,
   },
@@ -226,6 +226,11 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
     setIsLoading(true);
 
     try {
+      const acceptedPaymentMethodIds =
+        onboardingData.cadastrosBasicos && !onboardingData.cadastrosBasicos.skipped
+          ? onboardingData.cadastrosBasicos.acceptedPaymentMethodIds
+          : DEFAULT_ACCEPTED_PAYMENT_METHOD_IDS;
+
       const org = await createOrganization({
         name: onboardingData.organization?.name || '',
         domain: onboardingData.organization?.domain,
@@ -235,6 +240,7 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
           currency: 'BRL',
           language: 'pt-BR',
           logo: onboardingData.organization?.logo,
+          acceptedPaymentMethodIds,
         },
         address: {
           streetAddress: onboardingData.organization?.address || '',
@@ -281,8 +287,13 @@ export const OnboardingProvider: React.FC<{ children: ReactNode }> = ({ children
 
       const pendingTasks: Promise<unknown>[] = [];
 
-      if (onboardingData.setup?.importSampleData) {
-        pendingTasks.push(seedOnboardingSampleData(user.id, org.id));
+      if (
+        onboardingData.cadastrosBasicos &&
+        !onboardingData.cadastrosBasicos.skipped
+      ) {
+        pendingTasks.push(
+          seedCadastrosBasicos(user.id, org.id, onboardingData.cadastrosBasicos)
+        );
       }
 
       if ((onboardingData.invitations?.length ?? 0) > 0) {

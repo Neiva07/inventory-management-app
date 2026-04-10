@@ -1,9 +1,9 @@
+import { and, desc, eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { collection, doc, setDoc, getDoc, updateDoc, query, where, getDocs, deleteDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { createAppDb } from "../db/client";
+import { onboardingSessions } from "../db/schema";
 
 export type OnboardingStatus = "in_progress" | "completed";
-
 
 export interface OrganizationOnboardingData {
   organization: {
@@ -30,9 +30,14 @@ export interface OrganizationOnboardingData {
     a1Certificate?: string;
   };
   setup?: {
-    importSampleData: boolean;
     enableNotifications?: boolean;
     enableAnalytics?: boolean;
+  };
+  cadastrosBasicos?: {
+    units: { name: string; description?: string }[];
+    categories: { name: string; description?: string }[];
+    acceptedPaymentMethodIds: string[];
+    skipped?: boolean;
   };
   invitations?: {
     email: string;
@@ -41,129 +46,231 @@ export interface OrganizationOnboardingData {
   }[];
 }
 
+interface OnboardingProgress {
+  [stepId: string]: {
+    completed: boolean;
+    completedAt?: number;
+    data?: Record<string, unknown>;
+  };
+}
+
+interface OnboardingPayload {
+  data: OrganizationOnboardingData;
+  progress: OnboardingProgress;
+  completedAt?: number;
+  lastActivityAt: number;
+}
+
 export interface OrganizationOnboardingSession {
   id: string;
   userID: string;
   currentStep: number;
-  data: OrganizationOnboardingData; // Flexible for org/user onboarding data
+  data: OrganizationOnboardingData;
   status: OnboardingStatus;
   startedAt: number;
   completedAt?: number;
   lastActivityAt: number;
-  progress: {
-    [stepId: string]: {
-      completed: boolean;
-      completedAt?: number;
-    };
-  };
+  progress: OnboardingProgress;
 }
 
-const ONBOARDING_SESSIONS_COLLECTION = "onboarding_sessions";
+const parsePayload = (payloadJson: string | null): OnboardingPayload => {
+  if (!payloadJson) {
+    return {
+      data: { organization: { name: "" } },
+      progress: {},
+      lastActivityAt: Date.now(),
+    };
+  }
+  return JSON.parse(payloadJson) as OnboardingPayload;
+};
 
-export async function createOnboardingSession(userID: string): Promise<OrganizationOnboardingSession> {
+const mapSession = (
+  row: typeof onboardingSessions.$inferSelect
+): OrganizationOnboardingSession => {
+  const payload = parsePayload(row.payloadJson);
+  return {
+    id: row.id,
+    userID: row.userId,
+    currentStep: row.step,
+    data: payload.data,
+    status: row.status as OnboardingStatus,
+    startedAt: row.createdAt,
+    completedAt: payload.completedAt,
+    lastActivityAt: payload.lastActivityAt,
+    progress: payload.progress,
+  };
+};
+
+/** Create a new onboarding session for a user. */
+export async function createOnboardingSession(
+  userID: string
+): Promise<OrganizationOnboardingSession> {
+  const db = createAppDb();
+  const id = uuidv4();
   const now = Date.now();
-  const sessionID = uuidv4();
-  const session: OrganizationOnboardingSession = {
-    id: sessionID,
+
+  const payload: OnboardingPayload = {
+    data: { organization: { name: "" } },
+    progress: {},
+    lastActivityAt: now,
+  };
+
+  await db.insert(onboardingSessions).values({
+    id,
+    userId: userID,
+    status: "in_progress",
+    step: 1,
+    payloadJson: JSON.stringify(payload),
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return {
+    id,
     userID,
     currentStep: 1,
-    data: {
-      organization: {
-        name: '',
-      },
-    },
+    data: payload.data,
     status: "in_progress",
     startedAt: now,
     lastActivityAt: now,
     progress: {},
   };
-  const sessionRef = doc(db, ONBOARDING_SESSIONS_COLLECTION, sessionID);
-  await setDoc(sessionRef, session);
-  return session;
 }
 
-export async function getOnboardingSession(sessionId: string): Promise<OrganizationOnboardingSession | null> {
-  const sessionRef = doc(db, ONBOARDING_SESSIONS_COLLECTION, sessionId);
-  const sessionDoc = await getDoc(sessionRef);
-  if (!sessionDoc.exists()) {
+/** Get an onboarding session by ID. */
+export async function getOnboardingSession(
+  sessionId: string
+): Promise<OrganizationOnboardingSession | null> {
+  const db = createAppDb();
+
+  const rows = await db
+    .select()
+    .from(onboardingSessions)
+    .where(eq(onboardingSessions.id, sessionId))
+    .limit(1);
+
+  if (rows.length === 0) {
     return null;
   }
-  return sessionDoc.data() as OrganizationOnboardingSession;
+
+  return mapSession(rows[0]);
 }
 
+/** Update an onboarding session with partial data. */
 export async function updateOnboardingSession(
   sessionId: string,
   updates: Partial<OrganizationOnboardingSession>
 ): Promise<OrganizationOnboardingSession> {
-  const sessionRef = doc(db, ONBOARDING_SESSIONS_COLLECTION, sessionId);
-  const updateData = {
-    ...updates,
-    lastActivityAt: Date.now(),
-  };
-  await updateDoc(sessionRef, updateData);
-  const updatedSession = await getOnboardingSession(sessionId);
-  if (!updatedSession) {
-    throw new Error('Onboarding session not found');
+  const db = createAppDb();
+  const now = Date.now();
+
+  const existing = await getOnboardingSession(sessionId);
+  if (!existing) {
+    throw new Error("Onboarding session not found");
   }
-  return updatedSession;
+
+  const mergedData = updates.data ?? existing.data;
+  const mergedProgress = updates.progress ?? existing.progress;
+  const completedAt = updates.completedAt ?? existing.completedAt;
+  const lastActivityAt = now;
+
+  const payload: OnboardingPayload = {
+    data: mergedData,
+    progress: mergedProgress,
+    completedAt,
+    lastActivityAt,
+  };
+
+  await db
+    .update(onboardingSessions)
+    .set({
+      step: updates.currentStep ?? existing.currentStep,
+      status: updates.status ?? existing.status,
+      payloadJson: JSON.stringify(payload),
+      updatedAt: now,
+    })
+    .where(eq(onboardingSessions.id, sessionId));
+
+  return {
+    ...existing,
+    ...updates,
+    data: mergedData,
+    progress: mergedProgress,
+    completedAt,
+    lastActivityAt,
+  };
 }
 
-export async function completeOnboardingSession(sessionId: string): Promise<OrganizationOnboardingSession> {
+/** Mark an onboarding session as completed. */
+export async function completeOnboardingSession(
+  sessionId: string
+): Promise<OrganizationOnboardingSession> {
   return await updateOnboardingSession(sessionId, {
     status: "completed",
     completedAt: Date.now(),
   });
 }
 
+/** Get the most recent active (in_progress) onboarding session for a user. */
 export async function getActiveOnboardingSession(
   userID: string
 ): Promise<OrganizationOnboardingSession | null> {
-  const q = query(
-    collection(db, ONBOARDING_SESSIONS_COLLECTION),
-    where('userID', '==', userID),
-    where('status', '==', 'in_progress')
-  );
-  const querySnapshot = await getDocs(q);
-  if (querySnapshot.empty) {
+  const db = createAppDb();
+
+  const rows = await db
+    .select()
+    .from(onboardingSessions)
+    .where(
+      and(
+        eq(onboardingSessions.userId, userID),
+        eq(onboardingSessions.status, "in_progress")
+      )
+    )
+    .orderBy(desc(onboardingSessions.updatedAt))
+    .limit(1);
+
+  if (rows.length === 0) {
     return null;
   }
-  // Return the most recent active session
-  const sessions = querySnapshot.docs.map(doc => doc.data() as OrganizationOnboardingSession);
-  return sessions.sort((a, b) => b.lastActivityAt - a.lastActivityAt)[0];
+
+  return mapSession(rows[0]);
 }
 
-export async function deleteOnboardingSession(sessionId: string): Promise<void> {
-  const sessionRef = doc(db, ONBOARDING_SESSIONS_COLLECTION, sessionId);
+/** Delete an onboarding session. */
+export async function deleteOnboardingSession(
+  sessionId: string
+): Promise<void> {
+  const db = createAppDb();
 
-  await deleteDoc(sessionRef);
+  await db
+    .delete(onboardingSessions)
+    .where(eq(onboardingSessions.id, sessionId));
 }
 
-// Additional functions for step management and data handling
-
+/** Update the step of an onboarding session and record step progress. */
 export async function updateOnboardingStep(
   sessionId: string,
   step: number,
-  stepData?: any
+  stepData?: Record<string, unknown>
 ): Promise<OrganizationOnboardingSession> {
-  const onboardingSession = await getOnboardingSession(sessionId);
-  if (!onboardingSession) {
-    throw new Error('Onboarding session not found');
+  const existing = await getOnboardingSession(sessionId);
+  if (!existing) {
+    throw new Error("Onboarding session not found");
   }
 
   const stepId = `step_${step}`;
-  const progressUpdate: any = {
+  const progressEntry: OnboardingProgress[string] = {
     completed: true,
     completedAt: Date.now(),
   };
 
-  // Only add data if it's not undefined
   if (stepData !== undefined) {
-    progressUpdate.data = stepData;
+    progressEntry.data = stepData;
   }
 
-  const progress = {
-    ...onboardingSession.progress,
-    [stepId]: progressUpdate,
+  const progress: OnboardingProgress = {
+    ...existing.progress,
+    [stepId]: progressEntry,
   };
 
   return await updateOnboardingSession(sessionId, {
@@ -172,24 +279,24 @@ export async function updateOnboardingStep(
   });
 }
 
+/** Merge additional data into the onboarding session payload. */
 export async function updateOnboardingData(
   sessionId: string,
-  data: Record<string, any>
+  data: Partial<OrganizationOnboardingData>
 ): Promise<OrganizationOnboardingSession> {
-  const onboardingSession = await getOnboardingSession(sessionId);
-  if (!onboardingSession) {
-    throw new Error('Onboarding session not found');
+  const existing = await getOnboardingSession(sessionId);
+  if (!existing) {
+    throw new Error("Onboarding session not found");
   }
 
-  // Filter out undefined values
   const cleanData = Object.fromEntries(
     Object.entries(data).filter(([_, value]) => value !== undefined)
   );
 
   return await updateOnboardingSession(sessionId, {
     data: {
-      ...onboardingSession.data,
+      ...existing.data,
       ...cleanData,
-    },
+    } as OrganizationOnboardingData,
   });
 }

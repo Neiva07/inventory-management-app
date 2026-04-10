@@ -1,162 +1,135 @@
 import React from 'react';
-import { 
-  Typography, 
-  Box, 
-  Paper, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Avatar,
-  Chip,
-  Divider
-} from 'components/ui/form-compat';
-import {
-  Business as BusinessIcon,
-  Settings as SettingsIcon,
-  DataObject as DataIcon,
-  Group as GroupIcon,
-  CheckCircle as CheckIcon,
-  TrendingUp as TrendingIcon,
-  Security as SecurityIcon,
-  Speed as SpeedIcon
-} from 'components/ui/icon-compat';
+import { Building2, Settings, Database, Users, Zap, Shield, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { cn } from 'lib/utils';
+import { Card, CardContent } from 'components/ui/card';
 import logo from '../../../assets/icons/logo.png';
 
 export const OnboardingWelcome: React.FC = () => {
 
   const features = [
     {
-      icon: <BusinessIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
+      icon: Building2,
       title: 'Configurar sua organização',
-      description: 'Defina o nome, setor, endereço e contatos da sua empresa'
+      description: 'Defina o nome, setor, endereço e contatos da sua empresa',
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
     },
     {
-      icon: <SettingsIcon sx={{ fontSize: 40, color: 'secondary.main' }} />,
+      icon: Settings,
       title: 'Dados fiscais',
-      description: 'Configure CNPJ, IE, regime tributário e impostos'
+      description: 'Configure CNPJ, IE, regime tributário e impostos',
+      color: 'text-violet-500',
+      bg: 'bg-violet-500/10',
     },
     {
-      icon: <DataIcon sx={{ fontSize: 40, color: 'success.main' }} />,
+      icon: Database,
       title: 'Criar dados de exemplo',
-      description: 'Comece com produtos e clientes de exemplo'
+      description: 'Comece com produtos e clientes de exemplo',
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10',
     },
     {
-      icon: <GroupIcon sx={{ fontSize: 40, color: 'warning.main' }} />,
+      icon: Users,
       title: 'Convidar membros da equipe',
-      description: 'Adicione colaboradores com diferentes permissões'
-    }
+      description: 'Adicione colaboradores com diferentes permissões',
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+    },
   ];
 
   const benefits = [
-    { icon: <SpeedIcon />, text: 'Rápido e eficiente' },
-    { icon: <SecurityIcon />, text: 'Seguro e confiável' },
-    { icon: <TrendingIcon />, text: 'Crescimento garantido' }
+    { icon: Zap, text: 'Rápido e eficiente' },
+    { icon: Shield, text: 'Seguro e confiável' },
+    { icon: TrendingUp, text: 'Crescimento garantido' },
   ];
 
   return (
-    <Box sx={{ textAlign: 'center' }}>
+    <div className="text-center">
       {/* Header Section */}
-      <Box sx={{ mb: 4 }}>
-        <Box
-          sx={{
-            width: 80,
-            height: 80,
-            mx: 'auto',
-            mb: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <img 
-            src={logo} 
-            alt="Stockify Logo" 
-            style={{ 
-              width: '100%', 
-              height: '100%', 
-              objectFit: 'contain' 
-            }} 
+      <div className="mb-6">
+        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center">
+          <img
+            src={logo}
+            alt="Stockify Logo"
+            className="h-full w-full object-contain"
           />
-        </Box>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: 'primary.main' }}>
-          Bem-vindo ao Stockify! 🎉
-        </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
+        </div>
+        <h3 className="mb-1 text-2xl font-bold text-primary">
+          Bem-vindo ao Stockify
+        </h3>
+        <p className="mb-3 text-base text-muted-foreground">
           Sua solução completa de gestão de estoque
-        </Typography>
-        <Typography variant="body1" sx={{ maxWidth: 600, mx: 'auto', mb: 4 }}>
-          Vamos configurar tudo em poucos passos para que você possa começar a gerenciar seu estoque de forma eficiente e profissional.
-        </Typography>
-      </Box>
+        </p>
+        <p className="mx-auto mb-6 max-w-[600px] text-sm text-muted-foreground">
+          Vamos configurar tudo em poucos passos para que você possa começar a
+          gerenciar seu estoque de forma eficiente e profissional.
+        </p>
+      </div>
 
-      {/* Benefits Chips */}
-      <Box sx={{ mb: 4 }}>
+      {/* Benefits */}
+      <div className="mb-6 flex flex-wrap items-center justify-center gap-2">
         {benefits.map((benefit, index) => (
-          <Chip
+          <span
             key={index}
-            icon={benefit.icon}
-            label={benefit.text}
-            variant="outlined"
-            sx={{ 
-              mx: 1, 
-              mb: 1,
-              '& .MuiChip-icon': { color: 'primary.main' }
-            }}
-          />
+            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm text-muted-foreground"
+          >
+            <benefit.icon className="h-3.5 w-3.5 text-primary" />
+            {benefit.text}
+          </span>
         ))}
-      </Box>
+      </div>
 
-      <Divider sx={{ my: 3 }} />
+      <div className="mx-auto mb-6 h-px w-full bg-border" />
 
       {/* Features Grid */}
-      <Typography variant="h6" gutterBottom sx={{ mb: 3, fontWeight: 600 }}>
+      <h4 className="mb-4 text-lg font-semibold">
         O que vamos configurar:
-      </Typography>
-      
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {features.map((feature, index) => (
-          <Grid item xs={12} sm={6} key={index}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 4
-                }
-              }}
+      </h4>
+
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {features.map((feature, index) => {
+          const Icon = feature.icon;
+          return (
+            <Card
+              key={index}
+              className="transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
             >
-              <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                <Box sx={{ mb: 2 }}>
-                  {feature.icon}
-                </Box>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              <CardContent className="p-5 text-center">
+                <div
+                  className={cn(
+                    'mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full',
+                    feature.bg
+                  )}
+                >
+                  <Icon className={cn('h-6 w-6', feature.color)} />
+                </div>
+                <h5 className="mb-1 text-sm font-semibold">
                   {feature.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
+                </h5>
+                <p className="text-xs text-muted-foreground">
                   {feature.description}
-                </Typography>
+                </p>
               </CardContent>
             </Card>
-          </Grid>
-        ))}
-      </Grid>
+          );
+        })}
+      </div>
 
       {/* Call to Action */}
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
+      <div className="mt-6">
+        <h4 className="mb-1 text-lg font-semibold text-primary">
           Pronto para começar?
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+        </h4>
+        <p className="mb-3 text-sm text-muted-foreground">
           Vamos configurar sua organização em poucos passos simples
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-          <CheckIcon sx={{ color: 'success.main', fontSize: 20 }} />
-          <Typography variant="body2" color="success.main" sx={{ fontWeight: 500 }}>
-            Clique em "Próximo" para continuar
-          </Typography>
-        </Box>
-      </Box>
-    </Box>
+        </p>
+        <div className="flex items-center justify-center gap-1.5">
+          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          <span className="text-sm font-medium text-emerald-500">
+            Clique em &quot;Próximo&quot; para continuar
+          </span>
+        </div>
+      </div>
+    </div>
   );
-}; 
+};

@@ -9,6 +9,7 @@ import {
   HandCoins,
   History,
   LayoutGrid,
+  LogOut,
   Menu,
   PanelLeftClose,
   Receipt,
@@ -23,6 +24,7 @@ import {
   CircleDollarSign,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from 'context/auth';
 
 import { Button } from 'components/ui';
 import { cn } from 'lib/utils';
@@ -112,6 +114,7 @@ export const Sidebar = () => {
   const [openMovimentos, setOpenMovimentos] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const auth = useAuth();
 
   const width = open ? drawerWidth : collapsedWidth;
   const isActive = (path: string) => location.pathname === path;
@@ -183,6 +186,15 @@ export const Sidebar = () => {
           >
             {footerItem.icon}
             {open ? <span>{footerItem.text}</span> : null}
+          </button>
+          <button
+            type="button"
+            onClick={() => { auth.logout(); navigate('login'); }}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-white/10"
+            title={!open ? 'Sair' : undefined}
+          >
+            <LogOut className="h-4 w-4" />
+            {open ? <span>Sair</span> : null}
           </button>
         </div>
       </aside>

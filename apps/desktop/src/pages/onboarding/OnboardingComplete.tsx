@@ -1,235 +1,194 @@
 import React from 'react';
-import { 
-  Typography, 
-  Box, 
-  Alert, 
-  Card, 
-  CardContent, 
-  Grid, 
-  Chip,
-} from 'components/ui/form-compat';
-import { 
-  CheckCircle as CheckCircleIcon,
-  Business as BusinessIcon,
-  Group as GroupIcon,
-  DataObject as DataIcon,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  LocationOn as LocationIcon
-} from 'components/ui/icon-compat';
+import {
+  CheckCircle2,
+  Building2,
+  Users,
+  Database,
+  Mail,
+  Phone,
+  MapPin,
+} from 'lucide-react';
+import { Card, CardContent } from 'components/ui/card';
 import { useOnboarding } from '../../context/onboarding';
 
 export const OnboardingComplete: React.FC = () => {
   const { onboardingData } = useOnboarding();
 
   return (
-    <Box>
+    <div>
       {/* Header Section */}
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <CheckCircleIcon sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
-        
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: 'success.main' }}>
+      <div className="text-center mb-8">
+        <CheckCircle2 className="h-16 w-16 text-emerald-600 mx-auto mb-4" />
+
+        <h2 className="text-2xl font-bold text-emerald-600 mb-2">
           Tudo Pronto! 🎉
-        </Typography>
-        
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+        </h2>
+
+        <h3 className="text-lg text-muted-foreground mb-2">
           Bem-vindo ao Stockify!
-        </Typography>
-        
-        <Typography variant="body1" sx={{ maxWidth: 600, mx: 'auto', color: 'text.secondary' }}>
+        </h3>
+
+        <p className="text-base text-muted-foreground max-w-[600px] mx-auto">
           Sua organização foi configurada com sucesso. Aqui está um resumo de tudo que foi configurado:
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Organization Summary */}
       {onboardingData.organization && (
-        <Card sx={{ mb: 4, borderRadius: 2 }}>
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-              <BusinessIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Building2 className="h-8 w-8 text-primary" />
+              <h3 className="text-lg font-semibold">
                 Informações da Organização
-              </Typography>
-            </Box>
-            
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Nome da Organização
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {onboardingData.organization.name}
-                  </Typography>
-                </Box>
-              </Grid>
-              
-              {onboardingData.organization.domain && (
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Domínio
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {onboardingData.organization.domain}
-                    </Typography>
-                  </Box>
-                </Grid>
-              )}
-              
+              </h3>
+            </div>
 
-              
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="mb-2">
+                <p className="text-sm text-muted-foreground mb-1">
+                  Nome da Organização
+                </p>
+                <p className="text-base font-medium">
+                  {onboardingData.organization.name}
+                </p>
+              </div>
+
+              {onboardingData.organization.domain && (
+                <div className="mb-2">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Domínio
+                  </p>
+                  <p className="text-base font-medium">
+                    {onboardingData.organization.domain}
+                  </p>
+                </div>
+              )}
+
               {onboardingData.organization.employeeCount && (
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Número de Funcionários
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {onboardingData.organization.employeeCount}
-                    </Typography>
-                  </Box>
-                </Grid>
+                <div className="mb-2">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Número de Funcionários
+                  </p>
+                  <p className="text-base font-medium">
+                    {onboardingData.organization.employeeCount}
+                  </p>
+                </div>
               )}
-              
+
               {(onboardingData.organization.address || onboardingData.organization.state || onboardingData.organization.city || onboardingData.organization.zipCode) && (
-                <Grid item xs={12}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Localização
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                        {[
-                          onboardingData.organization.address,
-                          onboardingData.organization.city,
-                          onboardingData.organization.state,
-                          onboardingData.organization.zipCode
-                        ].filter(Boolean).join(', ')}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
+                <div className="col-span-full mb-2">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Localização
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <p className="text-base font-medium">
+                      {[
+                        onboardingData.organization.address,
+                        onboardingData.organization.city,
+                        onboardingData.organization.state,
+                        onboardingData.organization.zipCode
+                      ].filter(Boolean).join(', ')}
+                    </p>
+                  </div>
+                </div>
               )}
-              
+
               {(onboardingData.organization.organizationEmail || onboardingData.organization.organizationPhoneNumber) && (
-                <Grid item xs={12}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Contato da Organização
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                      {onboardingData.organization.organizationEmail && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <EmailIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                          <Typography variant="body2">
-                            {onboardingData.organization.organizationEmail}
-                          </Typography>
-                        </Box>
-                      )}
-                      {onboardingData.organization.organizationPhoneNumber && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <PhoneIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                          <Typography variant="body2">
-                            {onboardingData.organization.organizationPhoneNumber}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Box>
-                </Grid>
+                <div className="col-span-full mb-2">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Contato da Organização
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {onboardingData.organization.organizationEmail && (
+                      <div className="flex items-center gap-1.5">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {onboardingData.organization.organizationEmail}
+                        </span>
+                      </div>
+                    )}
+                    {onboardingData.organization.organizationPhoneNumber && (
+                      <div className="flex items-center gap-1.5">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {onboardingData.organization.organizationPhoneNumber}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-              
+
               {(onboardingData.organization.pocName || onboardingData.organization.pocEmail) && (
-                <Grid item xs={12}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Ponto de Contato Principal
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                      {onboardingData.organization.pocName && (
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          {onboardingData.organization.pocName}
-                          {onboardingData.organization.pocRole && ` (${onboardingData.organization.pocRole})`}
-                        </Typography>
-                      )}
-                      {onboardingData.organization.pocEmail && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <EmailIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                          <Typography variant="body2">
-                            {onboardingData.organization.pocEmail}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Box>
-                </Grid>
+                <div className="col-span-full mb-2">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Ponto de Contato Principal
+                  </p>
+                  <div className="flex flex-wrap gap-4">
+                    {onboardingData.organization.pocName && (
+                      <span className="text-sm font-medium">
+                        {onboardingData.organization.pocName}
+                        {onboardingData.organization.pocRole && ` (${onboardingData.organization.pocRole})`}
+                      </span>
+                    )}
+                    {onboardingData.organization.pocEmail && (
+                      <div className="flex items-center gap-1.5">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {onboardingData.organization.pocEmail}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-            </Grid>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Sample Data Summary */}
-      {onboardingData.setup?.importSampleData && (
-        <Card sx={{ mb: 4, borderRadius: 2 }}>
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <DataIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Dados de Exemplo
-              </Typography>
-            </Box>
-            
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
-              Recursos que serão criados:
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              <Chip 
-                label="10 Produtos" 
-                color="primary" 
-                variant="outlined" 
-                size="small"
-                icon={<Box>📦</Box>}
-              />
-              <Chip 
-                label="5 Clientes" 
-                color="success" 
-                variant="outlined" 
-                size="small"
-                icon={<Box>👥</Box>}
-              />
-              <Chip 
-                label="3 Fornecedores" 
-                color="warning" 
-                variant="outlined" 
-                size="small"
-                icon={<Box>🏢</Box>}
-              />
-              <Chip 
-                label="Categorias" 
-                color="info" 
-                variant="outlined" 
-                size="small"
-                icon={<Box>📂</Box>}
-              />
-            </Box>
+      {/* Cadastros Básicos Summary */}
+      {onboardingData.cadastrosBasicos && !onboardingData.cadastrosBasicos.skipped && (
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Database className="h-8 w-8 text-primary" />
+              <h3 className="text-lg font-semibold">
+                Cadastros Básicos
+              </h3>
+            </div>
+
+            <p className="text-sm font-medium text-muted-foreground mb-2">
+              Cadastros que serão criados:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary text-primary px-3 py-0.5 text-xs font-medium">
+                {onboardingData.cadastrosBasicos.units.length} Unidades de medida
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-600 text-emerald-600 px-3 py-0.5 text-xs font-medium">
+                {onboardingData.cadastrosBasicos.categories.length} Categorias
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-600 text-amber-600 px-3 py-0.5 text-xs font-medium">
+                {onboardingData.cadastrosBasicos.acceptedPaymentMethodIds.length} Formas de pagamento
+              </span>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Tax Data Summary */}
       {onboardingData.taxData && (
-        <Card sx={{ mb: 4, borderRadius: 2 }}>
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <DataIcon sx={{ fontSize: 32, color: 'success.main' }} />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Database className="h-8 w-8 text-emerald-600" />
+              <h3 className="text-lg font-semibold">
                 Dados Tributários
-              </Typography>
-            </Box>
-            
+              </h3>
+            </div>
+
             {/* NFE Requirements Status */}
             {(() => {
               const taxData = onboardingData.taxData;
@@ -238,125 +197,122 @@ export const OnboardingComplete: React.FC = () => {
               const hasCompanyName = taxData?.razaoSocial && taxData.razaoSocial.trim().length > 0;
               const hasA1Certificate = taxData?.a1Certificate && taxData.a1Certificate.trim().length > 0;
               const allComplete = hasCNPJ && hasIE && hasCompanyName && hasA1Certificate;
-              
+
               return (
-                <Alert 
-                  severity={allComplete ? 'success' : 'warning'} 
-                  sx={{ mb: 3 }}
-                >
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {allComplete 
-                      ? '✅ Todos os requisitos para emissão de NFEs estão preenchidos!' 
-                      : '⚠️ Alguns requisitos para emissão de NFEs ainda precisam ser preenchidos.'
-                    }
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    {allComplete 
-                      ? 'Você poderá emitir notas fiscais eletrônicas após completar o onboarding.'
-                      : 'Você pode completar o onboarding e adicionar essas informações posteriormente.'
-                    }
-                  </Typography>
-                </Alert>
+                <div className={`flex gap-3 items-start rounded-lg border p-4 mb-6 ${allComplete ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+                  <div>
+                    <p className={`text-base font-medium ${allComplete ? 'text-emerald-900' : 'text-amber-900'}`}>
+                      {allComplete
+                        ? '✅ Todos os requisitos para emissão de NFEs estão preenchidos!'
+                        : '⚠️ Alguns requisitos para emissão de NFEs ainda precisam ser preenchidos.'
+                      }
+                    </p>
+                    <p className={`text-sm mt-1 ${allComplete ? 'text-emerald-800' : 'text-amber-800'}`}>
+                      {allComplete
+                        ? 'Você poderá emitir notas fiscais eletrônicas após completar o onboarding.'
+                        : 'Você pode completar o onboarding e adicionar essas informações posteriormente.'
+                      }
+                    </p>
+                  </div>
+                </div>
               );
             })()}
-            
-            <Grid container spacing={2}>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {onboardingData.taxData.cnpj && (
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      CNPJ
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {onboardingData.taxData.cnpj}
-                    </Typography>
-                  </Box>
-                </Grid>
+                <div className="mb-2">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    CNPJ
+                  </p>
+                  <p className="text-base font-medium">
+                    {onboardingData.taxData.cnpj}
+                  </p>
+                </div>
               )}
-              
+
               {onboardingData.taxData.ie && (
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Inscrição Estadual (IE)
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {onboardingData.taxData.ie}
-                    </Typography>
-                  </Box>
-                </Grid>
+                <div className="mb-2">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Inscrição Estadual (IE)
+                  </p>
+                  <p className="text-base font-medium">
+                    {onboardingData.taxData.ie}
+                  </p>
+                </div>
               )}
-              
+
               {onboardingData.taxData.razaoSocial && (
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Razão Social
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {onboardingData.taxData.razaoSocial}
-                    </Typography>
-                  </Box>
-                </Grid>
+                <div className="mb-2">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Razão Social
+                  </p>
+                  <p className="text-base font-medium">
+                    {onboardingData.taxData.razaoSocial}
+                  </p>
+                </div>
               )}
-              
+
               {onboardingData.taxData.a1Certificate && (
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Certificado A1
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {onboardingData.taxData.a1Certificate}
-                    </Typography>
-                  </Box>
-                </Grid>
+                <div className="mb-2">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Certificado A1
+                  </p>
+                  <p className="text-base font-medium">
+                    {onboardingData.taxData.a1Certificate}
+                  </p>
+                </div>
               )}
-            </Grid>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Team Members Summary */}
       {onboardingData.invitations && onboardingData.invitations.length > 0 && (
-        <Card sx={{ mb: 4, borderRadius: 2 }}>
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <GroupIcon sx={{ fontSize: 32, color: 'info.main' }} />
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Users className="h-8 w-8 text-sky-600" />
+              <h3 className="text-lg font-semibold">
                 Membros da Equipe
-              </Typography>
-            </Box>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+              </h3>
+            </div>
+            <p className="text-base text-muted-foreground mb-3">
               {onboardingData.invitations.length} membro(s) convidado(s):
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            </p>
+            <div className="flex flex-wrap gap-2">
               {onboardingData.invitations.map((invitation) => {
                 const role = invitation.role;
+                const badgeClass =
+                  role === 'manager' ? 'border-red-500 text-red-600' :
+                  role === 'operator' ? 'border-primary text-primary' :
+                  'border-emerald-500 text-emerald-600';
                 return (
-                  <Chip
+                  <span
                     key={invitation.email}
-                    label={`${invitation.email} (${role === 'manager' ? 'Gerente' : role === 'operator' ? 'Operador' : 'Visualizador'})`}
-                    color={role === 'manager' ? 'error' : role === 'operator' ? 'primary' : 'success'}
-                    variant="outlined"
-                    size="small"
-                  />
+                    className={`inline-block rounded-full border px-3 py-0.5 text-xs font-medium ${badgeClass}`}
+                  >
+                    {invitation.email} ({role === 'manager' ? 'Gerente' : role === 'operator' ? 'Operador' : 'Visualizador'})
+                  </span>
                 );
               })}
-            </Box>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Success Message */}
-      <Alert severity="success" sx={{ borderRadius: 2 }}>
-        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-          Sua organização <strong>{onboardingData.organization?.name}</strong> está pronta para uso!
-        </Typography>
-        <Typography variant="body2" sx={{ mt: 1 }}>
-          Você pode começar a gerenciar seu estoque imediatamente.
-        </Typography>
-      </Alert>
-    </Box>
+      <div className="flex gap-3 items-start rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+        <CheckCircle2 className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" />
+        <div>
+          <p className="text-base font-medium text-emerald-900">
+            Sua organização <strong>{onboardingData.organization?.name}</strong> está pronta para uso!
+          </p>
+          <p className="text-sm text-emerald-800 mt-1">
+            Você pode começar a gerenciar seu estoque imediatamente.
+          </p>
+        </div>
+      </div>
+    </div>
   );
-}; 
+};

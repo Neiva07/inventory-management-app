@@ -1,26 +1,20 @@
 import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from 'components/ui/card';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import { cn } from 'lib/utils';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  TextField,
-  Tabs,
-  Tab,
-  Alert,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-} from 'components/ui/form-compat';
-import {
-  Search as SearchIcon,
-  Add as AddIcon,
-  Group as GroupIcon,
-  Business as BusinessIcon,
-} from 'components/ui/icon-compat';
+  Search,
+  Plus,
+  Building2,
+  QrCode,
+  Users,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  Info,
+  ArrowRight,
+} from 'lucide-react';
 import { getOrganization, Organization } from '../../model/organization';
 import {
   searchOrganizations,
@@ -32,27 +26,13 @@ import { createUserMembership } from '../../model/userMembership';
 import { useAuth } from '../../context/auth';
 import { useOnboarding } from '../../context/onboarding';
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
+type TabId = 'invite' | 'search' | 'create';
 
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`org-selection-tabpanel-${index}`}
-      aria-labelledby={`org-selection-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+const tabs: { id: TabId; label: string; icon: React.ElementType }[] = [
+  { id: 'invite', label: 'Código de Convite', icon: QrCode },
+  { id: 'search', label: 'Buscar', icon: Search },
+  { id: 'create', label: 'Criar Nova', icon: Plus },
+];
 
 interface OrganizationSelectionProps {
   onOrganizationSelected: () => void;
@@ -65,7 +45,7 @@ export const OrganizationSelection: React.FC<OrganizationSelectionProps> = ({
 }) => {
   const { user } = useAuth();
   const { updateData } = useOnboarding();
-  const [tabValue, setTabValue] = useState(0);
+  const [activeTab, setActiveTab] = useState<TabId>('invite');
   const [invitationCode, setInvitationCode] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Organization[]>([]);
@@ -74,8 +54,8 @@ export const OrganizationSelection: React.FC<OrganizationSelectionProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+  const switchTab = (tab: TabId) => {
+    setActiveTab(tab);
     setError(null);
     setSuccess(null);
     setSearchResults([]);
@@ -107,14 +87,14 @@ export const OrganizationSelection: React.FC<OrganizationSelectionProps> = ({
       await createUserMembership({
         userID: user.id,
         organizationId: organization.id,
-        role: invitationCodeRecord.role,
+        role: 'operator',
       });
 
       await useInvitationCode(invitationCodeRecord.id);
 
       setSuccess(`Convite aceito! Bem-vindo à ${organization.name}`);
       onOrganizationSelected();
-    } catch (error) {
+    } catch {
       setError('Erro ao validar código de convite');
     } finally {
       setIsLoading(false);
@@ -134,12 +114,11 @@ export const OrganizationSelection: React.FC<OrganizationSelectionProps> = ({
 
     try {
       const results = await searchOrganizations(searchTerm.trim());
-      // Filter for exact name match for security
-      const exactMatches = results.filter(org => 
+      const exactMatches = results.filter(org =>
         org.name.toLowerCase() === searchTerm.trim().toLowerCase()
       );
       setSearchResults(exactMatches);
-    } catch (error) {
+    } catch {
       setError('Erro ao buscar organizações');
     } finally {
       setIsLoading(false);
@@ -160,11 +139,10 @@ export const OrganizationSelection: React.FC<OrganizationSelectionProps> = ({
       await createJoinRequest(
         organizationId,
         user.id,
-        user.email,
         `Solicitação de entrada em ${organizationName}`
       );
       setSuccess(`Solicitação enviada para ${organizationName}. Aguarde a aprovação.`);
-    } catch (error) {
+    } catch {
       setError('Erro ao enviar solicitação');
     } finally {
       setIsLoading(false);
@@ -172,7 +150,6 @@ export const OrganizationSelection: React.FC<OrganizationSelectionProps> = ({
   };
 
   const handleCreateNewOrganization = () => {
-    // Set onboarding data to indicate new organization creation
     updateData({
       organization: {
         name: '',
@@ -194,157 +171,200 @@ export const OrganizationSelection: React.FC<OrganizationSelectionProps> = ({
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" gutterBottom align="center">
-        Selecione sua Organização
-      </Typography>
-      
-      <Typography variant="body1" paragraph align="center" color="text.secondary">
-        Junte-se a uma organização existente ou crie uma nova
-      </Typography>
+    <div className="max-w-2xl mx-auto px-4 py-12">
+      <div className="text-center mb-8">
+        <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+          <Building2 className="w-7 h-7 text-primary" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Selecione sua Organização
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Junte-se a uma organização existente ou crie uma nova
+        </p>
+      </div>
 
-      <Card>
-        <CardContent>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={tabValue} onChange={handleTabChange} aria-label="organization selection tabs">
-              <Tab 
-                icon={<BusinessIcon />} 
-                label="Código de Convite" 
-                iconPosition="start"
-              />
-              <Tab 
-                icon={<SearchIcon />} 
-                label="Buscar Organização" 
-                iconPosition="start"
-              />
-              <Tab 
-                icon={<AddIcon />} 
-                label="Criar Nova" 
-                iconPosition="start"
-              />
-            </Tabs>
-          </Box>
+      {/* Tab buttons */}
+      <div className="flex gap-1 p-1 rounded-xl bg-muted/50 mb-6">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => switchTab(tab.id)}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                activeTab === tab.id
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
 
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
+      {/* Alerts */}
+      {error && (
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 text-destructive mb-4">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
 
-          {success && (
-            <Alert severity="success" sx={{ mt: 2 }}>
-              {success}
-            </Alert>
-          )}
+      {success && (
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-green-500/10 text-green-700 mb-4">
+          <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+          <p className="text-sm">{success}</p>
+        </div>
+      )}
 
-          <TabPanel value={tabValue} index={0}>
-            <Typography variant="h6" gutterBottom>
-              Código de Convite
-            </Typography>
-            <Typography variant="body2" paragraph color="text.secondary">
+      {/* Invite Code Tab */}
+      {activeTab === 'invite' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Código de Convite</CardTitle>
+            <CardDescription>
               Digite o código de convite fornecido pela sua organização
-            </Typography>
-            
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <TextField
-                fullWidth
-                label="Código de Convite"
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3">
+              <Input
                 value={invitationCode}
                 onChange={(e) => setInvitationCode(e.target.value)}
                 placeholder="ex: ABC123"
                 disabled={isLoading}
+                className="flex-1 uppercase tracking-widest text-center font-mono text-lg h-12"
+                onKeyDown={(e) => e.key === 'Enter' && handleInvitationCodeSubmit()}
               />
               <Button
-                variant="outlined"
                 onClick={handleInvitationCodeSubmit}
                 disabled={isLoading || !invitationCode.trim()}
-                sx={{ minWidth: 120 }}
+                className="h-12 px-6"
               >
-                {isLoading ? <CircularProgress size={20} /> : 'Validar'}
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    Validar
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
-            </Box>
-          </TabPanel>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-          <TabPanel value={tabValue} index={1}>
-            <Typography variant="h6" gutterBottom>
-              Buscar Organização
-            </Typography>
-            <Typography variant="body2" paragraph color="text.secondary">
+      {/* Search Tab */}
+      {activeTab === 'search' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Buscar Organização</CardTitle>
+            <CardDescription>
               Procure por organizações públicas para solicitar entrada
-            </Typography>
-            
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', mb: 3 }}>
-              <TextField
-                fullWidth
-                label="Nome da Organização"
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-3">
+              <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Digite o nome da organização"
+                placeholder="Digite o nome exato da organização"
                 disabled={isLoading}
+                className="flex-1 h-12"
+                onKeyDown={(e) => e.key === 'Enter' && handleSearchOrganizations()}
               />
               <Button
-                variant="outlined"
+                variant="outline"
                 onClick={handleSearchOrganizations}
                 disabled={isLoading || !searchTerm.trim()}
-                startIcon={<SearchIcon />}
-                sx={{ minWidth: 120 }}
+                className="h-12 px-6"
               >
-                Buscar
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Search className="w-4 h-4 mr-2" />
+                    Buscar
+                  </>
+                )}
               </Button>
-            </Box>
+            </div>
 
             {searchResults.length > 0 && (
-              <List>
+              <div className="space-y-2">
                 {searchResults.map((org) => (
-                  <ListItem key={org.id} divider>
-                    <ListItemText
-                      primary={org.name}
-                      secondary={org.domain ? `Domínio: ${org.domain}` : 'Sem domínio'}
-                    />
-                    <ListItemSecondaryAction>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => handleJoinRequest(org.id, org.name)}
-                        disabled={isLoading}
-                        startIcon={<GroupIcon />}
-                      >
-                        Solicitar Entrada
-                      </Button>
-                    </ListItemSecondaryAction>
-                  </ListItem>
+                  <div
+                    key={org.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-background hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{org.name}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleJoinRequest(org.id, org.name)}
+                      disabled={isLoading}
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Solicitar Entrada
+                    </Button>
+                  </div>
                 ))}
-              </List>
+              </div>
             )}
 
             {searchResults.length === 0 && hasSearched && !isLoading && (
-              <Alert severity="info">
-                Nenhuma organização encontrada com esse nome
-              </Alert>
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50">
+                <Info className="w-5 h-5 shrink-0 mt-0.5 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma organização encontrada com esse nome
+                </p>
+              </div>
             )}
-          </TabPanel>
+          </CardContent>
+        </Card>
+      )}
 
-          <TabPanel value={tabValue} index={2}>
-            <Typography variant="h6" gutterBottom>
-              Criar Nova Organização
-            </Typography>
-            <Typography variant="body2" paragraph color="text.secondary">
+      {/* Create Tab */}
+      {activeTab === 'create' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Criar Nova Organização</CardTitle>
+            <CardDescription>
               Crie uma nova organização e comece a gerenciar seu estoque
-            </Typography>
-            
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleCreateNewOrganization}
-              startIcon={<AddIcon />}
-              fullWidth
-              sx={{ mt: 2 }}
-            >
-              Criar Nova Organização
-            </Button>
-          </TabPanel>
-        </CardContent>
-      </Card>
-    </Box>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-6">
+              <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                <Plus className="w-8 h-8 text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">
+                Você será o administrador da nova organização e poderá convidar membros depois
+              </p>
+              <Button
+                size="lg"
+                onClick={handleCreateNewOrganization}
+                className="px-8"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Criar Nova Organização
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
-}; 
+};

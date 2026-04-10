@@ -1,0 +1,1 @@
+ALTER TABLE `organizations` ADD `settings_json` text DEFAULT '{}' NOT NULL;

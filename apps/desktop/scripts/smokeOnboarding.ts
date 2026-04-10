@@ -10,7 +10,7 @@ import {
 } from "../src/model/organizationOnboardingSession";
 import { createOrganization, deleteOrganization, getOrganization } from "../src/model/organization";
 import { createUserMembership, deleteUserMembership, getUserMembership } from "../src/model/userMembership";
-import { persistOnboardingTeamInvitations, seedOnboardingSampleData } from "../src/model/onboardingSetup";
+import { persistOnboardingTeamInvitations, seedCadastrosBasicos } from "../src/model/onboardingSetup";
 
 dotenv.config();
 
@@ -94,9 +94,14 @@ async function main(): Promise<void> {
         pocEmail: `poc_${runId}@example.test`,
       },
       setup: {
-        importSampleData: true,
         enableNotifications: false,
         enableAnalytics: false,
+      },
+      cadastrosBasicos: {
+        units: [{ name: "Unidade", description: "un" }],
+        categories: [{ name: "Alimentos" }],
+        acceptedPaymentMethodIds: ["dinheiro", "pix"],
+        skipped: false,
       },
       invitations: invites,
     });
@@ -143,7 +148,12 @@ async function main(): Promise<void> {
     });
     membershipId = membership.id;
 
-    await seedOnboardingSampleData(userID, org.id);
+    await seedCadastrosBasicos(userID, org.id, {
+      units: [{ name: "Unidade", description: "un" }],
+      categories: [{ name: "Alimentos" }],
+      acceptedPaymentMethodIds: ["dinheiro", "pix"],
+      skipped: false,
+    });
     await persistOnboardingTeamInvitations(org.id, userID, invites);
 
     await completeOnboardingSession(session.id);

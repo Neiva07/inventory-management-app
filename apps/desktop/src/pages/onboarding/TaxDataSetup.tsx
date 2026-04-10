@@ -1,36 +1,39 @@
-import React, { useState } from 'react';
-import { 
-  Typography, 
-  TextField, 
-  Box, 
-  Grid,
-  Card,
-  CardContent,
-  Button,
-  Alert
-} from 'components/ui/form-compat';
-import { 
-  Receipt as ReceiptIcon,
-  Business as BusinessIcon,
-  Upload as UploadIcon,
-  CheckCircle as CheckIcon
-} from 'components/ui/icon-compat';
+import React, { useState, useRef } from 'react';
+import {
+  Receipt,
+  Building2,
+  Upload,
+  CheckCircle2,
+  Info,
+  AlertTriangle,
+  Circle,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from 'components/ui/card';
+import { Input } from 'components/ui/input';
+import { Button } from 'components/ui/button';
+import { cn } from 'lib/utils';
 import { useOnboarding } from '../../context/onboarding';
 
-export const TaxDataSetup: React.FC = () => {
+interface TaxDataSetupProps {
+  showErrors?: boolean;
+}
+
+export const TaxDataSetup: React.FC<TaxDataSetupProps> = ({ showErrors = false }) => {
   const { onboardingData, updateData, setStepValidation } = useOnboarding();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    setStepValidation(4, true);
-  }, [setStepValidation]);
+    setStepValidation(3, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleTaxDataChange = (field: string, value: string) => {
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
-    
+
     updateData({
       taxData: {
         ...onboardingData.taxData,
@@ -42,27 +45,27 @@ export const TaxDataSetup: React.FC = () => {
   const validateCNPJ = (cnpj: string) => {
     // Remove non-digits
     const cleanCNPJ = cnpj.replace(/\D/g, '');
-    
+
     if (cleanCNPJ.length !== 14) {
       return 'CNPJ deve ter 14 dígitos';
     }
-    
+
     // Basic CNPJ validation (simplified)
     if (/^(\d)\1{13}$/.test(cleanCNPJ)) {
       return 'CNPJ inválido';
     }
-    
+
     return '';
   };
 
   const validateIE = (ie: string) => {
     // Remove non-digits
     const cleanIE = ie.replace(/\D/g, '');
-    
+
     if (cleanIE.length < 8 || cleanIE.length > 12) {
       return 'IE deve ter entre 8 e 12 dígitos';
     }
-    
+
     return '';
   };
 
@@ -98,7 +101,7 @@ export const TaxDataSetup: React.FC = () => {
     const hasIE = taxData?.ie && taxData.ie.replace(/\D/g, '').length >= 8;
     const hasCompanyName = taxData?.razaoSocial && taxData.razaoSocial.trim().length > 0;
     const hasA1Certificate = taxData?.a1Certificate && taxData.a1Certificate.trim().length > 0;
-    
+
     return {
       cnpj: hasCNPJ,
       ie: hasIE,
@@ -111,39 +114,39 @@ export const TaxDataSetup: React.FC = () => {
   const nfeRequirements = checkNFERequirements();
 
   return (
-    <Box>
+    <div>
       {/* Header Section */}
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Box sx={{ mb: 2 }}>
-          <ReceiptIcon sx={{ fontSize: 64, color: 'primary.main' }} />
-        </Box>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: 'primary.main' }}>
+      <div className="text-center mb-8">
+        <div className="mb-3">
+          <Receipt className="h-16 w-16 text-primary mx-auto" />
+        </div>
+        <h2 className="text-2xl font-bold text-primary mb-2">
           Dados Tributários
-        </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+        </h2>
+        <h3 className="text-lg text-muted-foreground mb-2">
           Configure as informações tributárias da sua empresa
-        </Typography>
-        <Typography variant="body1" sx={{ maxWidth: 600, mx: 'auto', color: 'text.secondary' }}>
-          Essas informações são necessárias para emissão de notas fiscais e validação de NFEs. 
+        </h3>
+        <p className="text-base text-muted-foreground max-w-[600px] mx-auto">
+          Essas informações são necessárias para emissão de notas fiscais e validação de NFEs.
           Você pode preencher essas informações agora ou adicioná-las posteriormente.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Company Registration */}
-      <Card sx={{ mb: 4, borderRadius: 2 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <BusinessIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Registro da Empresa
-            </Typography>
-          </Box>
-          
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="CNPJ"
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Building2 className="h-8 w-8 text-primary" />
+            <CardTitle>Registro da Empresa</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                CNPJ <span className="text-destructive">*</span>
+              </label>
+              <Input
                 value={onboardingData.taxData?.cnpj || ''}
                 onChange={(e) => {
                   const formatted = formatCNPJ(e.target.value);
@@ -156,16 +159,18 @@ export const TaxDataSetup: React.FC = () => {
                   }
                 }}
                 placeholder="00.000.000/0000-00"
-                error={!!errors.cnpj}
-                helperText={errors.cnpj}
-                required
+                className={cn(errors.cnpj && 'border-destructive focus-visible:ring-destructive')}
               />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Inscrição Estadual (IE)"
+              {errors.cnpj && (
+                <p className="text-sm text-destructive mt-1">{errors.cnpj}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Inscrição Estadual (IE) <span className="text-destructive">*</span>
+              </label>
+              <Input
                 value={onboardingData.taxData?.ie || ''}
                 onChange={(e) => {
                   const formatted = formatIE(e.target.value);
@@ -178,171 +183,171 @@ export const TaxDataSetup: React.FC = () => {
                   }
                 }}
                 placeholder="000.000.000.000"
-                error={!!errors.ie}
-                helperText={errors.ie}
-                required
+                className={cn(errors.ie && 'border-destructive focus-visible:ring-destructive')}
               />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Inscrição Municipal (IM)"
+              {errors.ie && (
+                <p className="text-sm text-destructive mt-1">{errors.ie}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Inscrição Municipal (IM)
+              </label>
+              <Input
                 value={onboardingData.taxData?.im || ''}
                 onChange={(e) => handleTaxDataChange('im', e.target.value)}
                 placeholder="000000000"
               />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Razão Social"
+            </div>
+
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Razão Social <span className="text-destructive">*</span>
+              </label>
+              <Input
                 value={onboardingData.taxData?.razaoSocial || ''}
                 onChange={(e) => handleTaxDataChange('razaoSocial', e.target.value)}
                 placeholder="Nome completo da empresa"
-                required
               />
-            </Grid>
-          </Grid>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* A1 Certificate Upload */}
-      <Card sx={{ borderRadius: 2 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <UploadIcon sx={{ fontSize: 32, color: 'success.main' }} />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Certificado Digital A1
-            </Typography>
-          </Box>
-          
-          <Alert severity="info" sx={{ mb: 3 }}>
-            <Typography variant="body2">
-              O certificado A1 é necessário para emissão e validação de notas fiscais eletrônicas (NFEs).
-            </Typography>
-          </Alert>
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Upload className="h-8 w-8 text-green-600 dark:text-green-400" />
+            <CardTitle>Certificado Digital A1</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border border-blue-500/50 bg-blue-500/10 p-3 mb-4">
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                O certificado A1 é necessário para emissão e validação de notas fiscais eletrônicas (NFEs).
+              </p>
+            </div>
+          </div>
 
-          <Box sx={{ textAlign: 'center' }}>
+          <div className="text-center">
             {onboardingData.taxData?.a1Certificate ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
-                <CheckIcon sx={{ color: 'success.main' }} />
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <p className="text-base font-medium">
                   Certificado carregado: {onboardingData.taxData.a1Certificate}
-                </Typography>
-              </Box>
+                </p>
+              </div>
             ) : (
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              <p className="text-sm text-muted-foreground mb-3">
                 Nenhum certificado carregado
-              </Typography>
+              </p>
             )}
-            
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pfx,.p12"
+              onChange={handleFileUpload}
+            />
             <Button
-              variant="outlined"
-              component="label"
-              startIcon={<UploadIcon />}
-              sx={{ mt: 1 }}
+              variant="outline"
+              className="mt-1"
+              onClick={() => fileInputRef.current?.click()}
             >
+              <Upload className="h-4 w-4 mr-2" />
               Carregar Certificado A1
-              <input
-                type="file"
-                hidden
-                accept=".pfx,.p12"
-                onChange={handleFileUpload}
-              />
             </Button>
-            
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+
+            <p className="text-xs text-muted-foreground mt-2">
               Formatos aceitos: .pfx, .p12
-            </Typography>
-          </Box>
+            </p>
+          </div>
         </CardContent>
       </Card>
 
       {/* NFE Requirements Status */}
-      <Card sx={{ borderRadius: 2, mt: 4 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <CheckIcon sx={{ fontSize: 32, color: nfeRequirements.allComplete ? 'success.main' : 'warning.main' }} />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Status para Emissão de NFEs
-            </Typography>
-          </Box>
-          
-          <Alert 
-            severity={nfeRequirements.allComplete ? 'success' : 'warning'} 
-            sx={{ mb: 3 }}
-          >
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-              {nfeRequirements.allComplete 
-                ? '✅ Todos os requisitos para emissão de NFEs estão preenchidos!' 
-                : '⚠️ Alguns requisitos para emissão de NFEs ainda precisam ser preenchidos.'
-              }
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              {nfeRequirements.allComplete 
-                ? 'Você poderá emitir notas fiscais eletrônicas após completar o onboarding.'
-                : 'Você pode completar o onboarding e adicionar essas informações posteriormente.'
-              }
-            </Typography>
-          </Alert>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className={cn(
+              'h-8 w-8',
+              nfeRequirements.allComplete
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-yellow-600 dark:text-yellow-400'
+            )} />
+            <CardTitle>Status para Emissão de NFEs</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {nfeRequirements.allComplete ? (
+            <div className="rounded-md border border-green-500/50 bg-green-500/10 p-4 mb-4">
+              <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                Todos os requisitos para emissão de NFEs estão preenchidos!
+              </p>
+              <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                Você poderá emitir notas fiscais eletrônicas após completar o onboarding.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-md border border-yellow-500/50 bg-yellow-500/10 p-4 mb-4">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-yellow-700 dark:text-yellow-300">
+                    Alguns requisitos para emissão de NFEs ainda precisam ser preenchidos.
+                  </p>
+                  <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
+                    Você pode completar o onboarding e adicionar essas informações posteriormente.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                {nfeRequirements.cnpj ? (
-                  <CheckIcon sx={{ color: 'success.main', fontSize: 20 }} />
-                ) : (
-                  <Box sx={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #ccc' }} />
-                )}
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  CNPJ
-                </Typography>
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                {nfeRequirements.ie ? (
-                  <CheckIcon sx={{ color: 'success.main', fontSize: 20 }} />
-                ) : (
-                  <Box sx={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #ccc' }} />
-                )}
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Inscrição Estadual (IE)
-                </Typography>
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                {nfeRequirements.companyName ? (
-                  <CheckIcon sx={{ color: 'success.main', fontSize: 20 }} />
-                ) : (
-                  <Box sx={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #ccc' }} />
-                )}
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Razão Social
-                </Typography>
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                {nfeRequirements.a1Certificate ? (
-                  <CheckIcon sx={{ color: 'success.main', fontSize: 20 }} />
-                ) : (
-                  <Box sx={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #ccc' }} />
-                )}
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Certificado A1
-                </Typography>
-              </Box>
-            </Grid>
-          </Grid>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              {nfeRequirements.cnpj ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+              ) : (
+                <Circle className="h-5 w-5 text-muted-foreground/40" />
+              )}
+              <span className="text-sm font-medium">CNPJ</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {nfeRequirements.ie ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+              ) : (
+                <Circle className="h-5 w-5 text-muted-foreground/40" />
+              )}
+              <span className="text-sm font-medium">Inscrição Estadual (IE)</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {nfeRequirements.companyName ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+              ) : (
+                <Circle className="h-5 w-5 text-muted-foreground/40" />
+              )}
+              <span className="text-sm font-medium">Razão Social</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {nfeRequirements.a1Certificate ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+              ) : (
+                <Circle className="h-5 w-5 text-muted-foreground/40" />
+              )}
+              <span className="text-sm font-medium">Certificado A1</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
-}; 
+};

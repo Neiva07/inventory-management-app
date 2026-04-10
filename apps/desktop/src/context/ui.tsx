@@ -9,14 +9,14 @@ interface UIContextType {
 }
 
 const UIContext = createContext<UIContextType>({
-  layout: 'navbar',
+  layout: 'sidebar',
   setLayout: () => {},
   loading: false,
 });
 
 export const UIContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [layout, setLayoutState] = useState<UILayout>('navbar');
+  const [layout, setLayoutState] = useState<UILayout>('sidebar');
   const [loading, setLoading] = useState(false);
 
   // Load settings when user changes
@@ -28,7 +28,7 @@ export const UIContextProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (settings && settings.layout) {
           setLayoutState(settings.layout);
         } else {
-          setLayoutState('navbar');
+          setLayoutState('sidebar');
         }
       })
       .finally(() => setLoading(false));

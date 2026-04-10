@@ -1,31 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Typography, 
-  Box, 
-  TextField, 
-  Button, 
-  Chip, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem, 
-  FormHelperText,
-  Card,
-  CardContent,
-  Grid,
-  Paper,
-  Avatar,
-  ChipProps,
-} from 'components/ui/form-compat';
-import { 
-  Add as AddIcon, 
-  Close as CloseIcon,
-  Group as GroupIcon,
-  Person as PersonIcon,
-  Business as BusinessIcon,
-  Visibility as VisibilityIcon,
-  Email as EmailIcon
-} from 'components/ui/icon-compat';
+import { Plus, X, Users, User, Building2, Eye, Mail } from 'lucide-react';
+import { Card, CardContent } from 'components/ui/card';
+import { Input } from 'components/ui/input';
+import { Button } from 'components/ui/button';
+import { cn } from 'lib/utils';
 import { useOnboarding } from '../../context/onboarding';
 import { isValidEmail } from '../../lib/email';
 
@@ -40,8 +18,9 @@ export const InviteTeamSetup: React.FC = () => {
   const teamMembers = onboardingData.invitations || [];
 
   React.useEffect(() => {
-    setStepValidation(5, true);
-  }, [setStepValidation]);
+    setStepValidation(4, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addTeamMember = () => {
     // Validate name
@@ -49,39 +28,39 @@ export const InviteTeamSetup: React.FC = () => {
       setNameError('Nome é obrigatório');
       return;
     }
-    
+
     // Validate email
     if (!newEmail.trim()) {
       setEmailError('Email é obrigatório');
       return;
     }
-    
+
     if (!isValidEmail(newEmail.trim())) {
       setEmailError('Digite um email válido');
       return;
     }
-    
+
     if (teamMembers.find(member => member.email === newEmail.trim())) {
       setEmailError('Este email já foi adicionado');
       return;
     }
-    
+
     // Clear any previous errors
     setEmailError('');
     setNameError('');
-    
+
     const newMember = {
       email: newEmail.trim(),
       name: newName.trim(),
       role: newRole,
     };
-    
+
     const updatedInvitations = [...(onboardingData.invitations || []), newMember];
-    
+
     updateData({
       invitations: updatedInvitations,
     });
-    
+
     setNewEmail('');
     setNewName('');
     setNewRole('operator');
@@ -89,7 +68,7 @@ export const InviteTeamSetup: React.FC = () => {
 
   const removeTeamMember = (email: string) => {
     const updatedInvitations = teamMembers.filter(member => member.email !== email);
-    
+
     updateData({
       invitations: updatedInvitations,
     });
@@ -98,26 +77,26 @@ export const InviteTeamSetup: React.FC = () => {
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'manager':
-        return <BusinessIcon sx={{ fontSize: 16 }} />;
+        return <Building2 className="h-4 w-4" />;
       case 'operator':
-        return <PersonIcon sx={{ fontSize: 16 }} />;
+        return <User className="h-4 w-4" />;
       case 'viewer':
-        return <VisibilityIcon sx={{ fontSize: 16 }} />;
+        return <Eye className="h-4 w-4" />;
       default:
-        return <PersonIcon sx={{ fontSize: 16 }} />;
+        return <User className="h-4 w-4" />;
     }
   };
 
-  const getRoleColor = (role: string): ChipProps['color'] => {
+  const getRoleBadgeClass = (role: string) => {
     switch (role) {
       case 'manager':
-        return 'error';
+        return 'border-red-500 text-red-600';
       case 'operator':
-        return 'primary';
+        return 'border-primary text-primary';
       case 'viewer':
-        return 'success';
+        return 'border-emerald-500 text-emerald-600';
       default:
-        return 'default';
+        return 'border-border text-foreground';
     }
   };
 
@@ -135,218 +114,187 @@ export const InviteTeamSetup: React.FC = () => {
   };
 
   return (
-    <Box>
+    <div>
       {/* Header Section */}
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Box sx={{ mb: 2 }}>
-          <GroupIcon sx={{ fontSize: 64, color: 'primary.main' }} />
-        </Box>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: 'primary.main' }}>
+      <div className="text-center mb-8">
+        <div className="mb-4">
+          <Users className="h-16 w-16 text-primary mx-auto" />
+        </div>
+        <h2 className="text-2xl font-bold text-primary mb-2">
           Convidar Sua Equipe
-        </Typography>
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+        </h2>
+        <h3 className="text-lg text-muted-foreground mb-2">
           Colabore com sua equipe na gestão do estoque
-        </Typography>
-        <Typography variant="body1" sx={{ maxWidth: 600, mx: 'auto', color: 'text.secondary' }}>
-          Convide membros da equipe para colaborar na gestão do seu estoque. 
+        </h3>
+        <p className="text-base text-muted-foreground max-w-[600px] mx-auto">
+          Convide membros da equipe para colaborar na gestão do seu estoque.
           Você pode pular esta etapa e convidá-los depois.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Add Member Section */}
-      <Card sx={{ mb: 4, borderRadius: 2 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+      <Card className="mb-8">
+        <CardContent className="p-6">
+          <h3 className="text-lg font-semibold mb-6">
             Adicionar Membro da Equipe
-          </Typography>
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Nome Completo"
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Nome Completo
+              </label>
+              <Input
                 value={newName}
                 onChange={(e) => {
                   setNewName(e.target.value);
-                  // Clear error when user starts typing
                   if (nameError) setNameError('');
                 }}
                 placeholder="Nome do colega"
-                error={!!nameError}
-                fullWidth
-                size="medium"
+                className={cn('h-11', nameError && 'border-red-500 focus-visible:ring-red-500')}
               />
-              <Box sx={{ minHeight: 20, mt: 0.5 }}>
+              <div className="min-h-[20px] mt-1">
                 {nameError && (
-                  <FormHelperText error sx={{ margin: 0 }}>
-                    {nameError}
-                  </FormHelperText>
+                  <p className="text-sm text-red-500">{nameError}</p>
                 )}
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Endereço de Email"
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Endereço de Email
+              </label>
+              <Input
                 value={newEmail}
                 onChange={(e) => {
                   setNewEmail(e.target.value);
-                  // Clear error when user starts typing
                   if (emailError) setEmailError('');
                 }}
                 placeholder="colega@empresa.com"
-                error={!!emailError}
-                fullWidth
-                size="medium"
+                className={cn('h-11', emailError && 'border-red-500 focus-visible:ring-red-500')}
               />
-              <Box sx={{ minHeight: 20, mt: 0.5 }}>
+              <div className="min-h-[20px] mt-1">
                 {emailError && (
-                  <FormHelperText error sx={{ margin: 0 }}>
-                    {emailError}
-                  </FormHelperText>
+                  <p className="text-sm text-red-500">{emailError}</p>
                 )}
-              </Box>
-            </Grid>
-          </Grid>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-            <FormControl sx={{ minWidth: 140 }} size="medium">
-              <InputLabel>Função</InputLabel>
-              <Select
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3 items-start">
+            <div className="min-w-[140px]">
+              <label className="text-sm font-medium mb-1.5 block">
+                Função
+              </label>
+              <select
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value)}
-                label="Função"
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <MenuItem value="manager">Gerente</MenuItem>
-                <MenuItem value="operator">Operador</MenuItem>
-                <MenuItem value="viewer">Visualizador</MenuItem>
-              </Select>
-            </FormControl>
-            <Button
-              variant="contained"
-              onClick={addTeamMember}
-              disabled={!newEmail.trim() || !newName.trim() || !!emailError || !!nameError}
-              startIcon={<AddIcon />}
-              size="large"
-              sx={{ 
-                minHeight: 56,
-                px: 3
-              }}
-            >
-              Adicionar
-            </Button>
-          </Box>
+                <option value="manager">Gerente</option>
+                <option value="operator">Operador</option>
+                <option value="viewer">Visualizador</option>
+              </select>
+            </div>
+            <div className="pt-6">
+              <Button
+                onClick={addTeamMember}
+                disabled={!newEmail.trim() || !newName.trim() || !!emailError || !!nameError}
+                size="lg"
+                className="h-11 px-4"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Adicionar
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {teamMembers.length > 0 && (
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-6">
             Membros da Equipe ({teamMembers.length})
-          </Typography>
-          <Grid container spacing={2}>
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {teamMembers.map((member) => (
-              <Grid item xs={12} sm={6} key={member.email}>
-                <Paper 
-                  elevation={1}
-                  sx={{ 
-                    p: 2, 
-                    borderRadius: 1,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: 2
-                    }
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                      <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
-                        <EmailIcon />
-                      </Avatar>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-                          {member.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                          {member.email}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {getRoleIcon(member.role)}
-                          <Chip
-                            label={getRoleLabel(member.role)}
-                            color={getRoleColor(member.role)}
-                            size="small"
-                            variant="outlined"
-                          />
-                        </Box>
-                      </Box>
-                    </Box>
-                    <Button
-                      size="small"
-                      onClick={() => removeTeamMember(member.email)}
-                      sx={{ 
-                        minWidth: 'auto',
-                        p: 1,
-                        color: 'error.main',
-                        '&:hover': { bgcolor: 'error.light' }
-                      }}
-                    >
-                      <CloseIcon sx={{ fontSize: 18 }} />
-                    </Button>
-                  </Box>
-                </Paper>
-              </Grid>
+              <div
+                key={member.email}
+                className="rounded-lg border bg-card p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Mail className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium mb-0.5 truncate">
+                        {member.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground mb-1 truncate">
+                        {member.email}
+                      </p>
+                      <div className="flex items-center gap-1.5">
+                        {getRoleIcon(member.role)}
+                        <span className={`inline-block rounded-full border px-2 py-0.5 text-xs font-medium ${getRoleBadgeClass(member.role)}`}>
+                          {getRoleLabel(member.role)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => removeTeamMember(member.email)}
+                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-colors shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             ))}
-          </Grid>
-        </Box>
+          </div>
+        </div>
       )}
 
       {/* Permissions Section */}
-      <Card sx={{ borderRadius: 2, bgcolor: 'grey.50' }}>
-        <CardContent sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+      <Card className="bg-muted/50">
+        <CardContent className="p-6">
+          <h3 className="text-lg font-semibold mb-6">
             Permissões por Função
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={4}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                <BusinessIcon sx={{ color: 'error.main', fontSize: 24, mt: 0.5 }} />
-                <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'error.main', mb: 1 }}>
-                    Gerente
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Acesso completo a todas as funcionalidades, pode gerenciar usuários
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                <PersonIcon sx={{ color: 'primary.main', fontSize: 24, mt: 0.5 }} />
-                <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'primary.main', mb: 1 }}>
-                    Operador
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Criar e editar dados, gerenciamento limitado de usuários
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                <VisibilityIcon sx={{ color: 'success.main', fontSize: 24, mt: 0.5 }} />
-                <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'success.main', mb: 1 }}>
-                    Visualizador
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Acesso somente leitura aos dados
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="flex items-start gap-3">
+              <Building2 className="h-6 w-6 text-red-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-red-500 mb-1">
+                  Gerente
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Acesso completo a todas as funcionalidades, pode gerenciar usuários
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <User className="h-6 w-6 text-primary mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-primary mb-1">
+                  Operador
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Criar e editar dados, gerenciamento limitado de usuários
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Eye className="h-6 w-6 text-emerald-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-emerald-600 mb-1">
+                  Visualizador
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Acesso somente leitura aos dados
+                </p>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
-}; 
+};

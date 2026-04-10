@@ -1,23 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Typography, 
-  TextField, 
-  Box, 
-  Grid,
-  Card,
-  CardContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
-  Alert
-} from 'components/ui/form-compat';
+import { AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from 'components/ui/card';
+import { Input } from 'components/ui/input';
+import { cn } from 'lib/utils';
 import { useOnboarding } from '../../context/onboarding';
 import { states, citiesByState } from '../../model/region';
 import { isValidEmail } from '../../lib/email';
 
-export const OrganizationSetup: React.FC = () => {
+interface OrganizationSetupProps {
+  showErrors?: boolean;
+}
+
+export const OrganizationSetup: React.FC<OrganizationSetupProps> = ({ showErrors = false }) => {
   const { onboardingData, updateData, setStepValidation } = useOnboarding();
   const [stateOptions, setStateOptions] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -103,10 +97,14 @@ export const OrganizationSetup: React.FC = () => {
   const validationErrors = validateOrganizationData();
   const isValid = validationErrors.length === 0;
 
+  const requiredFieldError = (fieldValue: string | undefined) =>
+    showErrors && !fieldValue?.trim() ? 'border-destructive focus-visible:ring-destructive' : '';
+
   // Update validation state in context
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(() => {
-    setStepValidation(2, isValid); // Step 2 is Organization Setup
-  }, [isValid, setStepValidation]);
+    setStepValidation(2, isValid);
+  }, [isValid]);
 
   useEffect(() => {
     // Convert states array to just the names for the autocomplete
@@ -121,7 +119,7 @@ export const OrganizationSetup: React.FC = () => {
         city: '', // Reset city when state changes
       },
     });
-    
+
     if (state) {
       // Find the state code from the state name
       const stateObj = states.find(s => s.name === state);
@@ -143,7 +141,7 @@ export const OrganizationSetup: React.FC = () => {
     if (fieldErrors[field]) {
       setFieldErrors(prev => ({ ...prev, [field]: '' }));
     }
-    
+
     // Format fields
     let formattedValue = value;
     if (field === 'zipCode') {
@@ -151,7 +149,7 @@ export const OrganizationSetup: React.FC = () => {
     } else if (field === 'organizationPhoneNumber' || field === 'pocPhoneNumber') {
       formattedValue = formatPhone(value);
     }
-    
+
     updateData({
       organization: {
         ...onboardingData.organization,
@@ -161,145 +159,142 @@ export const OrganizationSetup: React.FC = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h5" gutterBottom>
+    <div>
+      <h2 className="text-xl font-semibold mb-1">
         Configuração da Organização
-      </Typography>
-      <Typography variant="body1" paragraph>
+      </h2>
+      <p className="text-base text-muted-foreground mb-4">
         Conte-nos sobre sua organização para personalizar sua experiência.
-      </Typography>
+      </p>
 
-      {/* Validation Alert - Fixed Height Container */}
-      <Box sx={{ 
-        height: 120, 
-        mb: 3,
-        display: 'flex',
-        alignItems: 'flex-start'
-      }}>
-        {validationErrors.length > 0 ? (
-          <Alert severity="error" sx={{ width: '100%', height: '100%' }}>
-            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                Por favor, preencha todos os campos obrigatórios:
-              </Typography>
-              <Typography variant="body2" sx={{ mt: 1, lineHeight: 1.4 }}>
-                {validationErrors.join(', ')}
-              </Typography>
-            </Box>
-          </Alert>
-        ) : (
-          <Alert severity="success" sx={{ width: '100%', height: '100%' }}>
-            <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                ✅ Todos os campos obrigatórios foram preenchidos!
-              </Typography>
-            </Box>
-          </Alert>
-        )}
-      </Box>
+      {/* Validation Alert - only shown after user tries to advance */}
+      {showErrors && validationErrors.length > 0 && (
+        <div className="mb-6 rounded-md border border-destructive/50 bg-destructive/10 p-4">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+            <p className="text-sm font-medium text-destructive">
+              Preencha os campos obrigatórios destacados abaixo
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Basic Information */}
-      <Card sx={{ mb: 3 }}>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Informações Básicas</CardTitle>
+        </CardHeader>
         <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-            Informações Básicas
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Nome da Organização"
+          <div className="grid grid-cols-1 gap-4">
+            <div className="col-span-1">
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Nome da Organização <span className="text-destructive">*</span>
+              </label>
+              <Input
                 value={onboardingData.organization?.name || ''}
                 onChange={(e) => handleOrganizationChange('name', e.target.value)}
-                required
+                className={cn(requiredFieldError(onboardingData.organization?.name))}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Domínio (opcional)"
-                value={onboardingData.organization?.domain || ''}
-                onChange={(e) => handleOrganizationChange('domain', e.target.value)}
-                placeholder="ex: empresa.com.br"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Número de Funcionários"
-                type="number"
-                value={onboardingData.organization?.employeeCount || ''}
-                onChange={(e) => handleOrganizationChange('employeeCount', e.target.value)}
-                placeholder="ex: 50"
-                required
-              />
-            </Grid>
-
-          </Grid>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium leading-none mb-1.5 block">
+                  Domínio (opcional)
+                </label>
+                <Input
+                  value={onboardingData.organization?.domain || ''}
+                  onChange={(e) => handleOrganizationChange('domain', e.target.value)}
+                  placeholder="ex: empresa.com.br"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium leading-none mb-1.5 block">
+                  Número de Funcionários <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  type="number"
+                  value={onboardingData.organization?.employeeCount || ''}
+                  onChange={(e) => handleOrganizationChange('employeeCount', e.target.value)}
+                  placeholder="ex: 50"
+                  className={cn(requiredFieldError(onboardingData.organization?.employeeCount))}
+                />
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Location Information */}
-      <Card sx={{ mb: 3 }}>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Localização</CardTitle>
+        </CardHeader>
         <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-            Localização
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Endereço"
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Endereço <span className="text-destructive">*</span>
+              </label>
+              <Input
                 value={onboardingData.organization?.address || ''}
                 onChange={(e) => handleOrganizationChange('address', e.target.value)}
                 placeholder="Rua, número, complemento"
-                required
+                className={cn(requiredFieldError(onboardingData.organization?.address))}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Estado</InputLabel>
-                <Select
-                  value={onboardingData.organization?.state || ''}
-                  onChange={(e) => handleStateChange(e.target.value || null)}
-                  required
-                >
-                  <MenuItem value="">Selecione um estado</MenuItem>
-                  {stateOptions.map((stateName) => (
-                    <MenuItem key={stateName} value={stateName}>
-                      {stateName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Cidade</InputLabel>
-                <Select
-                  value={onboardingData.organization?.city || ''}
-                  onChange={(e) => handleOrganizationChange('city', e.target.value)}
-                  disabled={!onboardingData.organization?.state}
-                  required
-                >
-                  <MenuItem value="">
-                    {onboardingData.organization?.state ? 'Selecione uma cidade' : 'Selecione um estado primeiro'}
-                  </MenuItem>
-                  {cities.map((cityName) => (
-                    <MenuItem key={cityName} value={cityName}>
-                      {cityName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {!onboardingData.organization?.state ? (
-                  <FormHelperText>Selecione um estado primeiro</FormHelperText>
-                ) : null}
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="CEP"
+            </div>
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Estado <span className="text-destructive">*</span>
+              </label>
+              <select
+                className={cn(
+                  "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+                  requiredFieldError(onboardingData.organization?.state)
+                )}
+                value={onboardingData.organization?.state || ''}
+                onChange={(e) => handleStateChange(e.target.value || null)}
+              >
+                <option value="">Selecione um estado</option>
+                {stateOptions.map((stateName) => (
+                  <option key={stateName} value={stateName}>
+                    {stateName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Cidade <span className="text-destructive">*</span>
+              </label>
+              <select
+                className={cn(
+                  "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+                  requiredFieldError(onboardingData.organization?.city)
+                )}
+                value={onboardingData.organization?.city || ''}
+                onChange={(e) => handleOrganizationChange('city', e.target.value)}
+                disabled={!onboardingData.organization?.state}
+              >
+                <option value="">
+                  {onboardingData.organization?.state ? 'Selecione uma cidade' : 'Selecione um estado primeiro'}
+                </option>
+                {cities.map((cityName) => (
+                  <option key={cityName} value={cityName}>
+                    {cityName}
+                  </option>
+                ))}
+              </select>
+              {!onboardingData.organization?.state && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Selecione um estado primeiro
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                CEP <span className="text-destructive">*</span>
+              </label>
+              <Input
                 value={onboardingData.organization?.zipCode || ''}
                 onChange={(e) => handleOrganizationChange('zipCode', e.target.value)}
                 onBlur={(e) => {
@@ -309,29 +304,29 @@ export const OrganizationSetup: React.FC = () => {
                   }
                 }}
                 placeholder="00000-000"
-                required
-                error={!!fieldErrors.zipCode}
-                helperText={fieldErrors.zipCode}
-                inputProps={{
-                  maxLength: 9
-                }}
+                maxLength={9}
+                className={cn(fieldErrors.zipCode ? 'border-destructive focus-visible:ring-destructive' : requiredFieldError(onboardingData.organization?.zipCode))}
               />
-            </Grid>
-          </Grid>
+              {fieldErrors.zipCode && (
+                <p className="text-sm text-destructive mt-1">{fieldErrors.zipCode}</p>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Organization Contact */}
-      <Card sx={{ mb: 3 }}>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Contato da Organização</CardTitle>
+        </CardHeader>
         <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-            Contato da Organização
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Telefone da Organização"
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Telefone da Organização <span className="text-destructive">*</span>
+              </label>
+              <Input
                 value={onboardingData.organization?.organizationPhoneNumber || ''}
                 onChange={(e) => handleOrganizationChange('organizationPhoneNumber', e.target.value)}
                 onBlur={(e) => {
@@ -341,74 +336,72 @@ export const OrganizationSetup: React.FC = () => {
                   }
                 }}
                 placeholder="(11) 99999-9999"
-                required
-                error={!!fieldErrors.organizationPhoneNumber}
-                helperText={fieldErrors.organizationPhoneNumber}
-                inputProps={{
-                  maxLength: 15
-                }}
+                maxLength={15}
+                className={cn(fieldErrors.organizationPhoneNumber ? 'border-destructive focus-visible:ring-destructive' : requiredFieldError(onboardingData.organization?.organizationPhoneNumber))}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Box>
-                <TextField
-                  fullWidth
-                  label="Email da Organização"
-                  type="email"
-                  value={onboardingData.organization?.organizationEmail || ''}
-                  onChange={(e) => handleOrganizationChange('organizationEmail', e.target.value)}
-                  onBlur={(e) => {
-                    const email = e.target.value.trim();
-                    if (email && !isValidEmail(email)) {
-                      setEmailErrors(prev => ({ ...prev, organizationEmail: 'Digite um email válido' }));
-                    }
-                  }}
-                  placeholder="contato@empresa.com.br"
-                  required
-                  error={!!emailErrors.organizationEmail}
-                />
-                {emailErrors.organizationEmail && (
-                  <FormHelperText error>
-                    {emailErrors.organizationEmail}
-                  </FormHelperText>
-                )}
-              </Box>
-            </Grid>
-          </Grid>
+              {fieldErrors.organizationPhoneNumber && (
+                <p className="text-sm text-destructive mt-1">{fieldErrors.organizationPhoneNumber}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Email da Organização <span className="text-destructive">*</span>
+              </label>
+              <Input
+                type="email"
+                value={onboardingData.organization?.organizationEmail || ''}
+                onChange={(e) => handleOrganizationChange('organizationEmail', e.target.value)}
+                onBlur={(e) => {
+                  const email = e.target.value.trim();
+                  if (email && !isValidEmail(email)) {
+                    setEmailErrors(prev => ({ ...prev, organizationEmail: 'Digite um email válido' }));
+                  }
+                }}
+                placeholder="contato@empresa.com.br"
+                className={cn(emailErrors.organizationEmail ? 'border-destructive focus-visible:ring-destructive' : requiredFieldError(onboardingData.organization?.organizationEmail))}
+              />
+              {emailErrors.organizationEmail && (
+                <p className="text-sm text-destructive mt-1">{emailErrors.organizationEmail}</p>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Point of Contact */}
       <Card>
+        <CardHeader>
+          <CardTitle>Ponto de Contato Principal</CardTitle>
+        </CardHeader>
         <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-            Ponto de Contato Principal
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Nome do Contato"
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Nome do Contato <span className="text-destructive">*</span>
+              </label>
+              <Input
                 value={onboardingData.organization?.pocName || ''}
                 onChange={(e) => handleOrganizationChange('pocName', e.target.value)}
                 placeholder="Nome completo"
-                required
+                className={cn(requiredFieldError(onboardingData.organization?.pocName))}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Cargo"
+            </div>
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Cargo <span className="text-destructive">*</span>
+              </label>
+              <Input
                 value={onboardingData.organization?.pocRole || ''}
                 onChange={(e) => handleOrganizationChange('pocRole', e.target.value)}
                 placeholder="ex: Gerente de TI"
-                required
+                className={cn(requiredFieldError(onboardingData.organization?.pocRole))}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Telefone do Contato"
+            </div>
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Telefone do Contato <span className="text-destructive">*</span>
+              </label>
+              <Input
                 value={onboardingData.organization?.pocPhoneNumber || ''}
                 onChange={(e) => handleOrganizationChange('pocPhoneNumber', e.target.value)}
                 onBlur={(e) => {
@@ -418,42 +411,37 @@ export const OrganizationSetup: React.FC = () => {
                   }
                 }}
                 placeholder="(11) 99999-9999"
-                required
-                error={!!fieldErrors.pocPhoneNumber}
-                helperText={fieldErrors.pocPhoneNumber}
-                inputProps={{
-                  maxLength: 15
-                }}
+                maxLength={15}
+                className={cn(fieldErrors.pocPhoneNumber ? 'border-destructive focus-visible:ring-destructive' : requiredFieldError(onboardingData.organization?.pocPhoneNumber))}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Box>
-                <TextField
-                  fullWidth
-                  label="Email do Contato"
-                  type="email"
-                  value={onboardingData.organization?.pocEmail || ''}
-                  onChange={(e) => handleOrganizationChange('pocEmail', e.target.value)}
-                  onBlur={(e) => {
-                    const email = e.target.value.trim();
-                    if (email && !isValidEmail(email)) {
-                      setEmailErrors(prev => ({ ...prev, pocEmail: 'Digite um email válido' }));
-                    }
-                  }}
-                  placeholder="contato@empresa.com.br"
-                  required
-                  error={!!emailErrors.pocEmail}
-                />
-                {emailErrors.pocEmail && (
-                  <FormHelperText error>
-                    {emailErrors.pocEmail}
-                  </FormHelperText>
-                )}
-              </Box>
-            </Grid>
-          </Grid>
+              {fieldErrors.pocPhoneNumber && (
+                <p className="text-sm text-destructive mt-1">{fieldErrors.pocPhoneNumber}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium leading-none mb-1.5 block">
+                Email do Contato <span className="text-destructive">*</span>
+              </label>
+              <Input
+                type="email"
+                value={onboardingData.organization?.pocEmail || ''}
+                onChange={(e) => handleOrganizationChange('pocEmail', e.target.value)}
+                onBlur={(e) => {
+                  const email = e.target.value.trim();
+                  if (email && !isValidEmail(email)) {
+                    setEmailErrors(prev => ({ ...prev, pocEmail: 'Digite um email válido' }));
+                  }
+                }}
+                placeholder="contato@empresa.com.br"
+                className={cn(emailErrors.pocEmail ? 'border-destructive focus-visible:ring-destructive' : requiredFieldError(onboardingData.organization?.pocEmail))}
+              />
+              {emailErrors.pocEmail && (
+                <p className="text-sm text-destructive mt-1">{emailErrors.pocEmail}</p>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
-    </Box>
+    </div>
   );
-}; 
+};

@@ -4,6 +4,7 @@ import { SlidersHorizontal, Building2, User } from 'lucide-react';
 import { PreferencesPage } from './preferences/PreferencesPage';
 import { OrganizationPage } from './organization/OrganizationPage';
 import { ProfilePage } from './profile/ProfilePage';
+import { DevToolsMenu } from './DevToolsMenu';
 import { Card, CardContent } from 'components/ui';
 
 type TabKey = 'preferences' | 'organization' | 'profile';
@@ -19,7 +20,10 @@ export const SettingsRouter = () => {
 
   return (
     <div className="mx-auto w-full max-w-6xl p-3">
-      <h1 className="mb-4 text-3xl font-semibold">Configurações</h1>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h1 className="text-3xl font-semibold">Configurações</h1>
+        <DevToolsMenu />
+      </div>
 
       <Card>
         <CardContent className="p-4">

@@ -2,6 +2,14 @@
   "name": "stockify",
   "private": true,
   "packageManager": "pnpm@10.28.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "bufferutil",
+      "sharp",
+      "protobufjs"
+    ]
+  },
   "scripts": {
     "desktop": "pnpm --filter stockify-app",
     "web": "pnpm --filter stockify-web"

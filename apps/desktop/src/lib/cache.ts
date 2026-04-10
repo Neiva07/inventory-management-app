@@ -1,8 +1,6 @@
 import { User } from "model/auth"
 import { Session } from "model/session";
 import { Supplier } from "model/suppliers"
-import { enableNetwork } from "firebase/firestore";
-import { db } from "../firebase";
 
 type EntityType = User | Supplier | Session
 
@@ -37,16 +35,3 @@ export function removeFromCache(type: "session"): void;
 export function removeFromCache(key: string) {
   localStorage.removeItem(key);
 }
-
-/**
- * Check if Firestore is online
- */
-export const isFirestoreOnline = async (): Promise<boolean> => {
-  try {
-    // Try to enable network - if it fails, we're offline
-    await enableNetwork(db);
-    return true;
-  } catch {
-    return false;
-  }
-};

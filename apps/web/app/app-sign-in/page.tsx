@@ -19,7 +19,7 @@ export default function Page() {
           signInUrl="/app-sign-in"
           signUpUrl="/app-sign-in"
           withSignUp 
-          fallbackRedirectUrl="/app-sign-in/callback"
+          forceRedirectUrl="/app-sign-in/callback"
         />
       </div>
     </div>

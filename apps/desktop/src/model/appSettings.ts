@@ -1,29 +1,63 @@
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { eq } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
+import { createAppDb } from "../db/client";
+import { appSettings } from "../db/schema";
 
-export type UILayout = 'navbar' | 'sidebar';
+export type UILayout = "navbar" | "sidebar";
 
 export interface AppSettings {
   user_id: string;
   layout: UILayout;
-  theme?: 'light' | 'dark';
+  theme?: "light" | "dark";
   language?: string;
   timezone?: string;
   notifications?: boolean;
   keyboardShortcuts?: boolean;
 }
 
-const COLLECTION = 'app_settings';
+/** Get app settings for a user. */
+export async function getAppSettings(
+  user_id: string
+): Promise<AppSettings | null> {
+  const db = createAppDb();
 
-export async function getAppSettings(user_id: string): Promise<AppSettings | null> {
-  const db = getFirestore();
-  const ref = doc(db, COLLECTION, user_id);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
-  return snap.data() as AppSettings;
+  const rows = await db
+    .select()
+    .from(appSettings)
+    .where(eq(appSettings.userId, user_id))
+    .limit(1);
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  const row = rows[0];
+  const parsed = JSON.parse(row.settingsJson) as Omit<AppSettings, "user_id">;
+  return { ...parsed, user_id: row.userId };
 }
 
+/** Upsert app settings for a user (insert or update on conflict). */
 export async function setAppSettings(settings: AppSettings): Promise<void> {
-  const db = getFirestore();
-  const ref = doc(db, COLLECTION, settings.user_id);
-  await setDoc(ref, settings, { merge: true });
-} 
+  const db = createAppDb();
+  const now = Date.now();
+
+  const { user_id, ...settingsData } = settings;
+  const settingsJson = JSON.stringify(settingsData);
+
+  await db
+    .insert(appSettings)
+    .values({
+      id: uuidv4(),
+      userId: user_id,
+      settingsJson,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: appSettings.userId,
+      set: {
+        settingsJson,
+        updatedAt: now,
+      },
+    });
+}
