@@ -25,10 +25,20 @@ const electronApi = {
   installUpdate: () => ipcRenderer.invoke('install-update'),
 };
 
+const resolveLocalDbUrl = (): string => {
+  const buildTimeUrl = process.env.TURSO_LOCAL_DATABASE_URL;
+  if (buildTimeUrl) {
+    return buildTimeUrl;
+  }
+  const userDataPath = ipcRenderer.sendSync('get-user-data-path') as string;
+  const sep = userDataPath.includes('\\') ? '\\' : '/';
+  return `file:${userDataPath}${sep}stockify.db`;
+};
+
 const envApi = {
   LOGIN_URL: process.env.LOGIN_URL,
   TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL,
-  TURSO_LOCAL_DATABASE_URL: process.env.TURSO_LOCAL_DATABASE_URL,
+  TURSO_LOCAL_DATABASE_URL: resolveLocalDbUrl(),
   TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN,
 };
 

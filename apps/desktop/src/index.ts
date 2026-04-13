@@ -131,6 +131,10 @@ ipcMain.handle('get-env-variable', (event, key: string) => {
   return process.env[key] || '';
 });
 
+ipcMain.on('get-user-data-path', (event) => {
+  event.returnValue = app.getPath('userData');
+});
+
 console.log('IPC handlers registered');
 
 const dialogStrings: IUpdateDialogStrings = {

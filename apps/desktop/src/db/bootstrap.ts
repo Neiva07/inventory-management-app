@@ -1,3 +1,4 @@
+import { existsSync, mkdirSync } from "fs";
 import { rm } from "fs/promises";
 import path from "path";
 import { drizzle } from "drizzle-orm/libsql";
@@ -49,13 +50,39 @@ const resetLocalDatabaseFile = async (): Promise<boolean> => {
   return true;
 };
 
+const resolveMigrationsFolder = (): string => {
+  // In packaged builds, migrations are copied into the asar by the forge hook.
+  // process.resourcesPath points to the Resources directory of the Electron app.
+  if (typeof process.resourcesPath === "string") {
+    const asarPath = path.join(process.resourcesPath, "app.asar", "drizzle");
+    if (existsSync(asarPath)) {
+      return asarPath;
+    }
+  }
+
+  return "drizzle";
+};
+
+const ensureDbDirectoryExists = () => {
+  const dbUrl = getLocalDatabaseUrl();
+  const raw = dbUrl.replace(/^file:/, "").split("?")[0];
+  if (!raw || raw === ":memory:") return;
+
+  const dir = path.dirname(raw.startsWith("/") ? raw : path.resolve(process.cwd(), raw));
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+};
+
 const runMigrations = async () => {
+  ensureDbDirectoryExists();
+
   const client = createAppDbClient();
   const db = drizzle(client, { schema });
 
   try {
     await migrate(db, {
-      migrationsFolder: "drizzle",
+      migrationsFolder: resolveMigrationsFolder(),
     });
   } finally {
     client.close();

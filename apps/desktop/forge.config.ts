@@ -1,8 +1,63 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
 import Logger from '@electron-forge/web-multi-logger';
+import { cpSync, existsSync } from 'fs';
+import path from 'path';
 import { mainConfig } from './webpack.main.config';
 import { rendererConfig } from './webpack.renderer.config';
+
+/**
+ * Webpack externals (`@libsql/client`, `libsql`, etc.) aren't bundled — they
+ * rely on a runtime `require()`. In a pnpm workspace these modules live in the
+ * root `node_modules/`, but Forge's webpack plugin builds a staging directory
+ * with an empty `node_modules/`. This function resolves the full transitive
+ * dependency tree of the externalized modules and copies them all into the
+ * staging directory so they end up in the packaged app.
+ */
+const EXTERNAL_ROOTS = ['@libsql/client', 'libsql', '@neon-rs/load', 'detect-libc'];
+
+const resolveTransitiveDeps = (rootModules: string, entryModules: string[]): string[] => {
+  const seen = new Set<string>();
+  const queue = [...entryModules];
+
+  while (queue.length > 0) {
+    const mod = queue.shift()!;
+    if (seen.has(mod)) continue;
+    seen.add(mod);
+
+    const pkgPath = path.join(rootModules, mod, 'package.json');
+    if (!existsSync(pkgPath)) continue;
+
+    const pkg = JSON.parse(require('fs').readFileSync(pkgPath, 'utf8'));
+    const allDeps = {
+      ...pkg.dependencies,
+      ...pkg.optionalDependencies,
+    };
+    for (const dep of Object.keys(allDeps)) {
+      if (!seen.has(dep)) queue.push(dep);
+    }
+  }
+
+  return [...seen];
+};
+
+const copyExternalModulesToBuild = (buildPath: string) => {
+  const rootModules = path.resolve(__dirname, '..', '..', 'node_modules');
+  const buildModules = path.join(buildPath, 'node_modules');
+  const allDeps = resolveTransitiveDeps(rootModules, EXTERNAL_ROOTS);
+
+  for (const mod of allDeps) {
+    const src = path.join(rootModules, mod);
+    const dst = path.join(buildModules, mod);
+    if (existsSync(src) && !existsSync(dst)) {
+      const parentDir = path.dirname(dst);
+      if (!existsSync(parentDir)) {
+        require('fs').mkdirSync(parentDir, { recursive: true });
+      }
+      cpSync(src, dst, { recursive: true });
+    }
+  }
+};
 
 type LoggerServer = {
   on: (event: "error", listener: (error: Error) => void) => void;
@@ -129,6 +184,18 @@ const config: ForgeConfig = {
       },
     }),
   ],
+  hooks: {
+    packageAfterCopy: async (_forgeConfig, buildPath) => {
+      copyExternalModulesToBuild(buildPath);
+
+      // Copy drizzle migration files so the app can run migrations at startup
+      const drizzleSrc = path.resolve(__dirname, 'drizzle');
+      const drizzleDst = path.join(buildPath, 'drizzle');
+      if (existsSync(drizzleSrc) && !existsSync(drizzleDst)) {
+        cpSync(drizzleSrc, drizzleDst, { recursive: true });
+      }
+    },
+  },
   publishers: [
     {
       name: '@electron-forge/publisher-github',

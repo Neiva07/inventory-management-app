@@ -1,9 +1,12 @@
 import React, { createContext, ReactElement, useContext, useEffect, useState } from "react";
+import { eq } from "drizzle-orm";
 import { upsertUserFromSession, User } from "model/auth";
 import { getFromCache, storeInCache, removeFromCache } from "lib/cache";
 import { Session } from "model/session";
 import { Organization, getOrganization } from "model/organization";
 import { UserMembership, getUserMembership } from "model/userMembership";
+import { createAppDb } from "../db/client";
+import { users } from "../db/schema";
 
 interface AuthContextData {
   user: User | null;
@@ -97,20 +100,43 @@ export const AuthContextProvider = ({ children }: { children: ReactElement }) =>
   useEffect(() => {
     const cachedSession = getFromCache("session");
     setSession(cachedSession);
- if (cachedSession) {
-      upsertUserFromSession(cachedSession).then(firebaseUser => {
-        if(firebaseUser){
-          setUser(firebaseUser);
-          storeInCache("user", firebaseUser);
-        }
-      }).catch(() => {
-        const userFromCache = getFromCache("user");
-        if(userFromCache) {
-          setUser(userFromCache);
-        }
-      });
+    if (cachedSession) {
+      upsertUserFromSession(cachedSession)
+        .then((firebaseUser) => {
+          if (firebaseUser) {
+            setUser(firebaseUser);
+            storeInCache("user", firebaseUser);
+          }
+        })
+        .catch(async () => {
+          const userFromCache = getFromCache("user");
+          if (!userFromCache) return;
+
+          // Verify the cached user exists in the local DB. If the DB is fresh
+          // (new install, reset, etc.) the user row won't exist and proceeding
+          // with a stale cache would cause FK constraint errors everywhere.
+          try {
+            const db = createAppDb();
+            const rows = await db
+              .select({ id: users.id })
+              .from(users)
+              .where(eq(users.id, userFromCache.id))
+              .limit(1);
+
+            if (rows.length > 0) {
+              setUser(userFromCache);
+              return;
+            }
+          } catch {
+            // DB not ready — treat as fresh install
+          }
+
+          // Cached user not in local DB — clear stale cache
+          removeFromCache("user");
+          removeFromCache("session");
+          setSession(null);
+        });
     }
-   
   }, []);
 
   return (
