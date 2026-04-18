@@ -3,7 +3,7 @@ import { useAuth } from '../../context/auth';
 import { useOnboarding } from '../../context/onboarding';
 import { OnboardingFlow } from './OnboardingFlow';
 import { OrganizationSelection } from './OrganizationSelection';
-import { CircularProgress } from 'components/ui/form-compat';
+import { Spinner } from 'components/ui/spinner';
 
 interface OnboardingRouterProps {
   children: React.ReactNode;
@@ -22,7 +22,7 @@ export const OnboardingRouter: React.FC<OnboardingRouterProps> = ({ children }) 
   }, [onboardingSession]);
 
   if (isLoading || isAuthLoading) {
-    return <CircularProgress size={24} /> ;
+    return <Spinner className="size-6" />;
   }
 
   // If user is not authenticated, show children (login page)

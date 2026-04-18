@@ -27,6 +27,7 @@ export const mainConfig: Configuration = {
       'process.env.TURSO_LOCAL_DATABASE_URL': JSON.stringify(process.env.TURSO_LOCAL_DATABASE_URL),
       'process.env.TURSO_AUTH_TOKEN': JSON.stringify(process.env.TURSO_AUTH_TOKEN),
       'process.env.LOGIN_URL': JSON.stringify(process.env.LOGIN_URL),
+      'process.env.SYNC_API_URL': JSON.stringify(process.env.SYNC_API_URL),
     }),
   ],
   resolve: {

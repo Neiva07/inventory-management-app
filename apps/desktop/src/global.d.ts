@@ -20,6 +20,7 @@ declare global {
       TURSO_DATABASE_URL: string;
       TURSO_LOCAL_DATABASE_URL: string;
       TURSO_AUTH_TOKEN: string;
+      SYNC_API_URL: string;
     }
   }
 }

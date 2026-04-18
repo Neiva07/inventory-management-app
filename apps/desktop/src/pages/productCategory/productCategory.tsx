@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useEffect, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 import { useAuth } from "context/auth";
 import {
@@ -96,10 +96,10 @@ export const ProductCategories = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (selectedCategory) {
       try {
-        deleteProductCategory(selectedCategory.id);
+        await deleteProductCategory(selectedCategory.id);
         toast.success("Categoria excluída com sucesso");
         refreshCategories();
       } catch (err: unknown) {

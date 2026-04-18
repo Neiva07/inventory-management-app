@@ -1,20 +1,16 @@
 import React from 'react';
-import { 
-  Box, 
-  Typography, 
-  Switch, 
-  FormControlLabel, 
-  FormGroup,
-  Divider,
-  Alert,
+import { Switch } from 'components/ui/switch';
+import { Separator } from 'components/ui/separator';
+import { Alert, AlertDescription } from 'components/ui/alert';
+import {
   Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Grid,
-  Paper,
-  TextField,
-} from 'components/ui/form-compat';
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from 'components/ui/select';
+import { Input } from 'components/ui/input';
+import { Field, FieldLabel } from 'components/ui/field';
 import { useUI } from '../../../../context/ui';
 import { useAuth } from '../../../../context/auth';
 import { getAppSettings, setAppSettings } from '../../../../model/appSettings';
@@ -42,9 +38,9 @@ export const PreferencesPage = () => {
   const handleThemeChange = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme);
     if (user) {
-      setAppSettings({ 
-        user_id: user.id, 
-        layout, 
+      setAppSettings({
+        user_id: user.id,
+        layout,
         theme: newTheme,
         language,
         timezone,
@@ -55,9 +51,9 @@ export const PreferencesPage = () => {
   const handleLanguageChange = (newLanguage: string) => {
     setLanguage(newLanguage);
     if (user) {
-      setAppSettings({ 
-        user_id: user.id, 
-        layout, 
+      setAppSettings({
+        user_id: user.id,
+        layout,
         theme,
         language: newLanguage,
         timezone,
@@ -68,9 +64,9 @@ export const PreferencesPage = () => {
   const handleTimezoneChange = (newTimezone: string) => {
     setTimezone(newTimezone);
     if (user) {
-      setAppSettings({ 
-        user_id: user.id, 
-        layout, 
+      setAppSettings({
+        user_id: user.id,
+        layout,
         theme,
         language,
         timezone: newTimezone,
@@ -79,95 +75,91 @@ export const PreferencesPage = () => {
   };
 
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
+    <div>
+      <h3 className="mb-2 scroll-m-20 text-xl font-semibold tracking-tight">
         Preferências do Sistema
-      </Typography>
-      
-      <Grid container spacing={3}>
+      </h3>
+
+      <div className="grid grid-cols-12 gap-6">
         {/* Layout Settings */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={1} sx={{ p: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+        <div className="col-span-12 md:col-span-6">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <p className="mb-2 text-base font-medium">
               Layout de Navegação
-            </Typography>
-            <FormGroup>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={layout === 'navbar'}
-                    onChange={() => setLayout(layout === 'navbar' ? 'sidebar' : 'navbar')}
-                    name="navbarEnabled"
-                    color="primary"
-                    disabled={loading}
-                  />
-                }
-                label={layout === 'navbar' ? 'Navbar' : 'Sidebar'}
-              />
-            </FormGroup>
-          </Paper>
-        </Grid>
+            </p>
+            <div className="space-y-2">
+              <label className="inline-flex items-center gap-2 text-sm">
+                <Switch
+                  checked={layout === 'navbar'}
+                  onCheckedChange={() => setLayout(layout === 'navbar' ? 'sidebar' : 'navbar')}
+                  disabled={loading}
+                />
+                {layout === 'navbar' ? 'Navbar' : 'Sidebar'}
+              </label>
+            </div>
+          </div>
+        </div>
 
         {/* Theme Settings */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={1} sx={{ p: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+        <div className="col-span-12 md:col-span-6">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <p className="mb-2 text-base font-medium">
               Tema
-            </Typography>
-            <FormControl fullWidth size="small">
-              <InputLabel>Tema</InputLabel>
+            </p>
+            <Field>
+              <FieldLabel>Tema</FieldLabel>
               <Select
                 value={theme}
-                label="Tema"
-                onChange={(e) => handleThemeChange(e.target.value as 'light' | 'dark')}
+                onValueChange={(value) => handleThemeChange(value as 'light' | 'dark')}
               >
-                <MenuItem value="light">Claro</MenuItem>
-                <MenuItem value="dark">Escuro</MenuItem>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar tema" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Claro</SelectItem>
+                  <SelectItem value="dark">Escuro</SelectItem>
+                </SelectContent>
               </Select>
-            </FormControl>
-          </Paper>
-        </Grid>
+            </Field>
+          </div>
+        </div>
 
         {/* Language Settings - Display Only */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={1} sx={{ p: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+        <div className="col-span-12 md:col-span-6">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <p className="mb-2 text-base font-medium">
               Idioma
-            </Typography>
-            <TextField
-              fullWidth
-              label="Idioma"
-              value={language}
-              size="small"
-              InputProps={{ readOnly: true }}
-            />
-          </Paper>
-        </Grid>
+            </p>
+            <Field>
+              <FieldLabel>Idioma</FieldLabel>
+              <Input value={language} readOnly />
+            </Field>
+          </div>
+        </div>
 
         {/* Timezone Settings - Display Only */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={1} sx={{ p: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+        <div className="col-span-12 md:col-span-6">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <p className="mb-2 text-base font-medium">
               Fuso Horário
-            </Typography>
-            <TextField
-              fullWidth
-              label="Fuso Horário"
-              value={timezone}
-              size="small"
-              InputProps={{ readOnly: true }}
-            />
-          </Paper>
-        </Grid>
-      </Grid>
+            </p>
+            <Field>
+              <FieldLabel>Fuso Horário</FieldLabel>
+              <Input value={timezone} readOnly />
+            </Field>
+          </div>
+        </div>
+      </div>
 
-      <Box mt={3}>
-        <Alert severity="info">
-          <Typography variant="body2">
-            <strong>Dica:</strong> Use Ctrl/Cmd + , para acessar as configurações rapidamente.
-          </Typography>
+      <div className="mt-6">
+        <Alert>
+          <AlertDescription>
+            <p className="text-sm">
+              <strong>Dica:</strong> Use Ctrl/Cmd + , para acessar as configurações rapidamente.
+            </p>
+          </AlertDescription>
         </Alert>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
-}; 
+};

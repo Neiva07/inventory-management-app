@@ -1,22 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Paper,
-  Avatar,
-  Alert,
-  CircularProgress,
-  Divider,
-  IconButton,
-} from 'components/ui/form-compat';
-import {
-  PhotoCameraIcon,
-  SaveIcon,
-  EditIcon,
-} from 'components/ui/icon-compat';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import { Spinner } from 'components/ui/spinner';
+import { Alert, AlertDescription } from 'components/ui/alert';
+import { Avatar, AvatarImage, AvatarFallback } from 'components/ui/avatar';
+import { Field, FieldLabel } from 'components/ui/field';
+import { Camera, Save, Pencil } from 'lucide-react';
 import { useAuth } from '../../../../context/auth';
 import { User } from '../../../../model/auth';
 
@@ -27,7 +16,6 @@ export const ProfilePage = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Profile form state
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -36,7 +24,6 @@ export const ProfilePage = () => {
     photoURL: '',
   });
 
-  // Load user data
   useEffect(() => {
     if (user) {
       setFormData({
@@ -59,8 +46,6 @@ export const ProfilePage = () => {
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // In a real app, you would upload the file to a storage service
-      // For now, we'll just create a local URL
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
@@ -81,10 +66,7 @@ export const ProfilePage = () => {
     setSuccess(null);
 
     try {
-      // In a real app, you would update the user profile in your backend
-      // For now, we'll just simulate the update
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
       setSuccess('Perfil atualizado com sucesso!');
       setIsEditing(false);
     } catch (err) {
@@ -95,7 +77,6 @@ export const ProfilePage = () => {
   };
 
   const handleCancel = () => {
-    // Reset form data to original values
     if (user) {
       setFormData({
         firstName: user.firstName || '',
@@ -112,180 +93,161 @@ export const ProfilePage = () => {
 
   if (isAuthLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
+      <div className="flex min-h-[200px] items-center justify-center">
+        <Spinner className="size-6" />
+      </div>
     );
   }
 
   if (!user) {
     return (
-      <Alert severity="warning">
-        Nenhum usuário encontrado. Faça login novamente.
+      <Alert variant="destructive">
+        <AlertDescription>
+          Nenhum usuário encontrado. Faça login novamente.
+        </AlertDescription>
       </Alert>
     );
   }
 
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
+    <div>
+      <h3 className="mb-2 scroll-m-20 text-xl font-semibold tracking-tight">
         Perfil do Usuário
-      </Typography>
+      </h3>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {success}
+        <Alert className="mb-4">
+          <AlertDescription>{success}</AlertDescription>
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-12 gap-6">
         {/* Profile Photo */}
-        <Grid item xs={12} md={4}>
-          <Paper elevation={1} sx={{ p: 3, textAlign: 'center' }}>
-            <Typography variant="subtitle1" gutterBottom>
+        <div className="col-span-12 md:col-span-4">
+          <div className="rounded-xl border bg-card p-6 text-center shadow-sm">
+            <p className="mb-2 text-base font-medium">
               Foto do Perfil
-            </Typography>
-            
-            <Box sx={{ position: 'relative', display: 'inline-block' }}>
-              <Avatar
-                src={formData.photoURL}
-                alt={user.fullName}
-                sx={{ 
-                  width: 120, 
-                  height: 120, 
-                  fontSize: '3rem',
-                  mb: 2,
-                }}
-              >
-                {user.firstName?.charAt(0) || user.email?.charAt(0) || 'U'}
+            </p>
+
+            <div className="relative inline-block">
+              <Avatar className="mb-4 size-[120px] text-3xl">
+                <AvatarImage src={formData.photoURL} alt={user.fullName} />
+                <AvatarFallback>
+                  {user.firstName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                </AvatarFallback>
               </Avatar>
-              
+
               {isEditing && (
-                <IconButton
-                  sx={{
-                    position: 'absolute',
-                    bottom: 8,
-                    right: 8,
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    },
-                  }}
-                  component="label"
-                >
+                <label className="absolute bottom-2 right-2 inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90">
                   <input
                     hidden
                     accept="image/*"
                     type="file"
                     onChange={handlePhotoUpload}
                   />
-                  <PhotoCameraIcon />
-                </IconButton>
+                  <Camera className="size-4" />
+                </label>
               )}
-            </Box>
+            </div>
 
             {isEditing && (
-              <Typography variant="body2" color="text.secondary">
+              <p className="text-sm text-muted-foreground">
                 Clique no ícone da câmera para alterar a foto
-              </Typography>
+              </p>
             )}
-          </Paper>
-        </Grid>
+          </div>
+        </div>
 
         {/* Profile Information */}
-        <Grid item xs={12} md={8}>
-          <Paper elevation={1} sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="subtitle1">
+        <div className="col-span-12 md:col-span-8">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-base font-medium">
                 Informações Pessoais
-              </Typography>
-              
+              </p>
+
               {!isEditing ? (
                 <Button
-                  startIcon={<EditIcon />}
                   onClick={() => setIsEditing(true)}
-                  variant="outlined"
-                  size="small"
+                  variant="outline"
+                  size="sm"
                 >
+                  <Pencil className="size-4" />
                   Editar
                 </Button>
               ) : (
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <div className="flex gap-2">
                   <Button
                     onClick={handleCancel}
-                    variant="outlined"
-                    size="small"
+                    variant="outline"
+                    size="sm"
                   >
                     Cancelar
                   </Button>
                   <Button
-                    startIcon={<SaveIcon />}
                     onClick={handleSave}
                     disabled={saving}
-                    variant="contained"
-                    size="small"
+                    size="sm"
                   >
+                    <Save className="size-4" />
                     {saving ? 'Salvando...' : 'Salvar'}
                   </Button>
-                </Box>
+                </div>
               )}
-            </Box>
+            </div>
 
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Nome"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  size="small"
-                  disabled={!isEditing}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Sobrenome"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  size="small"
-                  disabled={!isEditing}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  size="small"
-                  disabled={!isEditing}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Telefone"
-                  value={formData.phoneNumber}
-                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                  size="small"
-                  disabled={!isEditing}
-                />
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-
-
-      </Grid>
-    </Box>
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 md:col-span-6">
+                <Field>
+                  <FieldLabel>Nome</FieldLabel>
+                  <Input
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field>
+                  <FieldLabel>Sobrenome</FieldLabel>
+                  <Input
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field>
+                  <FieldLabel>Email</FieldLabel>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field>
+                  <FieldLabel>Telefone</FieldLabel>
+                  <Input
+                    value={formData.phoneNumber}
+                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                    disabled={!isEditing}
+                  />
+                </Field>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
-}; 
+};

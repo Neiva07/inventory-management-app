@@ -8,7 +8,7 @@ import { SelectField } from 'pages/product/useProductCreateForm';
 import { format } from "date-fns"
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
-import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { Autocomplete } from 'components/ui/autocomplete';
 import {
   Button,
   DatePickerField,
@@ -241,7 +241,7 @@ export const InboundOrderList = () => {
       <TooltipProvider>
         <div className="grid grid-cols-12 gap-2">
           <div className="col-span-12 lg:col-span-4">
-          <EnhancedAutocomplete
+          <Autocomplete
             ref={supplierFilterRef}
             id="supplier-filter"
             options={suppliers}
@@ -278,7 +278,7 @@ export const InboundOrderList = () => {
           />
           </div>
           <div className="col-span-12 lg:col-span-4">
-          <EnhancedAutocomplete
+          <Autocomplete
             ref={statusFilterRef}
             id="status-filter"
             options={statuses}

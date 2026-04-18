@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Loader2, RotateCcw, Wrench } from 'lucide-react';
+import {
+  AlertTriangle,
+  Croissant,
+  Loader2,
+  PackageX,
+  Receipt,
+  RotateCcw,
+  Sprout,
+  Trash2,
+  Wrench,
+} from 'lucide-react';
 import { Button } from 'components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from 'components/ui/popover';
 import {
@@ -12,33 +22,171 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from 'components/ui/alert-dialog';
+import { toast } from 'sonner';
 import { useAuth } from '../../../context/auth';
-import { resetUserOnboarding } from '../../../model/devTools';
+import {
+  resetUserOnboarding,
+  seedOutOfStockProducts,
+  seedOverdueBills,
+  seedSmallBakery,
+  wipeOrganizationData,
+} from '../../../model/devTools';
+import { isDev } from '../../../lib/env';
 
-const isDevMode = process.env.NODE_ENV === 'development';
+type ActionId =
+  | 'resetOnboarding'
+  | 'wipeOrgData'
+  | 'seedSmallBakery'
+  | 'seedOverdueBills'
+  | 'seedOutOfStock';
+
+interface ActionConfig {
+  id: ActionId;
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  destructive: boolean;
+  confirmTitle?: string;
+  confirmDescription?: string;
+}
+
+const actionConfigs: ActionConfig[] = [
+  {
+    id: 'resetOnboarding',
+    icon: <RotateCcw className="h-4 w-4 text-amber-600" />,
+    label: 'Resetar onboarding',
+    description: 'Apaga organização e sessão para refazer o fluxo',
+    destructive: true,
+    confirmTitle: 'Resetar onboarding?',
+    confirmDescription:
+      'Esta ação vai apagar a organização atual, todos os seus dados e a sessão de onboarding. O app será recarregado em seguida. Esta ação não pode ser desfeita.',
+  },
+  {
+    id: 'wipeOrgData',
+    icon: <Trash2 className="h-4 w-4 text-red-600" />,
+    label: 'Limpar dados da organização',
+    description: 'Apaga produtos, clientes, pedidos, etc. (mantém a organização)',
+    destructive: true,
+    confirmTitle: 'Limpar dados da organização?',
+    confirmDescription:
+      'Esta ação vai apagar produtos, clientes, fornecedores, pedidos, entradas, contas e unidades/categorias da organização atual. A organização e seu acesso são mantidos. Esta ação não pode ser desfeita.',
+  },
+  {
+    id: 'seedSmallBakery',
+    icon: <Croissant className="h-4 w-4 text-emerald-600" />,
+    label: 'Semear pequena padaria',
+    description: 'Cria unidades, categorias, fornecedores, clientes, produtos e pedidos',
+    destructive: false,
+  },
+  {
+    id: 'seedOverdueBills',
+    icon: <Receipt className="h-4 w-4 text-orange-600" />,
+    label: 'Semear contas vencidas',
+    description: 'Cria algumas contas a pagar com vencimento no passado',
+    destructive: false,
+  },
+  {
+    id: 'seedOutOfStock',
+    icon: <PackageX className="h-4 w-4 text-indigo-600" />,
+    label: 'Semear produtos em falta',
+    description: 'Cria alguns produtos abaixo do estoque mínimo',
+    destructive: false,
+  },
+];
+
+const runLabelMap: Record<ActionId, string> = {
+  resetOnboarding: 'Resetando...',
+  wipeOrgData: 'Limpando...',
+  seedSmallBakery: 'Semeando...',
+  seedOverdueBills: 'Semeando...',
+  seedOutOfStock: 'Semeando...',
+};
 
 export const DevToolsMenu: React.FC = () => {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [resetting, setResetting] = useState(false);
+  const [pendingAction, setPendingAction] = useState<ActionId | null>(null);
+  const [running, setRunning] = useState<ActionId | null>(null);
 
-  if (!isDevMode) {
+  if (!isDev) {
     return null;
   }
 
-  const handleResetOnboarding = async () => {
+  const runAction = async (id: ActionId): Promise<void> => {
     if (!user?.id) return;
-    setResetting(true);
+
+    setRunning(id);
     try {
-      await resetUserOnboarding(user.id);
-      window.location.reload();
+      switch (id) {
+        case 'resetOnboarding':
+          await resetUserOnboarding(user.id);
+          window.location.reload();
+          return;
+        case 'wipeOrgData':
+          if (!organization?.id) {
+            toast.error('Nenhuma organização ativa para limpar.');
+            return;
+          }
+          await wipeOrganizationData(organization.id);
+          window.location.reload();
+          return;
+        case 'seedSmallBakery':
+          if (!organization?.id) {
+            toast.error('Nenhuma organização ativa para semear.');
+            return;
+          }
+          await seedSmallBakery({ userId: user.id, organizationId: organization.id });
+          toast.success('Dados da pequena padaria semeados');
+          window.location.reload();
+          return;
+        case 'seedOverdueBills':
+          if (!organization?.id) {
+            toast.error('Nenhuma organização ativa para semear.');
+            return;
+          }
+          await seedOverdueBills({ userId: user.id, organizationId: organization.id });
+          toast.success('Contas vencidas semeadas');
+          window.location.reload();
+          return;
+        case 'seedOutOfStock':
+          if (!organization?.id) {
+            toast.error('Nenhuma organização ativa para semear.');
+            return;
+          }
+          await seedOutOfStockProducts({ userId: user.id, organizationId: organization.id });
+          toast.success('Produtos em falta semeados');
+          window.location.reload();
+          return;
+      }
     } catch (error) {
-      console.error('Failed to reset onboarding:', error);
-      setResetting(false);
-      setConfirmOpen(false);
+      console.error(`Failed to run dev action ${id}:`, error);
+      toast.error('Falha ao executar ação de desenvolvedor');
+    } finally {
+      setRunning(null);
+      setPendingAction(null);
     }
   };
+
+  const handleActionClick = (config: ActionConfig) => {
+    setPopoverOpen(false);
+    if (config.destructive) {
+      setPendingAction(config.id);
+    } else {
+      void runAction(config.id);
+    }
+  };
+
+  const handleConfirm = () => {
+    if (pendingAction) {
+      void runAction(pendingAction);
+    }
+  };
+
+  const activeConfirmConfig = pendingAction
+    ? actionConfigs.find((c) => c.id === pendingAction) ?? null
+    : null;
+
+  const isRunning = running !== null;
 
   return (
     <>
@@ -49,56 +197,61 @@ export const DevToolsMenu: React.FC = () => {
             Dev
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-64 p-2">
-          <div className="mb-2 px-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <PopoverContent align="end" className="w-72 p-2">
+          <div className="mb-2 flex items-center gap-2 px-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <Sprout className="h-3 w-3" />
             Ferramentas de desenvolvedor
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setPopoverOpen(false);
-              setConfirmOpen(true);
-            }}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"
-          >
-            <RotateCcw className="h-4 w-4 text-amber-600" />
-            <div>
-              <div className="font-medium">Resetar onboarding</div>
-              <div className="text-xs text-muted-foreground">
-                Apaga organização e sessão para refazer o fluxo
+          {actionConfigs.map((config) => (
+            <button
+              key={config.id}
+              type="button"
+              onClick={() => handleActionClick(config)}
+              disabled={isRunning}
+              className="flex w-full items-start gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent disabled:opacity-50"
+            >
+              <span className="mt-0.5">{config.icon}</span>
+              <div>
+                <div className="font-medium">{config.label}</div>
+                <div className="text-xs text-muted-foreground">{config.description}</div>
               </div>
-            </div>
-          </button>
+            </button>
+          ))}
+          <div className="mt-2 flex items-center gap-1.5 border-t px-2 pt-2 text-xs text-muted-foreground">
+            <AlertTriangle className="h-3 w-3" />
+            Visível apenas em modo de desenvolvimento
+          </div>
         </PopoverContent>
       </Popover>
 
-      <AlertDialog open={confirmOpen} onOpenChange={(open) => !resetting && setConfirmOpen(open)}>
+      <AlertDialog
+        open={activeConfirmConfig !== null}
+        onOpenChange={(open) => !isRunning && !open && setPendingAction(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Resetar onboarding?</AlertDialogTitle>
+            <AlertDialogTitle>{activeConfirmConfig?.confirmTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação vai apagar a organização atual, todos os seus dados (produtos,
-              clientes, fornecedores, unidades, categorias, etc.) e a sessão de onboarding.
-              O app será recarregado em seguida. Esta ação não pode ser desfeita.
+              {activeConfirmConfig?.confirmDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={resetting}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isRunning}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
-                void handleResetOnboarding();
+                handleConfirm();
               }}
-              disabled={resetting}
+              disabled={isRunning}
               className="bg-red-600 hover:bg-red-700"
             >
-              {resetting ? (
+              {isRunning && running ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Resetando...
+                  {runLabelMap[running]}
                 </>
               ) : (
-                'Resetar'
+                'Confirmar'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

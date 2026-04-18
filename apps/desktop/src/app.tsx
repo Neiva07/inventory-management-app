@@ -16,7 +16,7 @@ import { ProductList } from "./pages/product/ProductList";
 import { SupplierList } from "./pages/supplier/supplierList";
 import { CustomerForm } from "./pages/customer/customerForm";
 import { CustomerList } from "./pages/customer/customersList";
-import { ToastContainer } from "react-toastify";
+import { Toaster } from "sonner";
 import { AuthContextProvider, useAuth } from "./context/auth";
 import { OnboardingProvider } from "./context/onboarding";
 import { Login } from "pages/auth/Login";
@@ -48,24 +48,11 @@ const App = () => {
   const { layout } = useUI();
   const { checkOverdue } = useOverdueCheck();
   const [showGlobalHelp, setShowGlobalHelp] = React.useState(false);
-  const [databaseReady, setDatabaseReady] = React.useState(false);
+  const [databaseReady, setDatabaseReady] = React.useState(true);
 
   React.useEffect(() => {
-    let isMounted = true;
-
-    void bootstrapDatabase()
-      .then(() => {
-        if (isMounted) {
-          setDatabaseReady(true);
-          startSyncRuntime();
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to bootstrap local database:", error);
-      });
-
+    startSyncRuntime();
     return () => {
-      isMounted = false;
       stopSyncRuntime();
     };
   }, []);
@@ -93,23 +80,16 @@ const App = () => {
   return (
     <div className="flex min-h-screen">
       <OfflineIndicator />
-      {layout === 'navbar' ? <Navbar /> : <Sidebar />}
+      {user && (layout === 'navbar' ? <Navbar /> : <Sidebar />)}
       <main
         className="flex max-w-full flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6 sm:py-4"
-        style={{ marginTop: layout === "navbar" ? 60 : 0, transition: "margin 0.2s" }}
+        style={{ marginTop: user && layout === "navbar" ? 60 : 0, transition: "margin 0.2s" }}
       >
-        <ToastContainer
+        <Toaster
           position="bottom-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          icon
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="colored"
+          duration={5000}
+          richColors
+          closeButton
         />
         <UpdateNotification />
         <Outlet />
@@ -208,4 +188,9 @@ function render() {
   );
 }
 
-render();
+bootstrapDatabase()
+  .then(() => render())
+  .catch((error) => {
+    console.error("Failed to bootstrap database:", error);
+    render();
+  });

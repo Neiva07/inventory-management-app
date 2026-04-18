@@ -30,6 +30,12 @@ const resolveLocalDbUrl = (): string => {
   if (buildTimeUrl) {
     return buildTimeUrl;
   }
+  // In dev, use the project-local path so drizzle-kit/studio and the app
+  // share the same database. In production (packaged), use the user-data
+  // directory since the app bundle is read-only.
+  if (process.env.NODE_ENV !== 'production') {
+    return 'file:./data/stockify.db';
+  }
   const userDataPath = ipcRenderer.sendSync('get-user-data-path') as string;
   const sep = userDataPath.includes('\\') ? '\\' : '/';
   return `file:${userDataPath}${sep}stockify.db`;
@@ -40,6 +46,7 @@ const envApi = {
   TURSO_DATABASE_URL: process.env.TURSO_DATABASE_URL,
   TURSO_LOCAL_DATABASE_URL: resolveLocalDbUrl(),
   TURSO_AUTH_TOKEN: process.env.TURSO_AUTH_TOKEN,
+  SYNC_API_URL: process.env.SYNC_API_URL,
 };
 
 if (process.contextIsolated) {

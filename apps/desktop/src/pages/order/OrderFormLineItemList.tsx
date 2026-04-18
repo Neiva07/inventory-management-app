@@ -1,4 +1,3 @@
-import { Box } from "components/ui/form-compat";
 import { Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -135,7 +134,7 @@ export const OrderFormLineItemList = ({
   ];
 
   return (
-    <Box>
+    <div>
       <div className="mt-5 min-h-[400px]">
           <CustomDataTable
             data={pagedItems}
@@ -164,6 +163,6 @@ export const OrderFormLineItemList = ({
         onConfirm={confirmDelete}
         resourceName={`item "${itemToDelete?.title}"`}
       />
-    </Box>
+    </div>
   );
 };

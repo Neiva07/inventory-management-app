@@ -6,6 +6,8 @@ import { cn } from 'lib/utils';
 import { useOnboarding } from '../../context/onboarding';
 import { states, citiesByState } from '../../model/region';
 import { isValidEmail } from '../../lib/email';
+import { DevFillButton } from '../../dev/useDevFill';
+import { makeOrganizationSetupValues } from '../../dev/formValues';
 
 interface OrganizationSetupProps {
   showErrors?: boolean;
@@ -158,14 +160,30 @@ export const OrganizationSetup: React.FC<OrganizationSetupProps> = ({ showErrors
     });
   };
 
+  const handleDevFill = () => {
+    const values = makeOrganizationSetupValues();
+    if (values.state) {
+      const stateObj = states.find((s) => s.name === values.state);
+      if (stateObj && citiesByState.has(stateObj.code)) {
+        setCities(citiesByState.get(stateObj.code) ?? []);
+      }
+    }
+    updateData({ organization: values });
+  };
+
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-1">
-        Configuração da Organização
-      </h2>
-      <p className="text-base text-muted-foreground mb-4">
-        Conte-nos sobre sua organização para personalizar sua experiência.
-      </p>
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold mb-1">
+            Configuração da Organização
+          </h2>
+          <p className="text-base text-muted-foreground">
+            Conte-nos sobre sua organização para personalizar sua experiência.
+          </p>
+        </div>
+        <DevFillButton onFill={handleDevFill} />
+      </div>
 
       {/* Validation Alert - only shown after user tries to advance */}
       {showErrors && validationErrors.length > 0 && (

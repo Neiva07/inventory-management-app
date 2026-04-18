@@ -9,7 +9,7 @@ import { DeleteConfirmationDialog } from '../../components/DeleteConfirmationDia
 import { formatCurrency } from 'lib/math';
 import { DatePickerField } from 'components/ui';
 import { getDateStartTimestamp, getDateEndTimestamp } from '../../lib/date';
-import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { Autocomplete } from 'components/ui/autocomplete';
 import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
 import { KeyboardListPageKeyboardHelp } from 'components/KeyboardListPageKeyboardHelp';
 import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable';
@@ -304,7 +304,7 @@ export const SupplierBillList = () => {
       
       <div className="mb-2 grid grid-cols-12 gap-2">
         <div className="col-span-12 md:col-span-4">
-          <EnhancedAutocomplete
+          <Autocomplete
             ref={supplierFilterRef}
             id="supplier-filter"
             options={suppliers}
@@ -341,7 +341,7 @@ export const SupplierBillList = () => {
           />
         </div>
         <div className="col-span-12 md:col-span-4">
-          <EnhancedAutocomplete
+          <Autocomplete
             ref={statusFilterRef}
             id="status-filter"
             options={statuses}

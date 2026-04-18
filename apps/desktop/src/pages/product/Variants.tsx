@@ -1,13 +1,4 @@
-import {
-  Box,
-  Button,
-  FormControl,
-  Grid,
-  TextField,
-  Typography,
-  IconButton,
-} from "components/ui/form-compat";
-import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { Autocomplete } from 'components/ui/autocomplete';
 import { Trash2 } from 'lucide-react';
 import React, { useEffect, useRef } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
@@ -23,6 +14,9 @@ import { paymentMethods } from "../../model/paymentMethods";
 import { getUnits, Unit } from "model/units";
 import { useAuth } from "context/auth";
 import { add, divide, multiply, subtract } from "lib/math";
+import { Field, FieldLabel, FieldError } from 'components/ui/field';
+import { Input } from 'components/ui/input';
+import { Button } from 'components/ui/button';
 
 
 type VariantProps = {
@@ -109,136 +103,144 @@ const Price = ({ formMethods, index, parentIndex, focusNextField, focusPreviousF
   React.useEffect(() => {
     if (unitCost > 0) {
       const currentPrices = formMethods.getValues(`variants.${parentIndex}.prices`);
+      let changed = false;
       const updatedPrices = currentPrices.map((price, i) => {
         if (i === index && price.profit !== undefined) {
           const profit = !isNaN(Number(price.profit)) ? Number(price.profit) : 0;
-          // Recalculate the price value based on the new unit cost and existing profit percentage
           const newValue = divide(multiply(unitCost, add(profit, 100)), 100);
-          return { ...price, value: newValue };
+          if (newValue !== price.value) {
+            changed = true;
+            return { ...price, value: newValue };
+          }
         }
         return price;
       });
-      formMethods.setValue(`variants.${parentIndex}.prices`, updatedPrices);
+      if (changed) {
+        formMethods.setValue(`variants.${parentIndex}.prices`, updatedPrices);
+      }
     }
-  }, [unitCost, parentIndex, index, formMethods]);
+    // formMethods is an unstable composite ref from useProductCreateForm;
+    // its methods are stable, so it's safe to exclude from deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unitCost, parentIndex, index]);
 
   return (
-    <Grid
-      spacing={1}
-      container
+    <div
+      className="grid grid-cols-12 gap-2"
       style={{
         marginTop: "8px",
         marginBottom: "8px",
       }}
     >
-      <Grid item xs={3}>
-        <FormControl fullWidth>
-            <Controller
-              control={formMethods.control}
-              render={({ field: { value: paymentMethod, ...props } }) => {
-                const handleChange = (
-                  _: React.SyntheticEvent<Element, Event>,
-                  value: SelectField | null
-                ) => {
-                  props.onChange(value);
-                };
-                return (
-                  <EnhancedAutocomplete
-                    {...props}
-                    id={`variants.${parentIndex}.prices.${index}.paymentMethod`}
-                    options={availablePaymentMethods}
-                    isOptionEqualToValue={(option: SelectField, value: SelectField | null) => {
-                      // Handle null/undefined values
-                      if (!value || !option) {
-                        return false;
-                      }
-                      const isEqual = option.value === value.value;
-                      return isEqual;
-                    }}
-                    onChange={handleChange}
-                    value={paymentMethod}
-                    label="Método de Pagamento"
-                    ref={paymentMethodRef}
-                    onNextField={() => focusNextField(paymentMethodRef)}
-                    onPreviousField={() => focusPreviousField(paymentMethodRef)}
-                    getOptionLabel={(option: SelectField) => option?.label || ''}
-                  />
-                );
-              }}
-              name={`variants.${parentIndex}.prices.${index}.paymentMethod`}
-            />
-          </FormControl>
-      </Grid>
-      <Grid item xs={4}>
-        <FormControl fullWidth>
-          <Controller
-            control={formMethods.control}
-            render={({ field: { value: profit, ...props } }) => {
-              const currentCost = formMethods.watch(`variants.${parentIndex}.unitCost`) ?? 0
-              const onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
-                props.onChange(event)
+      <div className="col-span-3">
+        <Controller
+          control={formMethods.control}
+          render={({ field: { value: paymentMethod, ...props } }) => {
+            const handleChange = (
+              _: React.SyntheticEvent<Element, Event>,
+              value: SelectField | null
+            ) => {
+              props.onChange(value);
+            };
+            return (
+              <Autocomplete
+                {...props}
+                id={`variants.${parentIndex}.prices.${index}.paymentMethod`}
+                options={availablePaymentMethods}
+                isOptionEqualToValue={(option: SelectField, value: SelectField | null) => {
+                  // Handle null/undefined values
+                  if (!value || !option) {
+                    return false;
+                  }
+                  const isEqual = option.value === value.value;
+                  return isEqual;
+                }}
+                onChange={handleChange}
+                value={paymentMethod}
+                label="Método de Pagamento"
+                ref={paymentMethodRef}
+                onNextField={() => focusNextField(paymentMethodRef)}
+                onPreviousField={() => focusPreviousField(paymentMethodRef)}
+                getOptionLabel={(option: SelectField) => option?.label || ''}
+              />
+            );
+          }}
+          name={`variants.${parentIndex}.prices.${index}.paymentMethod`}
+        />
+      </div>
+      <div className="col-span-4">
+        <Controller
+          control={formMethods.control}
+          render={({ field: { value: profit, ...props }, fieldState }) => {
+            const currentCost = formMethods.watch(`variants.${parentIndex}.unitCost`) ?? 0
+            const onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
+              props.onChange(event)
 
-                const value = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0
-                const finalValue = divide(multiply(currentCost, add(value, 100)), 100)
-                formMethods.setValue(`variants.${parentIndex}.prices.${index}.value`, finalValue)
-              }
-              return (
-                <TextField
+              const value = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0
+              const finalValue = divide(multiply(currentCost, add(value, 100)), 100)
+              formMethods.setValue(`variants.${parentIndex}.prices.${index}.value`, finalValue)
+            }
+            return (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Lucro %</FieldLabel>
+                <Input
                   {...props}
                   ref={profitRef}
-                  variant="outlined"
-                  label="Lucro %"
                   value={profit}
                   onChange={onChange}
+                  aria-invalid={fieldState.invalid}
                   onFocus={(e) => e.target.select()}
                 />
-              );
-            }}
-            name={`variants.${parentIndex}.prices.${index}.profit`}
-          />
-        </FormControl>
-      </Grid>
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            );
+          }}
+          name={`variants.${parentIndex}.prices.${index}.profit`}
+        />
+      </div>
 
-      <Grid item xs={4}>
-        <FormControl fullWidth>
-          <Controller
-            control={formMethods.control}
-            render={({ field: props }) => {
-              const currentCost = formMethods.watch(`variants.${parentIndex}.unitCost`) || 0
-              const onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
-                props.onChange(event)
+      <div className="col-span-4">
+        <Controller
+          control={formMethods.control}
+          render={({ field: props, fieldState }) => {
+            const currentCost = formMethods.watch(`variants.${parentIndex}.unitCost`) || 0
+            const onChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
+              props.onChange(event)
 
-                const value = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0
-                const finalValue = divide(multiply(subtract(value, currentCost), 100),  currentCost)
-                formMethods.setValue(`variants.${parentIndex}.prices.${index}.profit`, finalValue)
-              }
+              const value = !isNaN(Number(event.target.value)) ? Number(event.target.value) : 0
+              const finalValue = divide(multiply(subtract(value, currentCost), 100),  currentCost)
+              formMethods.setValue(`variants.${parentIndex}.prices.${index}.profit`, finalValue)
+            }
 
-              return (
-                <TextField
+            return (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Preço</FieldLabel>
+                <Input
                   {...props}
                   ref={priceRef}
                   onChange={onChange}
-                  variant="outlined"
-                  label="Preço"
+                  aria-invalid={fieldState.invalid}
                   onFocus={(e) => e.target.select()}
                 />
-              );
-            }}
-            name={`variants.${parentIndex}.prices.${index}.value`}
-          />
-        </FormControl>
-      </Grid>
-      <Grid item xs={1}>
-        <IconButton 
-          color="error" 
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            );
+          }}
+          name={`variants.${parentIndex}.prices.${index}.value`}
+        />
+      </div>
+      <div className="col-span-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 text-destructive"
           onClick={handleRemovePrice}
-          size="small"
           style={{ marginTop: '8px' }}
         >
           <Trash2 className="h-4 w-4" />
-        </IconButton>
-      </Grid>
-    </Grid>
+        </Button>
+      </div>
+    </div>
   );
 };
 
@@ -294,18 +296,26 @@ const VariantItem = ({ formMethods, index, focusNextField, focusPreviousField, r
   // Auto-set conversion rate to 1 when unit matches base unit
   React.useEffect(() => {
     if (currentUnit?.value && baseUnit?.value && currentUnit.value === baseUnit.value) {
-      formMethods.setValue(`variants.${index}.conversionRate`, 1);
+      const current = formMethods.getValues(`variants.${index}.conversionRate`);
+      if (current !== 1) {
+        formMethods.setValue(`variants.${index}.conversionRate`, 1);
+      }
     }
-  }, [currentUnit?.value, baseUnit?.value, index, formMethods]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUnit?.value, baseUnit?.value, index]);
 
   // Recalculate unit cost when main cost changes
   React.useEffect(() => {
     const conversionRate = formMethods.getValues(`variants.${index}.conversionRate`) ?? 0;
     if (conversionRate > 0) {
       const newUnitCost = multiply(mainCost, conversionRate);
-      formMethods.setValue(`variants.${index}.unitCost`, newUnitCost);
+      const current = formMethods.getValues(`variants.${index}.unitCost`);
+      if (current !== newUnitCost) {
+        formMethods.setValue(`variants.${index}.unitCost`, newUnitCost);
+      }
     }
-  }, [mainCost, index, formMethods]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mainCost, index]);
 
   // Calculate unit cost when conversion rate changes
   const handleConversionRateChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -319,108 +329,105 @@ const VariantItem = ({ formMethods, index, focusNextField, focusPreviousField, r
   };
 
   return (
-    <Box>
-      <Grid container spacing={1}>
-       
-        <Grid item xs={3}>
-          <FormControl fullWidth>
-            <Controller
-              control={formMethods.control}
-              render={({ field: { value: unit, ...props } }) => {
-                const handleChange = (
-                  _: React.SyntheticEvent<Element, Event>,
-                  value: SelectField | null
-                ) => {
-                  props.onChange(value);
-                  
-                  // Auto-set conversion rate to 1 if unit matches buy unit
-                  if (value?.value && baseUnit?.value && value.value === baseUnit.value) {
-                    formMethods.setValue(`variants.${index}.conversionRate`, 1);
+    <div>
+      <div className="grid grid-cols-12 gap-2">
+        <div className="col-span-3">
+          <Controller
+            control={formMethods.control}
+            render={({ field: { value: unit, ...props } }) => {
+              const handleChange = (
+                _: React.SyntheticEvent<Element, Event>,
+                value: SelectField | null
+              ) => {
+                props.onChange(value);
+
+                // Auto-set conversion rate to 1 if unit matches buy unit
+                if (value?.value && baseUnit?.value && value.value === baseUnit.value) {
+                  formMethods.setValue(`variants.${index}.conversionRate`, 1);
+                }
+              };
+              return (
+                <Autocomplete
+                  {...props}
+                  id={`variants.${index}.unit`}
+                  options={units.map((c) => {
+                    return {
+                      label: c.description ? `${c.name} (${c.description})` : c.name,
+                      value: c.id,
+                    } as SelectField;
+                  })}
+                  getOptionLabel={(option: SelectField) => option.label}
+                  isOptionEqualToValue={(option: SelectField, value: SelectField | null) =>
+                    option.value === value?.value
                   }
-                };
-                return (
-                  <EnhancedAutocomplete
-                    {...props}
-                    id={`variants.${index}.unit`}
-                    options={units.map((c) => {
-                      return {
-                        label: c.description ? `${c.name} (${c.description})` : c.name,
-                        value: c.id,
-                      } as SelectField;
-                    })}
-                    getOptionLabel={(option: SelectField) => option.label}
-                    isOptionEqualToValue={(option: SelectField, value: SelectField | null) =>
-                      option.value === value?.value
-                    }
-                    onChange={handleChange}
-                    value={unit}
-                    label="Unidade"
-                    ref={unitRef}
-                    onNextField={focusNextField ? () => focusNextField(unitRef) : undefined}
-                    onPreviousField={focusPreviousField ? () => focusPreviousField(unitRef) : undefined}
-                  />
-                );
-              }}
-              name={`variants.${index}.unit`}
-            />
-          </FormControl>
-        </Grid>
-        <Grid item xs={3}>
-          <FormControl fullWidth>
-            <Controller
-              control={formMethods.control}
-              render={({ field: { ...props } }) => {
-                return (
-                  <TextField 
+                  onChange={handleChange}
+                  value={unit}
+                  label="Unidade"
+                  ref={unitRef}
+                  onNextField={focusNextField ? () => focusNextField(unitRef) : undefined}
+                  onPreviousField={focusPreviousField ? () => focusPreviousField(unitRef) : undefined}
+                />
+              );
+            }}
+            name={`variants.${index}.unit`}
+          />
+        </div>
+        <div className="col-span-3">
+          <Controller
+            control={formMethods.control}
+            render={({ field: { ...props }, fieldState }) => {
+              return (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Conversão</FieldLabel>
+                  <Input
                     {...props}
                     ref={conversionRateRef}
-                    variant="outlined"
-                    label="Conversão"
+                    aria-invalid={fieldState.invalid}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => {
                       props.onChange(e);
                       handleConversionRateChange(e);
                     }}
                   />
-                );
-              }}
-              name={`variants.${index}.conversionRate`}
-            />
-          </FormControl>
-        </Grid>
-        <Grid item xs={5}>
-          <FormControl fullWidth>
-            <Controller
-              control={formMethods.control}
-              render={({ field: { ...props } }) => {
-                return (
-                  <TextField
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              );
+            }}
+            name={`variants.${index}.conversionRate`}
+          />
+        </div>
+        <div className="col-span-5">
+          <Controller
+            control={formMethods.control}
+            render={({ field: { ...props }, fieldState }) => {
+              return (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Custo da unidade</FieldLabel>
+                  <Input
                     {...props}
                     ref={unitCostRef}
-                    variant="outlined"
-                    label="Custo da unidade"
+                    readOnly
+                    aria-invalid={fieldState.invalid}
                     onFocus={(e) => e.target.select()}
-                    InputProps={{
-                      readOnly: true,
-                    }}
                   />
-                );
-              }}
-              name={`variants.${index}.unitCost`}
-            />
-          </FormControl>
-        </Grid>
-        <Grid item xs={1}>
-          <IconButton 
-            color="error" 
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              );
+            }}
+            name={`variants.${index}.unitCost`}
+          />
+        </div>
+        <div className="col-span-1">
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleRemoveVariant}
-            size="medium"
             style={{ marginTop: '8px' }}
           >
             <Trash2 className="h-4 w-4" />
-          </IconButton>
-        </Grid>
-        <Grid item xs={12}>
+          </Button>
+        </div>
+        <div className="col-span-12">
           <Controller
             control={formMethods.control}
             name={`variants.${index}.prices`}
@@ -451,13 +458,13 @@ const VariantItem = ({ formMethods, index, focusNextField, focusPreviousField, r
               );
             }}
           />
-        </Grid>
+        </div>
 
-        <Grid item xs={6} style={{ marginBottom: '16px' }}>
-          <Button onClick={handleAddPrice}>+ preço sugerido</Button>
-        </Grid>
-      </Grid>
-    </Box>
+        <div className="col-span-6" style={{ marginBottom: '16px' }}>
+          <Button variant="ghost" onClick={handleAddPrice}>+ preço sugerido</Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -515,37 +522,35 @@ export const Variants = ({
   };
 
   return (
-    <>
-      <Box>
-        <Typography variant="h6" gutterBottom>
-          Variantes
-        </Typography>
-        <Controller
-          control={formMethods.control}
-          name="variants"
-          render={(formControlProps) => {
-            return (
-              <>
-                {formControlProps.field.value?.map((v, index) => {
-                  return (
-                    <VariantItem
-                      key={index}
-                      index={index}
-                      variant={v}
-                      formMethods={formMethods}
-                      focusNextField={focusNextField}
-                      focusPreviousField={focusPreviousField}
-                      registerVariantRef={registerVariantRef}
-                      unregisterVariantRef={unregisterVariantRef}
-                    />
-                  );
-                })}
-              </>
-            );
-          }}
-        />
-        <Button onClick={handleAddNewVariant}>+ variante</Button>
-      </Box>
-    </>
+    <div>
+      <h3 className="mb-2 scroll-m-20 text-xl font-semibold tracking-tight">
+        Variantes
+      </h3>
+      <Controller
+        control={formMethods.control}
+        name="variants"
+        render={(formControlProps) => {
+          return (
+            <>
+              {formControlProps.field.value?.map((v, index) => {
+                return (
+                  <VariantItem
+                    key={index}
+                    index={index}
+                    variant={v}
+                    formMethods={formMethods}
+                    focusNextField={focusNextField}
+                    focusPreviousField={focusPreviousField}
+                    registerVariantRef={registerVariantRef}
+                    unregisterVariantRef={unregisterVariantRef}
+                  />
+                );
+              })}
+            </>
+          );
+        }}
+      />
+      <Button variant="ghost" onClick={handleAddNewVariant}>+ variante</Button>
+    </div>
   );
 };

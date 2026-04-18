@@ -18,7 +18,7 @@ import {
 } from 'components/ui';
 import { useOverdueCheck } from '../../lib/overdueCheck';
 import { getDateStartTimestamp, getDateEndTimestamp } from '../../lib/date';
-import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { Autocomplete } from 'components/ui/autocomplete';
 import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
 import { KeyboardListPageKeyboardHelp } from 'components/KeyboardListPageKeyboardHelp';
 import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable';
@@ -403,7 +403,7 @@ export const InstallmentPaymentList = () => {
             />
           </div>
           <div className="col-span-12 md:col-span-6">
-            <EnhancedAutocomplete
+            <Autocomplete
               ref={statusFilterRef}
               id="status-filter"
               options={statuses}

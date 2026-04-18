@@ -33,25 +33,26 @@ export const upsertUserFromSession = async (session: Session): Promise<User> => 
   );
 
   const now = Date.now();
+  const email = mainEmailAddress?.email_address || "";
+  const name = fullName || "";
   const db = createAppDb();
 
-  await db
-    .insert(users)
-    .values({
-      id: user_id,
-      email: mainEmailAddress?.email_address || "",
-      fullName: fullName || "",
-      createdAt: now,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: users.id,
-      set: {
-        email: mainEmailAddress?.email_address || "",
-        fullName: fullName || "",
-        updatedAt: now,
-      },
-    });
+  const existing = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, user_id))
+    .limit(1);
+
+  if (existing.length > 0) {
+    await db
+      .update(users)
+      .set({ email, fullName: name, updatedAt: now })
+      .where(eq(users.id, user_id));
+  } else {
+    await db
+      .insert(users)
+      .values({ id: user_id, email, fullName: name, createdAt: now, updatedAt: now });
+  }
 
   const rows = await db
     .select()

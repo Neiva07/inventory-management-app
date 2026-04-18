@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mockup 3 - Compact Collapsible</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwindcss.config = {
+      theme: {
+        extend: {
+          colors: {
+            border: '#e5e7eb',
+            muted: '#f9fafb',
+            'muted-foreground': '#6b7280',
+            destructive: '#ef4444',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
+    input, select {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, select:focus { border-color: #111; }
+    input[readonly] { background: #f9fafb; color: #6b7280; }
+    label { font-size: 13px; font-weight: 500; color: #374151; display: block; margin-bottom: 4px; }
+    .variant-toggle:checked ~ .variant-body { display: block; }
+    .variant-toggle:not(:checked) ~ .variant-body { display: none; }
+    .variant-toggle:checked ~ .variant-header .chevron { transform: rotate(90deg); }
+  </style>
+</head>
+<body class="p-8 max-w-4xl mx-auto">
+
+  <h1 class="text-2xl font-bold mb-1">Cadastro de Produto</h1>
+  <p class="text-sm text-muted-foreground mb-8">Mockup 3 - Collapsible sections with inline price chips</p>
+
+  <!-- Variant Section -->
+  <section class="mt-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold">Variantes</h2>
+      <span class="text-xs text-muted-foreground">2 variantes</span>
+    </div>
+
+    <!-- Variant 1 - Expanded -->
+    <div class="border border-gray-200 rounded-xl mb-3 overflow-hidden">
+      <input type="checkbox" class="variant-toggle hidden" id="v1" checked />
+
+      <!-- Collapsible Header -->
+      <label for="v1" class="variant-header flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors select-none">
+        <svg class="chevron w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <div class="flex items-center gap-3 flex-1 min-w-0">
+          <span class="font-medium text-sm">Caixa (12 un)</span>
+          <span class="text-xs text-muted-foreground">x12</span>
+          <span class="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">R$ 120,00</span>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span class="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 rounded-full px-2 py-0.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            2 precos
+          </span>
+        </div>
+      </label>
+
+      <!-- Expandable Body -->
+      <div class="variant-body border-t border-gray-100">
+        <div class="p-4">
+          <!-- Variant Fields - compact single row -->
+          <div class="grid grid-cols-12 gap-3 items-end">
+            <div class="col-span-4">
+              <label>Unidade</label>
+              <select>
+                <option>Caixa (12 un)</option>
+              </select>
+            </div>
+            <div class="col-span-2">
+              <label>Conversao</label>
+              <input type="number" value="12" />
+            </div>
+            <div class="col-span-3">
+              <label>Custo da unidade</label>
+              <input type="text" value="R$ 120,00" readonly />
+            </div>
+            <div class="col-span-3 flex justify-end pb-1">
+              <button class="text-xs text-gray-400 hover:text-destructive border border-gray-200 hover:border-red-200 hover:bg-red-50 rounded-md px-3 py-2 transition-all flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                Remover variante
+              </button>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="my-4 border-t border-dashed border-gray-200"></div>
+
+          <!-- Prices Section -->
+          <div class="space-y-2">
+            <!-- Price 1 -->
+            <div class="flex items-center gap-3 bg-gray-50/80 border border-gray-100 rounded-lg px-4 py-3 group">
+              <div class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></div>
+              <div class="grid grid-cols-3 gap-3 flex-1">
+                <div>
+                  <span class="text-[11px] text-muted-foreground block mb-1">Metodo</span>
+                  <select class="bg-white text-sm py-1.5"><option>Dinheiro</option></select>
+                </div>
+                <div>
+                  <span class="text-[11px] text-muted-foreground block mb-1">Lucro</span>
+                  <div class="flex items-center gap-1">
+                    <input type="number" value="30" class="bg-white text-sm py-1.5" />
+                    <span class="text-muted-foreground text-xs shrink-0">%</span>
+                  </div>
+                </div>
+                <div>
+                  <span class="text-[11px] text-muted-foreground block mb-1">Preco final</span>
+                  <div class="flex items-center gap-1">
+                    <span class="text-muted-foreground text-xs shrink-0">R$</span>
+                    <input type="text" value="156,00" class="bg-white text-sm py-1.5 font-semibold" />
+                  </div>
+                </div>
+              </div>
+              <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-destructive transition-all p-1.5 rounded-md hover:bg-red-50 shrink-0" title="Remover preco">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <!-- Price 2 -->
+            <div class="flex items-center gap-3 bg-gray-50/80 border border-gray-100 rounded-lg px-4 py-3 group">
+              <div class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></div>
+              <div class="grid grid-cols-3 gap-3 flex-1">
+                <div>
+                  <span class="text-[11px] text-muted-foreground block mb-1">Metodo</span>
+                  <select class="bg-white text-sm py-1.5"><option>Cartao</option></select>
+                </div>
+                <div>
+                  <span class="text-[11px] text-muted-foreground block mb-1">Lucro</span>
+                  <div class="flex items-center gap-1">
+                    <input type="number" value="35" class="bg-white text-sm py-1.5" />
+                    <span class="text-muted-foreground text-xs shrink-0">%</span>
+                  </div>
+                </div>
+                <div>
+                  <span class="text-[11px] text-muted-foreground block mb-1">Preco final</span>
+                  <div class="flex items-center gap-1">
+                    <span class="text-muted-foreground text-xs shrink-0">R$</span>
+                    <input type="text" value="162,00" class="bg-white text-sm py-1.5 font-semibold" />
+                  </div>
+                </div>
+              </div>
+              <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-destructive transition-all p-1.5 rounded-md hover:bg-red-50 shrink-0" title="Remover preco">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <!-- Add price -->
+            <button class="w-full border border-dashed border-gray-200 rounded-lg py-2 text-xs text-gray-400 hover:text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all">
+              + Adicionar preco sugerido
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variant 2 - Collapsed -->
+    <div class="border border-gray-200 rounded-xl mb-3 overflow-hidden">
+      <input type="checkbox" class="variant-toggle hidden" id="v2" />
+
+      <label for="v2" class="variant-header flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors select-none">
+        <svg class="chevron w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <div class="flex items-center gap-3 flex-1 min-w-0">
+          <span class="font-medium text-sm">Unidade</span>
+          <span class="text-xs text-muted-foreground">x1</span>
+          <span class="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">R$ 10,00</span>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span class="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 rounded-full px-2 py-0.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            1 preco
+          </span>
+        </div>
+      </label>
+
+      <div class="variant-body border-t border-gray-100">
+        <div class="p-4">
+          <div class="grid grid-cols-12 gap-3 items-end">
+            <div class="col-span-4">
+              <label>Unidade</label>
+              <select><option>Unidade</option></select>
+            </div>
+            <div class="col-span-2">
+              <label>Conversao</label>
+              <input type="number" value="1" />
+            </div>
+            <div class="col-span-3">
+              <label>Custo da unidade</label>
+              <input type="text" value="R$ 10,00" readonly />
+            </div>
+            <div class="col-span-3 flex justify-end pb-1">
+              <button class="text-xs text-gray-400 hover:text-destructive border border-gray-200 hover:border-red-200 hover:bg-red-50 rounded-md px-3 py-2 transition-all flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                Remover variante
+              </button>
+            </div>
+          </div>
+
+          <div class="my-4 border-t border-dashed border-gray-200"></div>
+
+          <div class="space-y-2">
+            <div class="flex items-center gap-3 bg-gray-50/80 border border-gray-100 rounded-lg px-4 py-3 group">
+              <div class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></div>
+              <div class="grid grid-cols-3 gap-3 flex-1">
+                <div>
+                  <span class="text-[11px] text-muted-foreground block mb-1">Metodo</span>
+                  <select class="bg-white text-sm py-1.5"><option>Dinheiro</option></select>
+                </div>
+                <div>
+                  <span class="text-[11px] text-muted-foreground block mb-1">Lucro</span>
+                  <div class="flex items-center gap-1">
+                    <input type="number" value="50" class="bg-white text-sm py-1.5" />
+                    <span class="text-muted-foreground text-xs shrink-0">%</span>
+                  </div>
+                </div>
+                <div>
+                  <span class="text-[11px] text-muted-foreground block mb-1">Preco final</span>
+                  <div class="flex items-center gap-1">
+                    <span class="text-muted-foreground text-xs shrink-0">R$</span>
+                    <input type="text" value="15,00" class="bg-white text-sm py-1.5 font-semibold" />
+                  </div>
+                </div>
+              </div>
+              <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-destructive transition-all p-1.5 rounded-md hover:bg-red-50 shrink-0" title="Remover preco">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <button class="w-full border border-dashed border-gray-200 rounded-lg py-2 text-xs text-gray-400 hover:text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all">
+              + Adicionar preco sugerido
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add variant button -->
+    <button class="w-full border border-dashed border-gray-300 rounded-xl py-3.5 text-sm text-gray-500 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nova variante
+    </button>
+  </section>
+
+  <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+    <strong>Mockup 3 - Compact Collapsible:</strong> Variants are collapsible accordion sections. The collapsed header shows a summary (unit name, conversion, cost, price count badge) so you get an overview without expanding. Each price is a self-contained bordered row with a colored dot. "Remover variante" is an explicit labeled button (not just an icon). Dashed buttons for adding. Click the second variant header to toggle it open.
+  </div>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mockup 2 - Left Border Hierarchy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwindcss.config = {
+      theme: {
+        extend: {
+          colors: {
+            border: '#e5e7eb',
+            muted: '#f9fafb',
+            'muted-foreground': '#6b7280',
+            destructive: '#ef4444',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fff; }
+    input, select {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, select:focus { border-color: #111; }
+    input[readonly] { background: #f9fafb; color: #6b7280; }
+    label { font-size: 13px; font-weight: 500; color: #374151; display: block; margin-bottom: 4px; }
+  </style>
+</head>
+<body class="p-8 max-w-4xl mx-auto">
+
+  <h1 class="text-2xl font-bold mb-1">Cadastro de Produto</h1>
+  <p class="text-sm text-muted-foreground mb-8">Mockup 2 - Left border hierarchy with indented pricing table</p>
+
+  <!-- Variant Section -->
+  <section class="mt-8">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-semibold">Variantes</h2>
+    </div>
+
+    <!-- Variant 1 -->
+    <div class="border-l-[3px] border-emerald-500 pl-5 mb-8 relative">
+      <!-- Delete variant - positioned top right -->
+      <button class="absolute -right-1 top-0 text-gray-300 hover:text-destructive transition-colors p-1 rounded hover:bg-red-50" title="Remover variante">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+      </button>
+
+      <!-- Variant Fields Row -->
+      <div class="grid grid-cols-3 gap-4 mb-4 pr-8">
+        <div>
+          <label>Unidade</label>
+          <select>
+            <option>Caixa (12 un)</option>
+          </select>
+        </div>
+        <div>
+          <label>Conversao</label>
+          <input type="number" value="12" />
+        </div>
+        <div>
+          <label>Custo da unidade</label>
+          <input type="text" value="R$ 120,00" readonly />
+        </div>
+      </div>
+
+      <!-- Prices as indented table -->
+      <div class="ml-4 border-l-2 border-gray-200 pl-4 mt-4">
+        <div class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Precos sugeridos
+        </div>
+
+        <!-- Price table header -->
+        <div class="grid grid-cols-12 gap-2 mb-1 px-1">
+          <div class="col-span-4 text-xs text-muted-foreground font-medium">Metodo</div>
+          <div class="col-span-3 text-xs text-muted-foreground font-medium">Lucro %</div>
+          <div class="col-span-3 text-xs text-muted-foreground font-medium">Preco</div>
+          <div class="col-span-2"></div>
+        </div>
+
+        <!-- Price Row 1 -->
+        <div class="grid grid-cols-12 gap-2 items-center py-2 px-1 rounded-md hover:bg-gray-50 transition-colors group">
+          <div class="col-span-4">
+            <select>
+              <option>Dinheiro</option>
+            </select>
+          </div>
+          <div class="col-span-3">
+            <input type="number" value="30" />
+          </div>
+          <div class="col-span-3">
+            <input type="text" value="156,00" class="font-medium" />
+          </div>
+          <div class="col-span-2 flex justify-end">
+            <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-destructive transition-all text-xs px-2 py-1 rounded hover:bg-red-50">
+              Remover
+            </button>
+          </div>
+        </div>
+
+        <!-- Price Row 2 -->
+        <div class="grid grid-cols-12 gap-2 items-center py-2 px-1 rounded-md hover:bg-gray-50 transition-colors group">
+          <div class="col-span-4">
+            <select>
+              <option>Cartao</option>
+            </select>
+          </div>
+          <div class="col-span-3">
+            <input type="number" value="35" />
+          </div>
+          <div class="col-span-3">
+            <input type="text" value="162,00" class="font-medium" />
+          </div>
+          <div class="col-span-2 flex justify-end">
+            <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-destructive transition-all text-xs px-2 py-1 rounded hover:bg-red-50">
+              Remover
+            </button>
+          </div>
+        </div>
+
+        <!-- Price Row 3 -->
+        <div class="grid grid-cols-12 gap-2 items-center py-2 px-1 rounded-md hover:bg-gray-50 transition-colors group">
+          <div class="col-span-4">
+            <select>
+              <option>PIX</option>
+            </select>
+          </div>
+          <div class="col-span-3">
+            <input type="number" value="25" />
+          </div>
+          <div class="col-span-3">
+            <input type="text" value="150,00" class="font-medium" />
+          </div>
+          <div class="col-span-2 flex justify-end">
+            <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-destructive transition-all text-xs px-2 py-1 rounded hover:bg-red-50">
+              Remover
+            </button>
+          </div>
+        </div>
+
+        <button class="text-xs text-gray-500 hover:text-gray-700 mt-2 py-1 transition-colors">
+          + Adicionar preco
+        </button>
+      </div>
+    </div>
+
+    <!-- Variant 2 -->
+    <div class="border-l-[3px] border-blue-500 pl-5 mb-8 relative">
+      <button class="absolute -right-1 top-0 text-gray-300 hover:text-destructive transition-colors p-1 rounded hover:bg-red-50" title="Remover variante">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+      </button>
+
+      <div class="grid grid-cols-3 gap-4 mb-4 pr-8">
+        <div>
+          <label>Unidade</label>
+          <select><option>Unidade</option></select>
+        </div>
+        <div>
+          <label>Conversao</label>
+          <input type="number" value="1" />
+        </div>
+        <div>
+          <label>Custo da unidade</label>
+          <input type="text" value="R$ 10,00" readonly />
+        </div>
+      </div>
+
+      <div class="ml-4 border-l-2 border-gray-200 pl-4 mt-4">
+        <div class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Precos sugeridos
+        </div>
+
+        <div class="grid grid-cols-12 gap-2 mb-1 px-1">
+          <div class="col-span-4 text-xs text-muted-foreground font-medium">Metodo</div>
+          <div class="col-span-3 text-xs text-muted-foreground font-medium">Lucro %</div>
+          <div class="col-span-3 text-xs text-muted-foreground font-medium">Preco</div>
+          <div class="col-span-2"></div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-2 items-center py-2 px-1 rounded-md hover:bg-gray-50 transition-colors group">
+          <div class="col-span-4">
+            <select><option>Dinheiro</option></select>
+          </div>
+          <div class="col-span-3">
+            <input type="number" value="50" />
+          </div>
+          <div class="col-span-3">
+            <input type="text" value="15,00" class="font-medium" />
+          </div>
+          <div class="col-span-2 flex justify-end">
+            <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-destructive transition-all text-xs px-2 py-1 rounded hover:bg-red-50">
+              Remover
+            </button>
+          </div>
+        </div>
+
+        <button class="text-xs text-gray-500 hover:text-gray-700 mt-2 py-1 transition-colors">
+          + Adicionar preco
+        </button>
+      </div>
+    </div>
+
+    <!-- Variant 3 (empty, just added) -->
+    <div class="border-l-[3px] border-amber-500 pl-5 mb-8 relative">
+      <button class="absolute -right-1 top-0 text-gray-300 hover:text-destructive transition-colors p-1 rounded hover:bg-red-50" title="Remover variante">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+      </button>
+
+      <div class="grid grid-cols-3 gap-4 mb-4 pr-8">
+        <div>
+          <label>Unidade</label>
+          <select><option value="">Selecione...</option></select>
+        </div>
+        <div>
+          <label>Conversao</label>
+          <input type="number" value="0" />
+        </div>
+        <div>
+          <label>Custo da unidade</label>
+          <input type="text" value="0" readonly />
+        </div>
+      </div>
+
+      <div class="ml-4 border-l-2 border-gray-200 pl-4 mt-4">
+        <div class="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Precos sugeridos
+        </div>
+
+        <div class="grid grid-cols-12 gap-2 mb-1 px-1">
+          <div class="col-span-4 text-xs text-muted-foreground font-medium">Metodo</div>
+          <div class="col-span-3 text-xs text-muted-foreground font-medium">Lucro %</div>
+          <div class="col-span-3 text-xs text-muted-foreground font-medium">Preco</div>
+          <div class="col-span-2"></div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-2 items-center py-2 px-1 rounded-md hover:bg-gray-50 transition-colors group">
+          <div class="col-span-4">
+            <select><option value="">Selecione...</option></select>
+          </div>
+          <div class="col-span-3">
+            <input type="number" value="0" />
+          </div>
+          <div class="col-span-3">
+            <input type="text" value="0" />
+          </div>
+          <div class="col-span-2 flex justify-end">
+            <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-destructive transition-all text-xs px-2 py-1 rounded hover:bg-red-50">
+              Remover
+            </button>
+          </div>
+        </div>
+
+        <button class="text-xs text-gray-500 hover:text-gray-700 mt-2 py-1 transition-colors">
+          + Adicionar preco
+        </button>
+      </div>
+    </div>
+
+    <!-- Add variant button -->
+    <button class="w-full border border-dashed border-gray-300 rounded-xl py-3 text-sm text-gray-500 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-all">
+      + Nova variante
+    </button>
+  </section>
+
+  <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+    <strong>Mockup 2 - Left Border Hierarchy:</strong> Colored left borders visually group each variant (green, blue, amber). Prices are indented further with a lighter nested border, creating a clear tree structure. Table headers for prices reduce label repetition. Delete shows as text "Remover" on hover. Full-width dashed button for adding variants.
+  </div>
+</body>
+</html>

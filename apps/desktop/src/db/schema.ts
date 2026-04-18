@@ -515,6 +515,14 @@ export const installmentPayments = sqliteTable(
   })
 );
 
+// Stores sync bookkeeping: watermarks, initial-sync flags, client ID.
+export const syncMeta = sqliteTable("sync_meta", {
+  id: text("sync_meta_id").primaryKey(),
+  key: text("key").notNull(),
+  value: text("value").notNull(),
+  ...lifecycleColumns,
+});
+
 // Tracks local writes that still need cloud replication.
 export const syncQueue = sqliteTable(
   "sync_queue",

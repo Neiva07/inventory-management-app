@@ -11,7 +11,7 @@ import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { InboundOrder } from 'model/inboundOrder';
 import { statuses } from './useInboundOrderForm';
 import { TotalCostDisplay } from 'components/TotalCostDisplay';
-import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
+import { Autocomplete } from "components/ui/autocomplete";
 import { DatePickerField } from "components/ui";
 
 interface InboundOrderFormHeaderProps {
@@ -93,7 +93,7 @@ export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFi
 
                 return (
                   <>
-                    <EnhancedAutocomplete
+                    <Autocomplete
                       label="Fornecedor"
                       value={supplier}
                       {...props}
@@ -137,7 +137,7 @@ export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFi
 
                 return (
                   <>
-                    <EnhancedAutocomplete
+                    <Autocomplete
                       value={status}
                       {...props}
                       id="status-select"

@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from 'components/ui';
-import { Warning as WarningIcon } from 'components/ui/icon-compat';
+import { TriangleAlert as WarningIcon } from 'lucide-react';
 
 interface OnboardingExitDialogProps {
   open: boolean;
@@ -32,7 +32,7 @@ export const OnboardingExitDialog: React.FC<OnboardingExitDialogProps> = ({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <WarningIcon sx={{ color: 'warning.main' }} />
+            <WarningIcon className="size-5 text-amber-500" />
             <span>Sair da Configuração</span>
           </AlertDialogTitle>
           <AlertDialogDescription asChild>

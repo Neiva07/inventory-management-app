@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useEffect, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 import { useAuth } from "context/auth";
 import { createUnit, deleteUnit, getUnits, Unit, updateUnit } from "../../model/units";
@@ -89,10 +89,10 @@ export const Units = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (selectedUnit) {
       try {
-        deleteUnit(selectedUnit.id);
+        await deleteUnit(selectedUnit.id);
         toast.success("Unidade excluída com sucesso");
         refreshUnits();
       } catch (err: unknown) {

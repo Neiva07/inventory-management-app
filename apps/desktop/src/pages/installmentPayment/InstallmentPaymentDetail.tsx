@@ -1,17 +1,4 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Chip,
-  Button,
-  Alert,
-  IconButton,
-  Tooltip,
-  Divider,
-} from 'components/ui/form-compat';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageTitle } from '../../components/PageTitle';
 import { InstallmentPayment, getInstallmentPayment } from '../../model/installmentPayment';
@@ -20,7 +7,12 @@ import { useAuth } from '../../context/auth';
 import { formatCurrency } from 'lib/math';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { PaymentModal } from '../../components/PaymentModal';
-import { Payment, ArrowBack } from 'components/ui/icon-compat';
+import { Card, CardContent } from 'components/ui/card';
+import { Badge } from 'components/ui/badge';
+import { Button } from 'components/ui/button';
+import { Alert, AlertDescription } from 'components/ui/alert';
+import { Separator } from 'components/ui/separator';
+import { CreditCard, ArrowLeft } from 'lucide-react';
 
 // Helper function to format date
 const formatDate = (timestamp: number): string => {
@@ -64,7 +56,7 @@ export const InstallmentPaymentDetail = () => {
   const { installmentPaymentID } = useParams();
   const navigate = useNavigate();
   const { user, organization } = useAuth();
-  
+
   const [installmentPayment, setInstallmentPayment] = useState<InstallmentPayment | null>(null);
   const [supplierBill, setSupplierBill] = useState<SupplierBill | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,17 +66,17 @@ export const InstallmentPaymentDetail = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!installmentPaymentID) return;
-      
+
       try {
         setLoading(true);
-        
+
         // Fetch installment payment
         const installment = await getInstallmentPayment(installmentPaymentID, {
           userID: user.id,
           organizationId: organization?.id,
         });
         setInstallmentPayment(installment);
-        
+
         // Fetch related supplier bill
         if (installment.supplierBillID) {
           try {
@@ -97,7 +89,7 @@ export const InstallmentPaymentDetail = () => {
             console.warn('Could not fetch supplier bill:', err);
           }
         }
-        
+
       } catch (err) {
         console.error('Error fetching installment payment:', err);
         setError('Erro ao carregar dados da parcela');
@@ -125,220 +117,220 @@ export const InstallmentPaymentDetail = () => {
 
   if (loading) {
     return (
-      <Box>
+      <div>
         <PageTitle>Carregando...</PageTitle>
-      </Box>
+      </div>
     );
   }
 
   if (error || !installmentPayment) {
     return (
-      <Box>
+      <div>
         <PageTitle>Erro</PageTitle>
-        <Alert severity="error">{error || 'Parcela não encontrada'}</Alert>
-      </Box>
+        <Alert variant="destructive"><AlertDescription>{error || 'Parcela não encontrada'}</AlertDescription></Alert>
+      </div>
     );
   }
 
   const canPay = installmentPayment.status === 'pending' || installmentPayment.status === 'overdue';
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
-        <IconButton onClick={() => navigate('/installment-payments')}>
-          <ArrowBack />
-        </IconButton>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+    <div>
+      <div className="flex items-center mb-4 gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate('/installment-payments')}>
+          <ArrowLeft className="size-5" />
+        </Button>
+        <div className="flex items-center gap-4 flex-1">
           <PageTitle>Parcela #{installmentPayment.installmentNumber}</PageTitle>
           <PublicIdDisplay publicId={installmentPayment.publicId} />
-          <Chip
-            label={getStatusLabel(installmentPayment.status)}
-            sx={{
+          <Badge
+            className="font-bold"
+            style={{
               backgroundColor: getStatusColor(installmentPayment.status),
               color: 'white',
-              fontWeight: 'bold',
             }}
-          />
-        </Box>
+          >
+            {getStatusLabel(installmentPayment.status)}
+          </Badge>
+        </div>
         {canPay && (
           <Button
-            variant="contained"
-            startIcon={<Payment />}
             onClick={() => setPaymentModalOpen(true)}
           >
+            <CreditCard className="size-5" />
             Registrar Pagamento
           </Button>
         )}
-      </Box>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-12 gap-6">
         {/* Installment Details */}
-        <Grid item xs={12} md={6}>
+        <div className="col-span-12 md:col-span-6">
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <h3 className="scroll-m-20 text-xl font-semibold tracking-tight mb-2">
                 Detalhes da Parcela
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Número da Parcela
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
+              </h3>
+              <Separator className="mb-4" />
+
+              <div className="grid grid-cols-12 gap-4">
+                <div className="col-span-6">
+                  <p className="text-sm text-muted-foreground">
+                    Numero da Parcela
+                  </p>
+                  <p className="font-medium">
                     #{installmentPayment.installmentNumber}
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
+                  </p>
+                </div>
+
+                <div className="col-span-6">
+                  <p className="text-sm text-muted-foreground">
                     Valor
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium" color="primary">
+                  </p>
+                  <p className="font-medium text-primary">
                     {formatCurrency(installmentPayment.amount)}
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
+                  </p>
+                </div>
+
+                <div className="col-span-6">
+                  <p className="text-sm text-muted-foreground">
                     Data de Vencimento
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
+                  </p>
+                  <p className="font-medium">
                     {formatDate(installmentPayment.dueDate)}
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
+                  </p>
+                </div>
+
+                <div className="col-span-6">
+                  <p className="text-sm text-muted-foreground">
                     Forma de Pagamento
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
+                  </p>
+                  <p className="font-medium">
                     {installmentPayment.paymentMethod?.label || '-'}
-                  </Typography>
-                </Grid>
-                
+                  </p>
+                </div>
+
                 {installmentPayment.paidAmount && (
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
+                  <div className="col-span-6">
+                    <p className="text-sm text-muted-foreground">
                       Valor Pago
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium" color="success.main">
+                    </p>
+                    <p className="font-medium text-green-700">
                       {formatCurrency(installmentPayment.paidAmount)}
-                    </Typography>
-                  </Grid>
+                    </p>
+                  </div>
                 )}
-                
+
                 {installmentPayment.paidAt && (
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
+                  <div className="col-span-6">
+                    <p className="text-sm text-muted-foreground">
                       Data do Pagamento
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
+                    </p>
+                    <p className="font-medium">
                       {formatDate(installmentPayment.paidAt)}
-                    </Typography>
-                  </Grid>
+                    </p>
+                  </div>
                 )}
-                
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
+
+                <div className="col-span-6">
+                  <p className="text-sm text-muted-foreground">
                     Data de Criação
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
+                  </p>
+                  <p className="font-medium">
                     {formatDate(installmentPayment.createdAt)}
-                  </Typography>
-                </Grid>
-                
+                  </p>
+                </div>
+
                 {installmentPayment.updatedAt && (
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
+                  <div className="col-span-6">
+                    <p className="text-sm text-muted-foreground">
                       Última Atualização
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
+                    </p>
+                    <p className="font-medium">
                       {formatDate(installmentPayment.updatedAt)}
-                    </Typography>
-                  </Grid>
+                    </p>
+                  </div>
                 )}
-              </Grid>
+              </div>
             </CardContent>
           </Card>
-        </Grid>
+        </div>
 
         {/* Supplier Bill Information */}
-        <Grid item xs={12} md={6}>
+        <div className="col-span-12 md:col-span-6">
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <h3 className="scroll-m-20 text-xl font-semibold tracking-tight mb-2">
                 Informações da Conta
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
+              </h3>
+              <Separator className="mb-4" />
+
               {supplierBill ? (
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Typography variant="body2" color="text.secondary">
+                <div className="grid grid-cols-12 gap-4">
+                  <div className="col-span-12">
+                    <p className="text-sm text-muted-foreground">
                       Fornecedor
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
+                    </p>
+                    <p className="font-medium">
                       {supplierBill.supplier.supplierName}
-                    </Typography>
-                  </Grid>
-                  
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
+                    </p>
+                  </div>
+
+                  <div className="col-span-6">
+                    <p className="text-sm text-muted-foreground">
                       ID da Conta
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
+                    </p>
+                    <p className="font-medium">
                       {supplierBill.publicId}
-                    </Typography>
-                  </Grid>
-                  
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
+                    </p>
+                  </div>
+
+                  <div className="col-span-6">
+                    <p className="text-sm text-muted-foreground">
                       Pedido
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
+                    </p>
+                    <p className="font-medium">
                       {supplierBill.inboundOrder.publicId}
-                    </Typography>
-                  </Grid>
-                  
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
+                    </p>
+                  </div>
+
+                  <div className="col-span-6">
+                    <p className="text-sm text-muted-foreground">
                       Valor Total
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
+                    </p>
+                    <p className="font-medium">
                       {formatCurrency(supplierBill.totalValue)}
-                    </Typography>
-                  </Grid>
-                  
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
+                    </p>
+                  </div>
+
+                  <div className="col-span-6">
+                    <p className="text-sm text-muted-foreground">
                       Valor Restante
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
+                    </p>
+                    <p className="font-medium">
                       {formatCurrency(supplierBill.remainingValue)}
-                    </Typography>
-                  </Grid>
-                  
-                  <Grid item xs={12}>
+                    </p>
+                  </div>
+
+                  <div className="col-span-12">
                     <Button
-                      variant="outlined"
+                      variant="outline"
                       onClick={() => navigate(`/supplier-bills/${supplierBill.id}`)}
-                      fullWidth
+                      className="w-full"
                     >
                       Ver Detalhes da Conta
                     </Button>
-                  </Grid>
-                </Grid>
+                  </div>
+                </div>
               ) : (
-                <Typography variant="body2" color="text.secondary">
+                <p className="text-sm text-muted-foreground">
                   Informações da conta não disponíveis
-                </Typography>
+                </p>
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </div>
+      </div>
 
       <PaymentModal
         open={paymentModalOpen}
@@ -346,6 +338,6 @@ export const InstallmentPaymentDetail = () => {
         onPaymentRecorded={handlePaymentRecorded}
         installment={installmentPayment}
       />
-    </Box>
+    </div>
   );
-}; 
+};

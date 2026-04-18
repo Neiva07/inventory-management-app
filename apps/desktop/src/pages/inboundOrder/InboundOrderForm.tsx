@@ -14,7 +14,7 @@ import { createSupplierBill } from 'model/supplierBill';
 import { createMultipleInstallmentPayments } from 'model/installmentPayment';
 import { getSupplier } from 'model/suppliers';
 import { useAuth } from 'context/auth';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useFormWrapper } from '../../hooks/forms/useFormWrapper';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { ProductUpdateModal } from 'components/ProductUpdateModal';

@@ -4,8 +4,7 @@ import useInboundOrderFormValidationSchema from './useInboundOrderFormValidation
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback, useState } from 'react';
 import { createInboundOrder, InboundOrder, InboundOrderStatus, deleteInboundOrder, getInboundOrder, InboundOrderItem, updateInboundOrder, InboundOrderPayment } from 'model/inboundOrder';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
 import { useAuth } from 'context/auth';
 import { Product, Variant, updateProduct } from 'model/products';
 import { getProducts } from 'model/products';
@@ -206,25 +205,16 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
     try {
       if (inboundOrderID) {
         await updateInboundOrder(inboundOrderID, inboundOrder);
-        toast.success('Compra atualizada com sucesso', {
-          position: "bottom-right",
-          theme: "colored",
-        });
+        toast.success('Compra atualizada com sucesso');
         return { id: inboundOrderID, publicId: '' };
       } else {
         const result = await createInboundOrder(inboundOrder);
-        toast.success('Compra realizada com sucesso', {
-          position: "bottom-right",
-          theme: "colored",
-        });
+        toast.success('Compra realizada com sucesso');
         return result;
       }
     } catch (err) {
       console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
       return null;
     }
   }, [inboundOrderID, organization?.id, user.id]);
@@ -232,19 +222,13 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
   const onDelete = useCallback((onSuccess?: () => void) => {
     try {
       deleteInboundOrder(inboundOrderID)
-      toast.success('Compra deletada com sucesso', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.success('Compra deletada com sucesso')
       // Call the success callback (navigation) after successful deletion
       onSuccess?.()
 
     } catch (err) {
       console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
   }, [inboundOrderID])
 

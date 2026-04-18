@@ -7,7 +7,7 @@ import { Customer, deactiveCustomer, deleteCustomer, getCustomers, activeCustome
 import { useAuth } from 'context/auth';
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
-import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { Autocomplete } from 'components/ui/autocomplete';
 import { useListPageFocusNavigation } from 'hooks/listings/useListPageFocusNavigation';
 import { KeyboardListPageKeyboardHelp } from 'components/KeyboardListPageKeyboardHelp';
 import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable';
@@ -255,7 +255,7 @@ export const CustomerList = () => {
           />
           </div>
           <div className="col-span-12 md:col-span-6">
-            <EnhancedAutocomplete
+            <Autocomplete
             ref={statusFilterRef}
             id="status-filter"
             options={statuses}

@@ -6,8 +6,7 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { activeCustomer, createCustomer, Customer, deactiveCustomer, deleteCustomer, getCustomer, updateCustomer } from '../../model/customer';
 import { AddressFormDataInterface } from '../supplier/useSupplierCreateForm';
 import { regionByCode, citiesByState } from '../../model/region';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
 import { useAuth } from 'context/auth';
 
 
@@ -66,15 +65,21 @@ export const useCustomerCreateForm = (customerID?: string) => {
         value: city,
       }));
       setAvailableCities(cityOptions);
-      
-      // Clear city selection when region changes (but not when loading existing data)
+
+      // Clear city when region changes, unless loading existing data or the
+      // currently selected city is already valid for the new region (e.g.
+      // form.reset populated both region and city in the same update).
       if (!fetchedCustomerForm) {
-        form.setValue('address.city', { label: '', value: '' });
+        const currentCity = form.getValues('address.city');
+        const cityIsValidForRegion = !!currentCity?.value && cities.includes(currentCity.value);
+        if (!cityIsValidForRegion) {
+          form.setValue('address.city', { label: '', value: '' });
+        }
       }
     } else {
       setAvailableCities([]);
     }
-  }, [watchedRegion, form.setValue, fetchedCustomerForm]);
+  }, [watchedRegion, form.setValue, form.getValues, fetchedCustomerForm]);
 
   // Populate cities when form is reset with fetched data
   useEffect(() => {
@@ -156,17 +161,11 @@ export const useCustomerCreateForm = (customerID?: string) => {
         rg: cleanedRG,
       } as Customer);
 
-      toast.success('Cliente registrado com sucesso', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.success('Cliente registrado com sucesso')
 
     } catch (err) {
       console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
   }, [organization?.id, user.id]);
 
@@ -198,17 +197,11 @@ export const useCustomerCreateForm = (customerID?: string) => {
         cpf: cleanedCPF,
         rg: cleanedRG,
       } as Customer);
-      toast.success('Cliente atualizado com sucesso', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.success('Cliente atualizado com sucesso')
 
     } catch (err) {
       console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
 
     }
 
@@ -219,18 +212,12 @@ export const useCustomerCreateForm = (customerID?: string) => {
   const onDelete = useCallback((onSuccess?: () => void) => {
     try {
       deleteCustomer(customerID)
-      toast.success('Cliente deletado com sucesso', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.success('Cliente deletado com sucesso')
       onSuccess?.()
 
     } catch (err) {
       console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
   }, [customerID])
 
@@ -239,17 +226,11 @@ export const useCustomerCreateForm = (customerID?: string) => {
       await deactiveCustomer(customerID)
       // Re-fetch customer data to update UI
       await getCustomerFormData(customerID)
-      toast.success('Cliente desativado com sucesso', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.success('Cliente desativado com sucesso')
 
     } catch (err) {
       console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
 
   }, [customerID, getCustomerFormData])
@@ -259,17 +240,11 @@ export const useCustomerCreateForm = (customerID?: string) => {
       await activeCustomer(customerID)
       // Re-fetch customer data to update UI
       await getCustomerFormData(customerID)
-      toast.success('Cliente ativado com sucesso', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.success('Cliente ativado com sucesso')
 
     } catch (err) {
       console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
 
   }, [customerID, getCustomerFormData])

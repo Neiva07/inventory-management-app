@@ -3,7 +3,7 @@ import React from "react";
 import { useFormContext, Controller } from "react-hook-form";
 import { OrderFormDataInterface } from "./useOrderForm";
 import { DuplicateItemDialog } from "components/DuplicateItemDialog";
-import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
+import { Autocomplete } from "components/ui/autocomplete";
 import { Button, Input } from "components/ui";
 import { cn } from "lib/utils";
 const Field = ({
@@ -72,7 +72,7 @@ export const OrderFormLineItemForm = ({
           name="pendingItem.selectedProduct"
           control={formMethods.control}
           render={({ field }) => (
-            <EnhancedAutocomplete
+            <Autocomplete
               {...field}
               id="product-select"
               options={products}
@@ -97,7 +97,7 @@ export const OrderFormLineItemForm = ({
           name="pendingItem.variant"
           control={formMethods.control}
           render={({ field }) => (
-            <EnhancedAutocomplete
+            <Autocomplete
               {...field}
               id="unit-select"
               options={pendingItem.selectedProduct?.variants ?? []}

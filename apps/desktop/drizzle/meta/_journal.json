@@ -22,6 +22,13 @@
       "when": 1775760143912,
       "tag": "0002_last_abomination",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1776188988764,
+      "tag": "0003_light_goliath",
+      "breakpoints": true
     }
   ]
 }

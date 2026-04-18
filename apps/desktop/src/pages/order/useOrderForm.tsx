@@ -4,8 +4,7 @@ import useOrderFormValidationSchema from './useOrderFormValidation';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useCallback, useState } from 'react';
 import { createOrder, Order, OrderStatus, deleteOrder, getOrder, Item, updateOrder, calcItemTotalCost } from 'model/orders';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
 import { useAuth } from 'context/auth';
 import { getProducts, Product, Variant } from 'model/products';
 import { paymentMethodById } from 'model/paymentMethods';
@@ -210,36 +209,24 @@ export const useOrderForm = (orderID?: string) => {
     try {
       orderID ? updateOrder(orderID, order) : createOrder(order);
 
-      toast.success('Venda realizada com sucesso', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.success('Venda realizada com sucesso')
 
     } catch (err) {
       console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
   }, [orderID, organization?.id, user.id]);
 
   const onDelete = useCallback((onSuccess?: () => void) => {
     try {
       deleteOrder(orderID)
-      toast.success('Venda deletada com sucesso', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.success('Venda deletada com sucesso')
       // Call the success callback (navigation) after successful deletion
       onSuccess?.()
 
     } catch (err) {
       console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
-        position: "bottom-right",
-        theme: "colored",
-      })
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
   }, [orderID])
 

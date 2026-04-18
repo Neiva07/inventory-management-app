@@ -1,5 +1,6 @@
 import { enqueueSyncChange, SyncOperation } from "./syncQueue";
 import { getSyncState, setSyncState } from "./syncState";
+import { getIsSyncingDown } from "./syncDown";
 
 interface TrackPendingSyncChangeArgs {
   organizationId?: string | null;
@@ -17,6 +18,11 @@ export const trackPendingSyncChange = async ({
   payload,
 }: TrackPendingSyncChangeArgs): Promise<void> => {
   if (!organizationId) {
+    return;
+  }
+
+  // Don't re-enqueue changes being applied from sync-down
+  if (getIsSyncingDown()) {
     return;
   }
 

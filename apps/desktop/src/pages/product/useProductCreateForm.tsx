@@ -5,7 +5,7 @@ import React, { useCallback } from "react";
 import { Product, ProductSupplier, ProductUnit, Variant, createProduct, getProduct, updateProduct, deleteProduct, deactiveProduct, activeProduct } from "../../model/products";
 import { ProductCategory } from "../../model/productCategories";
 import { PaymentMethod, paymentMethods } from "../../model/paymentMethods";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { useAuth } from "context/auth";
 
 export interface SelectField<T = string> {

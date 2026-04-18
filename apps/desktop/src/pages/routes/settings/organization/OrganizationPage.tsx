@@ -1,29 +1,24 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Paper,
-  Alert,
-  CircularProgress,
-  FormHelperText,
-} from 'components/ui/form-compat';
+import { Button } from 'components/ui/button';
+import { Input } from 'components/ui/input';
+import { Textarea } from 'components/ui/textarea';
+import { Spinner } from 'components/ui/spinner';
+import { Alert, AlertDescription } from 'components/ui/alert';
+import { Field, FieldLabel, FieldError } from 'components/ui/field';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { useAuth } from '../../../../context/auth';
 import { updateOrganization, deleteOrganization } from '../../../../model/organization';
 import { states, citiesByState } from '../../../../model/region';
-import { 
-  isValidEmail, 
-  validateCEP, 
-  validatePhone, 
-  validateCNPJ, 
+import {
+  isValidEmail,
+  validateCEP,
+  validatePhone,
+  validateCNPJ,
   validateIE,
-  formatCEP, 
-  formatPhone, 
-  formatCNPJ, 
-  formatIE 
+  formatCEP,
+  formatPhone,
+  formatCNPJ,
+  formatIE
 } from '../../../../lib/validation';
 
 export const OrganizationPage = () => {
@@ -109,15 +104,13 @@ export const OrganizationPage = () => {
   }, [organization]);
 
   const handleInputChange = (field: string, value: string) => {
-    // Clear errors when user starts typing
     if ((field === 'email' || field === 'pocEmail') && emailErrors[field]) {
       setEmailErrors(prev => ({ ...prev, [field]: '' }));
     }
     if (fieldErrors[field]) {
       setFieldErrors(prev => ({ ...prev, [field]: '' }));
     }
-    
-    // Format fields
+
     let formattedValue = value;
     if (field === 'zipCode') {
       formattedValue = formatCEP(value);
@@ -128,7 +121,7 @@ export const OrganizationPage = () => {
     } else if (field === 'ie') {
       formattedValue = formatIE(value);
     }
-    
+
     setFormData(prev => ({
       ...prev,
       [field]: formattedValue,
@@ -136,11 +129,10 @@ export const OrganizationPage = () => {
   };
 
   const handleAddressChange = (field: string, value: string) => {
-    // Clear errors when user starts typing
     if (fieldErrors[field]) {
       setFieldErrors(prev => ({ ...prev, [field]: '' }));
     }
-    
+
     setFormData(prev => ({
       ...prev,
       address: {
@@ -151,20 +143,18 @@ export const OrganizationPage = () => {
   };
 
   const handlePocChange = (field: string, value: string) => {
-    // Clear errors when user starts typing
     if (field === 'email' && emailErrors.pocEmail) {
       setEmailErrors(prev => ({ ...prev, pocEmail: '' }));
     }
     if (field === 'phoneNumber' && fieldErrors.pocPhoneNumber) {
       setFieldErrors(prev => ({ ...prev, pocPhoneNumber: '' }));
     }
-    
-    // Format phone field
+
     let formattedValue = value;
     if (field === 'phoneNumber') {
       formattedValue = formatPhone(value);
     }
-    
+
     setFormData(prev => ({
       ...prev,
       poc: {
@@ -175,19 +165,17 @@ export const OrganizationPage = () => {
   };
 
   const handleTaxChange = (field: string, value: string) => {
-    // Clear errors when user starts typing
     if (fieldErrors[field]) {
       setFieldErrors(prev => ({ ...prev, [field]: '' }));
     }
-    
-    // Format fields
+
     let formattedValue = value;
     if (field === 'cnpj') {
       formattedValue = formatCNPJ(value);
     } else if (field === 'ie') {
       formattedValue = formatIE(value);
     }
-    
+
     setFormData(prev => ({
       ...prev,
       tax: {
@@ -203,12 +191,11 @@ export const OrganizationPage = () => {
       address: {
         ...prev.address,
         state: state || '',
-        city: '', // Reset city when state changes
+        city: '',
       },
     }));
-    
+
     if (state) {
-      // Find the state code from the state name
       const stateObj = states.find(s => s.name === state);
       if (stateObj && citiesByState.has(stateObj.code)) {
         setAvailableCities(citiesByState.get(stateObj.code) || []);
@@ -264,7 +251,6 @@ export const OrganizationPage = () => {
     try {
       await deleteOrganization(organization.id);
       setDeleteDialogOpen(false);
-      // Redirect to home or show success message
       setSuccess('Organização excluída com sucesso!');
     } catch (err) {
       setError('Erro ao excluir organização. Tente novamente.');
@@ -275,89 +261,92 @@ export const OrganizationPage = () => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-        <CircularProgress />
-      </Box>
+      <div className="flex min-h-[200px] items-center justify-center">
+        <Spinner className="size-6" />
+      </div>
     );
   }
 
   if (!organization) {
     return (
-      <Alert severity="warning">
-        Nenhuma organização encontrada. Entre em contato com o administrador.
+      <Alert variant="destructive">
+        <AlertDescription>
+          Nenhuma organização encontrada. Entre em contato com o administrador.
+        </AlertDescription>
       </Alert>
     );
   }
 
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
+    <div>
+      <h3 className="mb-2 scroll-m-20 text-xl font-semibold tracking-tight">
         Informações da Organização
-      </Typography>
+      </h3>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {success}
+        <Alert className="mb-4">
+          <AlertDescription>{success}</AlertDescription>
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <div className="grid grid-cols-12 gap-6">
         {/* Basic Information */}
-        <Grid item xs={12}>
-          <Paper elevation={1} sx={{ p: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+        <div className="col-span-12">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <p className="mb-2 text-base font-medium">
               Informações Básicas
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Nome da Organização"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Domínio"
-                  value={formData.domain}
-                  onChange={(e) => handleInputChange('domain', e.target.value)}
-                  size="small"
-                  placeholder="exemplo.com"
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Telefone"
-                  value={formData.phoneNumber}
-                  onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                  onBlur={(e) => {
-                    const error = validatePhone(e.target.value);
-                    if (error) {
-                      setFieldErrors(prev => ({ ...prev, phoneNumber: error }));
-                    }
-                  }}
-                  size="small"
-                  error={!!fieldErrors.phoneNumber}
-                  helperText={fieldErrors.phoneNumber}
-                  placeholder="(11) 99999-9999"
-                  inputProps={{ maxLength: 15 }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Box>
-                  <TextField
-                    fullWidth
-                    label="Email"
+            </p>
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 md:col-span-6">
+                <Field>
+                  <FieldLabel>Nome da Organização</FieldLabel>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                  />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field>
+                  <FieldLabel>Domínio</FieldLabel>
+                  <Input
+                    value={formData.domain}
+                    onChange={(e) => handleInputChange('domain', e.target.value)}
+                    placeholder="exemplo.com"
+                  />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field data-invalid={!!fieldErrors.phoneNumber}>
+                  <FieldLabel>Telefone</FieldLabel>
+                  <Input
+                    value={formData.phoneNumber}
+                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                    onBlur={(e) => {
+                      const validationError = validatePhone(e.target.value);
+                      if (validationError) {
+                        setFieldErrors(prev => ({ ...prev, phoneNumber: validationError }));
+                      }
+                    }}
+                    aria-invalid={!!fieldErrors.phoneNumber}
+                    placeholder="(11) 99999-9999"
+                    maxLength={15}
+                  />
+                  {fieldErrors.phoneNumber && (
+                    <FieldError>{fieldErrors.phoneNumber}</FieldError>
+                  )}
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field data-invalid={!!emailErrors.email}>
+                  <FieldLabel>Email</FieldLabel>
+                  <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
@@ -367,40 +356,37 @@ export const OrganizationPage = () => {
                         setEmailErrors(prev => ({ ...prev, email: 'Digite um email válido' }));
                       }
                     }}
-                    size="small"
-                    error={!!emailErrors.email}
+                    aria-invalid={!!emailErrors.email}
                     placeholder="contato@empresa.com.br"
                   />
                   {emailErrors.email && (
-                    <FormHelperText error>
-                      {emailErrors.email}
-                    </FormHelperText>
+                    <FieldError>{emailErrors.email}</FieldError>
                   )}
-                </Box>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
+                </Field>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Address */}
-        <Grid item xs={12}>
-          <Paper elevation={1} sx={{ p: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+        <div className="col-span-12">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <p className="mb-2 text-base font-medium">
               Endereço
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Endereço"
-                  value={formData.address.streetAddress}
-                  onChange={(e) => handleAddressChange('streetAddress', e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium">Estado</label>
+            </p>
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12">
+                <Field>
+                  <FieldLabel>Endereço</FieldLabel>
+                  <Input
+                    value={formData.address.streetAddress}
+                    onChange={(e) => handleAddressChange('streetAddress', e.target.value)}
+                  />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-4">
+                <Field>
+                  <FieldLabel>Estado</FieldLabel>
                   <select
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     value={formData.address.state || ''}
@@ -413,11 +399,11 @@ export const OrganizationPage = () => {
                       </option>
                     ))}
                   </select>
-                </div>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium">Cidade</label>
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-4">
+                <Field>
+                  <FieldLabel>Cidade</FieldLabel>
                   <select
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     value={formData.address.city || ''}
@@ -431,80 +417,83 @@ export const OrganizationPage = () => {
                       </option>
                     ))}
                   </select>
-                </div>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="CEP"
-                  value={formData.address.zipCode}
-                  onChange={(e) => handleAddressChange('zipCode', e.target.value)}
-                  onBlur={(e) => {
-                    const error = validateCEP(e.target.value);
-                    if (error) {
-                      setFieldErrors(prev => ({ ...prev, zipCode: error }));
-                    }
-                  }}
-                  size="small"
-                  error={!!fieldErrors.zipCode}
-                  helperText={fieldErrors.zipCode}
-                  placeholder="00000-000"
-                  inputProps={{ maxLength: 9 }}
-                />
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-4">
+                <Field data-invalid={!!fieldErrors.zipCode}>
+                  <FieldLabel>CEP</FieldLabel>
+                  <Input
+                    value={formData.address.zipCode}
+                    onChange={(e) => handleAddressChange('zipCode', e.target.value)}
+                    onBlur={(e) => {
+                      const validationError = validateCEP(e.target.value);
+                      if (validationError) {
+                        setFieldErrors(prev => ({ ...prev, zipCode: validationError }));
+                      }
+                    }}
+                    aria-invalid={!!fieldErrors.zipCode}
+                    placeholder="00000-000"
+                    maxLength={9}
+                  />
+                  {fieldErrors.zipCode && (
+                    <FieldError>{fieldErrors.zipCode}</FieldError>
+                  )}
+                </Field>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Point of Contact */}
-        <Grid item xs={12}>
-          <Paper elevation={1} sx={{ p: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+        <div className="col-span-12">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <p className="mb-2 text-base font-medium">
               Ponto de Contato
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Nome"
-                  value={formData.poc.name}
-                  onChange={(e) => handlePocChange('name', e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Cargo"
-                  value={formData.poc.role}
-                  onChange={(e) => handlePocChange('role', e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Telefone"
-                  value={formData.poc.phoneNumber}
-                  onChange={(e) => handlePocChange('phoneNumber', e.target.value)}
-                  onBlur={(e) => {
-                    const error = validatePhone(e.target.value);
-                    if (error) {
-                      setFieldErrors(prev => ({ ...prev, pocPhoneNumber: error }));
-                    }
-                  }}
-                  size="small"
-                  error={!!fieldErrors.pocPhoneNumber}
-                  helperText={fieldErrors.pocPhoneNumber}
-                  placeholder="(11) 99999-9999"
-                  inputProps={{ maxLength: 15 }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Box>
-                  <TextField
-                    fullWidth
-                    label="Email"
+            </p>
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 md:col-span-6">
+                <Field>
+                  <FieldLabel>Nome</FieldLabel>
+                  <Input
+                    value={formData.poc.name}
+                    onChange={(e) => handlePocChange('name', e.target.value)}
+                  />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field>
+                  <FieldLabel>Cargo</FieldLabel>
+                  <Input
+                    value={formData.poc.role}
+                    onChange={(e) => handlePocChange('role', e.target.value)}
+                  />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field data-invalid={!!fieldErrors.pocPhoneNumber}>
+                  <FieldLabel>Telefone</FieldLabel>
+                  <Input
+                    value={formData.poc.phoneNumber}
+                    onChange={(e) => handlePocChange('phoneNumber', e.target.value)}
+                    onBlur={(e) => {
+                      const validationError = validatePhone(e.target.value);
+                      if (validationError) {
+                        setFieldErrors(prev => ({ ...prev, pocPhoneNumber: validationError }));
+                      }
+                    }}
+                    aria-invalid={!!fieldErrors.pocPhoneNumber}
+                    placeholder="(11) 99999-9999"
+                    maxLength={15}
+                  />
+                  {fieldErrors.pocPhoneNumber && (
+                    <FieldError>{fieldErrors.pocPhoneNumber}</FieldError>
+                  )}
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field data-invalid={!!emailErrors.pocEmail}>
+                  <FieldLabel>Email</FieldLabel>
+                  <Input
                     type="email"
                     value={formData.poc.email}
                     onChange={(e) => handlePocChange('email', e.target.value)}
@@ -514,157 +503,145 @@ export const OrganizationPage = () => {
                         setEmailErrors(prev => ({ ...prev, pocEmail: 'Digite um email válido' }));
                       }
                     }}
-                    size="small"
-                    error={!!emailErrors.pocEmail}
+                    aria-invalid={!!emailErrors.pocEmail}
                     placeholder="contato@empresa.com.br"
                   />
                   {emailErrors.pocEmail && (
-                    <FormHelperText error>
-                      {emailErrors.pocEmail}
-                    </FormHelperText>
+                    <FieldError>{emailErrors.pocEmail}</FieldError>
                   )}
-                </Box>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
+                </Field>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Tax Information */}
-        <Grid item xs={12}>
-          <Paper elevation={1} sx={{ p: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+        <div className="col-span-12">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <p className="mb-2 text-base font-medium">
               Informações Tributárias
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Razão Social"
-                  value={formData.tax.razaoSocial}
-                  onChange={(e) => handleTaxChange('razaoSocial', e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="CNPJ"
-                  value={formData.tax.cnpj}
-                  onChange={(e) => handleTaxChange('cnpj', e.target.value)}
-                  onBlur={(e) => {
-                    const error = validateCNPJ(e.target.value);
-                    if (error) {
-                      setFieldErrors(prev => ({ ...prev, cnpj: error }));
-                    }
-                  }}
-                  size="small"
-                  error={!!fieldErrors.cnpj}
-                  helperText={fieldErrors.cnpj}
-                  placeholder="00.000.000/0000-00"
-                  inputProps={{ maxLength: 18 }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Inscrição Estadual (IE)"
-                  value={formData.tax.ie}
-                  onChange={(e) => handleTaxChange('ie', e.target.value)}
-                  onBlur={(e) => {
-                    const error = validateIE(e.target.value);
-                    if (error) {
-                      setFieldErrors(prev => ({ ...prev, ie: error }));
-                    }
-                  }}
-                  size="small"
-                  error={!!fieldErrors.ie}
-                  helperText={fieldErrors.ie}
-                  placeholder="000.000.000.000"
-                  inputProps={{ maxLength: 15 }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Inscrição Municipal (IM)"
-                  value={formData.tax.im}
-                  onChange={(e) => handleTaxChange('im', e.target.value)}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Certificado A1"
-                  value={formData.tax.a1Certificate}
-                  onChange={(e) => handleTaxChange('a1Certificate', e.target.value)}
-                  size="small"
-                  multiline
-                  rows={3}
-                />
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
+            </p>
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 md:col-span-6">
+                <Field>
+                  <FieldLabel>Razão Social</FieldLabel>
+                  <Input
+                    value={formData.tax.razaoSocial}
+                    onChange={(e) => handleTaxChange('razaoSocial', e.target.value)}
+                  />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field data-invalid={!!fieldErrors.cnpj}>
+                  <FieldLabel>CNPJ</FieldLabel>
+                  <Input
+                    value={formData.tax.cnpj}
+                    onChange={(e) => handleTaxChange('cnpj', e.target.value)}
+                    onBlur={(e) => {
+                      const validationError = validateCNPJ(e.target.value);
+                      if (validationError) {
+                        setFieldErrors(prev => ({ ...prev, cnpj: validationError }));
+                      }
+                    }}
+                    aria-invalid={!!fieldErrors.cnpj}
+                    placeholder="00.000.000/0000-00"
+                    maxLength={18}
+                  />
+                  {fieldErrors.cnpj && (
+                    <FieldError>{fieldErrors.cnpj}</FieldError>
+                  )}
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field data-invalid={!!fieldErrors.ie}>
+                  <FieldLabel>Inscrição Estadual (IE)</FieldLabel>
+                  <Input
+                    value={formData.tax.ie}
+                    onChange={(e) => handleTaxChange('ie', e.target.value)}
+                    onBlur={(e) => {
+                      const validationError = validateIE(e.target.value);
+                      if (validationError) {
+                        setFieldErrors(prev => ({ ...prev, ie: validationError }));
+                      }
+                    }}
+                    aria-invalid={!!fieldErrors.ie}
+                    placeholder="000.000.000.000"
+                    maxLength={15}
+                  />
+                  {fieldErrors.ie && (
+                    <FieldError>{fieldErrors.ie}</FieldError>
+                  )}
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <Field>
+                  <FieldLabel>Inscrição Municipal (IM)</FieldLabel>
+                  <Input
+                    value={formData.tax.im}
+                    onChange={(e) => handleTaxChange('im', e.target.value)}
+                  />
+                </Field>
+              </div>
+              <div className="col-span-12">
+                <Field>
+                  <FieldLabel>Certificado A1</FieldLabel>
+                  <Textarea
+                    value={formData.tax.a1Certificate}
+                    onChange={(e) => handleTaxChange('a1Certificate', e.target.value)}
+                    rows={3}
+                  />
+                </Field>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Organization Settings - Display Only */}
-        <Grid item xs={12}>
-          <Paper elevation={1} sx={{ p: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+        <div className="col-span-12">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
+            <p className="mb-2 text-base font-medium">
               Configurações da Organização
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="Fuso Horário"
-                  value={formData.settings.timezone}
-                  size="small"
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="Moeda"
-                  value={formData.settings.currency}
-                  size="small"
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="Idioma"
-                  value={formData.settings.language}
-                  size="small"
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-      </Grid>
+            </p>
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 md:col-span-4">
+                <Field>
+                  <FieldLabel>Fuso Horário</FieldLabel>
+                  <Input value={formData.settings.timezone} readOnly />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-4">
+                <Field>
+                  <FieldLabel>Moeda</FieldLabel>
+                  <Input value={formData.settings.currency} readOnly />
+                </Field>
+              </div>
+              <div className="col-span-12 md:col-span-4">
+                <Field>
+                  <FieldLabel>Idioma</FieldLabel>
+                  <Input value={formData.settings.language} readOnly />
+                </Field>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Box mt={3} display="flex" justifyContent="space-between" alignItems="center">
+      <div className="mt-6 flex items-center justify-between">
         <Button
-          variant="outlined"
-          color="error"
+          variant="outline"
           onClick={() => setDeleteDialogOpen(true)}
-          size="large"
+          className="text-destructive border-destructive hover:bg-destructive/10"
         >
           Excluir Organização
         </Button>
-        
+
         <Button
-          variant="contained"
           onClick={handleSave}
           disabled={saving}
-          size="large"
         >
           {saving ? 'Salvando...' : 'Salvar Alterações'}
         </Button>
-      </Box>
+      </div>
 
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
@@ -674,6 +651,6 @@ export const OrganizationPage = () => {
         }}
         resourceName="organização"
       />
-    </Box>
+    </div>
   );
 };

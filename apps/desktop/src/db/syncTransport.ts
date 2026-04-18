@@ -1,48 +1,41 @@
-import { eq } from "drizzle-orm";
-import { createCloudDb } from "./client";
-import { syncQueue } from "./schema";
-import { PendingSyncRecord } from "./syncQueue";
+import { getSyncApiClient, SyncPushChange } from "./syncApiClient";
+import { getOrCreateClientId } from "./syncMeta";
+import { markSyncChangeAsFailed, PendingSyncRecord } from "./syncQueue";
 
-export const replicatePendingChangesToCloud = async (changes: PendingSyncRecord[]): Promise<void> => {
-  const cloudDb = createCloudDb();
-  if (!cloudDb) {
-    throw new Error("Cloud Turso database is not configured (missing TURSO_DATABASE_URL).");
+export interface SyncTransportResult {
+  acceptedIds: string[];
+  rejectedIds: string[];
+}
+
+export const replicatePendingChangesToCloud = async (changes: PendingSyncRecord[]): Promise<SyncTransportResult> => {
+  const apiClient = getSyncApiClient();
+
+  if (!apiClient) {
+    // No API client configured — mark nothing as accepted so the queue retains items.
+    return { acceptedIds: [], rejectedIds: changes.map((c) => c.id) };
   }
 
-  for (const change of changes) {
-    const existing = await cloudDb.select({ id: syncQueue.id }).from(syncQueue).where(eq(syncQueue.id, change.id)).limit(1);
-    const now = Date.now();
+  const clientId = await getOrCreateClientId();
 
-    if (existing.length) {
-      await cloudDb
-        .update(syncQueue)
-        .set({
-          organizationId: change.organizationId,
-          tableName: change.tableName,
-          recordId: change.recordId,
-          operation: change.operation,
-          payloadJson: change.payloadJson,
-          status: "pending",
-          attempts: change.attempts,
-          nextAttemptAt: change.nextAttemptAt,
-          updatedAt: now,
-        })
-        .where(eq(syncQueue.id, change.id));
-      continue;
-    }
+  const pushChanges: SyncPushChange[] = changes.map((change) => ({
+    syncQueueId: change.id,
+    organizationId: change.organizationId,
+    tableName: change.tableName,
+    recordId: change.recordId,
+    operation: change.operation,
+    payload: JSON.parse(change.payloadJson) as Record<string, unknown>,
+    clientTimestamp: Date.now(),
+  }));
 
-    await cloudDb.insert(syncQueue).values({
-      id: change.id,
-      organizationId: change.organizationId,
-      tableName: change.tableName,
-      recordId: change.recordId,
-      operation: change.operation,
-      payloadJson: change.payloadJson,
-      status: "pending",
-      attempts: change.attempts,
-      nextAttemptAt: change.nextAttemptAt,
-      createdAt: now,
-      updatedAt: now,
-    });
+  const response = await apiClient.pushChanges({ clientId, changes: pushChanges });
+
+  // Mark individually rejected items as failed with reason
+  for (const rejection of response.rejected) {
+    await markSyncChangeAsFailed(rejection.syncQueueId, rejection.reason);
   }
+
+  return {
+    acceptedIds: response.accepted,
+    rejectedIds: response.rejected.map((r) => r.syncQueueId),
+  };
 };

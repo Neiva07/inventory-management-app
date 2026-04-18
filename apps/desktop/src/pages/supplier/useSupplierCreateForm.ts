@@ -6,7 +6,7 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { Supplier, createSupplier, getSupplier, updateSupplier, deleteSupplier, deactiveSupplier, activeSupplier } from '../../model/suppliers';
 import { ProductCategory } from '../../model/productCategories';
 import { regionByCode, citiesByState } from '../../model/region';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useAuth } from 'context/auth';
 
 export interface AddressFormDataInterface {
@@ -77,15 +77,21 @@ export const useSupplierCreateForm = (supplierID?: string) => {
         value: city,
       }));
       setAvailableCities(cityOptions);
-      
-      // Clear city selection when region changes (but not when loading existing data)
+
+      // Clear city when region changes, unless loading existing data or the
+      // currently selected city is already valid for the new region (e.g.
+      // form.reset populated both region and city in the same update).
       if (!fetchedSupplierForm) {
-        form.setValue('address.city', { label: '', value: '' });
+        const currentCity = form.getValues('address.city');
+        const cityIsValidForRegion = !!currentCity?.value && cities.includes(currentCity.value);
+        if (!cityIsValidForRegion) {
+          form.setValue('address.city', { label: '', value: '' });
+        }
       }
     } else {
       setAvailableCities([]);
     }
-  }, [watchedRegion, form.setValue, fetchedSupplierForm]);
+  }, [watchedRegion, form.setValue, form.getValues, fetchedSupplierForm]);
 
   // Populate cities when form is reset with fetched data
   useEffect(() => {
@@ -174,29 +180,11 @@ export const useSupplierCreateForm = (supplierID?: string) => {
         ...restData,
       } as Supplier);
 
-      toast.success('Fornecedor registrado com sucesso', {
-        position: "bottom-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        draggable: true,
-        progress: undefined,
-        icon: false,
-        theme: "colored",
-      })
+      toast.success('Fornecedor registrado com sucesso')
 
     } catch (err) {
       console.error(err)
-      toast.error('Alguma coisa deu errado. Tente novamente mais tarde', {
-        position: "bottom-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        draggable: true,
-        progress: undefined,
-        icon: false,
-        theme: "colored",
-      })
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde')
     }
 
   }, [organization?.id, user.id]);

@@ -13,6 +13,8 @@ import { Input } from 'components/ui/input';
 import { Button } from 'components/ui/button';
 import { cn } from 'lib/utils';
 import { useOnboarding } from '../../context/onboarding';
+import { DevFillButton } from '../../dev/useDevFill';
+import { makeTaxDataSetupValues } from '../../dev/formValues';
 
 interface TaxDataSetupProps {
   showErrors?: boolean;
@@ -113,10 +115,17 @@ export const TaxDataSetup: React.FC<TaxDataSetupProps> = ({ showErrors = false }
 
   const nfeRequirements = checkNFERequirements();
 
+  const handleDevFill = () => {
+    updateData({ taxData: makeTaxDataSetupValues() });
+  };
+
   return (
     <div>
       {/* Header Section */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 relative">
+        <div className="absolute right-0 top-0">
+          <DevFillButton onFill={handleDevFill} />
+        </div>
         <div className="mb-3">
           <Receipt className="h-16 w-16 text-primary mx-auto" />
         </div>

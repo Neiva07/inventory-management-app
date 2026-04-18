@@ -26,9 +26,23 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from 'context/auth';
 
-import { Button } from 'components/ui';
+import { Button, SparklesText } from 'components/ui';
 import { cn } from 'lib/utils';
 import logo from '../../../assets/icons/logo.png';
+
+const DISABLED_PATHS = new Set([
+  '/employees/create',
+  '/purchase-list',
+  '/customer-requests',
+  '/receipts',
+  '/advances',
+  '/accounts-receivable',
+  '/financial-movements',
+  '/account-flows',
+  '/daily-cash',
+  '/retroactive-cash',
+  '/cash-flow',
+]);
 
 const drawerWidth = 270;
 const collapsedWidth = 64;
@@ -87,21 +101,41 @@ function Section({
       </button>
       {expanded ? (
         <div className="mt-1 space-y-0.5">
-          {items.map((item) => (
-            <button
-              key={item.text}
-              type="button"
-              onClick={() => navigate(item.path)}
-              className={cn(
-                'flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-white/10',
-                isActive(item.path) && 'bg-primary-foreground/15'
-              )}
-              title={!open ? item.text : undefined}
-            >
-              <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center">{item.icon}</span>
-              {open ? <span className="truncate">{item.text}</span> : null}
-            </button>
-          ))}
+          {[...items].sort((a, b) => {
+            const aDisabled = DISABLED_PATHS.has(a.path) ? 1 : 0;
+            const bDisabled = DISABLED_PATHS.has(b.path) ? 1 : 0;
+            return aDisabled - bDisabled;
+          }).map((item) => {
+            const disabled = DISABLED_PATHS.has(item.path);
+            return (
+              <button
+                key={item.text}
+                type="button"
+                onClick={disabled ? undefined : () => navigate(item.path)}
+                className={cn(
+                  'flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm',
+                  disabled
+                    ? 'cursor-not-allowed opacity-50'
+                    : 'hover:bg-white/10',
+                  !disabled && isActive(item.path) && 'bg-primary-foreground/15'
+                )}
+                title={!open ? item.text : undefined}
+                disabled={disabled}
+              >
+                <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center">{item.icon}</span>
+                {open ? (
+                  <>
+                    <span className="truncate">{item.text}</span>
+                    {disabled ? (
+                      <span className="ml-auto shrink-0 text-[10px] italic text-white/30">
+                        em breve
+                      </span>
+                    ) : null}
+                  </>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       ) : null}
     </div>

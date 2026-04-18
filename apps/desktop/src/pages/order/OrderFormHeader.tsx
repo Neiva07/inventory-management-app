@@ -13,7 +13,7 @@ import { statuses } from './useOrderForm';
 import { paymentMethods } from "model";
 import { TotalCostDisplay } from 'components/TotalCostDisplay';
 import { TotalComissionDisplay } from 'components/TotalComissionDisplay';
-import { EnhancedAutocomplete } from "components/EnhancedAutocomplete";
+import { Autocomplete } from "components/ui/autocomplete";
 import { DatePickerField } from "components/ui";
 
 export const paymentOptions = [
@@ -132,7 +132,7 @@ export const OrderFormHeader = ({ onDelete, onBack, order, firstFieldRef, focusN
 
                 return (
                   <>
-                    <EnhancedAutocomplete
+                    <Autocomplete
                       label="Cliente"
                       value={customer}
                       {...props}
@@ -176,7 +176,7 @@ export const OrderFormHeader = ({ onDelete, onBack, order, firstFieldRef, focusN
 
                 return (
                   <>
-                    <EnhancedAutocomplete
+                    <Autocomplete
                       value={status}
                       {...props}
                       id="status-select"
@@ -214,7 +214,7 @@ export const OrderFormHeader = ({ onDelete, onBack, order, firstFieldRef, focusN
 
                 return (
                   <>
-                    <EnhancedAutocomplete
+                    <Autocomplete
                       value={paymentType}
                       {...props}
                       id="payment-method-select"

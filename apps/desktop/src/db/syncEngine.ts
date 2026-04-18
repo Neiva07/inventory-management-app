@@ -6,12 +6,19 @@ import {
   PendingSyncRecord,
 } from "./syncQueue";
 import { setSyncState } from "./syncState";
+import { pullAndApplyDelta } from "./syncDown";
+import { type SyncTransportResult } from "./syncTransport";
 
-type SyncTransport = (changes: PendingSyncRecord[]) => Promise<void>;
+type SyncTransport = (changes: PendingSyncRecord[]) => Promise<SyncTransportResult>;
 
 export interface SyncEngineOptions {
   transport: SyncTransport;
   intervalMs?: number;
+}
+
+export interface SyncScope {
+  userId: string;
+  organizationIds: string[];
 }
 
 export class SyncEngine {
@@ -19,10 +26,19 @@ export class SyncEngine {
   private readonly intervalMs: number;
   private timer: ReturnType<typeof setInterval> | null = null;
   private isRunning = false;
+  private scope: SyncScope | null = null;
 
   constructor(options: SyncEngineOptions) {
     this.transport = options.transport;
     this.intervalMs = options.intervalMs ?? 15_000;
+  }
+
+  setScope(scope: SyncScope): void {
+    this.scope = scope;
+  }
+
+  clearScope(): void {
+    this.scope = null;
   }
 
   start(): void {
@@ -66,38 +82,78 @@ export class SyncEngine {
 
     this.isRunning = true;
     try {
-      const pending = await getPendingSyncChanges();
+      await this.syncUp();
+      await this.syncDown();
+    } finally {
+      this.isRunning = false;
+    }
+  }
 
-      if (!pending.length) {
-        setSyncState({ status: "synced", pendingCount: 0, lastError: null, lastSyncedAt: Date.now() });
-        return;
+  private async syncUp(): Promise<void> {
+    const pending = await getPendingSyncChanges();
+
+    if (!pending.length) {
+      setSyncState({ status: "synced", pendingCount: 0, lastError: null, lastSyncedAt: Date.now() });
+      return;
+    }
+
+    setSyncState({ status: "syncing", pendingCount: pending.length, lastError: null });
+    const ids = pending.map((change) => change.id);
+    await markSyncChangesAsSyncing(ids);
+
+    try {
+      const result = await this.transport(pending);
+
+      if (result.acceptedIds.length > 0) {
+        await markSyncChangesAsSynced(result.acceptedIds);
       }
 
-      setSyncState({ status: "syncing", pendingCount: pending.length, lastError: null });
-      const ids = pending.map((change) => change.id);
-      await markSyncChangesAsSyncing(ids);
-
-      try {
-        await this.transport(pending);
-        await markSyncChangesAsSynced(ids);
+      // Rejected items are already marked as failed by the transport,
+      // but update the UI state accordingly.
+      if (result.rejectedIds.length > 0 && result.acceptedIds.length === 0) {
+        setSyncState({
+          status: "error",
+          pendingCount: result.rejectedIds.length,
+          lastError: "All changes were rejected by the server",
+        });
+      } else {
         setSyncState({
           status: "synced",
-          pendingCount: 0,
+          pendingCount: result.rejectedIds.length,
           lastSyncedAt: Date.now(),
           lastError: null,
         });
-      } catch (error) {
-        await Promise.all(
-          pending.map((change) => markSyncChangeAsFailed(change.id, error instanceof Error ? error.message : String(error)))
-        );
-        setSyncState({
-          status: "error",
-          pendingCount: pending.length,
-          lastError: error instanceof Error ? error.message : String(error),
-        });
       }
-    } finally {
-      this.isRunning = false;
+    } catch (error) {
+      await Promise.all(
+        pending.map((change) =>
+          markSyncChangeAsFailed(change.id, error instanceof Error ? error.message : String(error)),
+        ),
+      );
+      setSyncState({
+        status: "error",
+        pendingCount: pending.length,
+        lastError: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async syncDown(): Promise<void> {
+    if (!this.scope) {
+      return;
+    }
+
+    const scopes = [
+      { type: "user" as const, id: this.scope.userId },
+      ...this.scope.organizationIds.map((id) => ({ type: "organization" as const, id })),
+    ];
+
+    try {
+      await pullAndApplyDelta(scopes);
+    } catch (error) {
+      // Sync-down failures are logged but don't override the primary sync status.
+      // The sync-up status is what the user cares about for data safety.
+      console.error("Sync-down failed:", error);
     }
   }
 
@@ -109,4 +165,3 @@ export class SyncEngine {
     setSyncState({ status: "offline" });
   };
 }
-

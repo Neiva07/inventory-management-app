@@ -7,6 +7,7 @@ import { Organization, getOrganization } from "model/organization";
 import { UserMembership, getUserMembership } from "model/userMembership";
 import { createAppDb } from "../db/client";
 import { users } from "../db/schema";
+import { configureSyncScope, clearSyncScope } from "../db/syncRuntime";
 
 interface AuthContextData {
   user: User | null;
@@ -47,6 +48,16 @@ export const AuthContextProvider = ({ children }: { children: ReactElement }) =>
 
       const org = await getOrganization(userMembership.organizationId);
       setOrganization(org);
+
+      // Configure bidirectional sync scope for this user + org
+      if (user?.id && userMembership.organizationId) {
+        const cachedSession = getFromCache("session") as Session | null;
+        void configureSyncScope(
+          user.id,
+          [userMembership.organizationId],
+          () => cachedSession?.id ?? null,
+        );
+      }
     } catch (error) {
       setOrganization(null);
       setMembership(null);
@@ -70,6 +81,7 @@ export const AuthContextProvider = ({ children }: { children: ReactElement }) =>
       console.error('Error during logout:', error);
     } finally {
       // Clear local state and cache regardless of API success
+      clearSyncScope();
       setUser(null);
       setOrganization(null);
       setMembership(null);
@@ -79,6 +91,54 @@ export const AuthContextProvider = ({ children }: { children: ReactElement }) =>
     }
   };
 
+  const upsertInFlight = React.useRef<Promise<User | null> | null>(null);
+
+  const handleSession = React.useCallback(async (sessionData: Session) => {
+    // Deduplicate: if an upsert is already running, reuse its result
+    if (upsertInFlight.current) {
+      return upsertInFlight.current;
+    }
+
+    const promise = upsertUserFromSession(sessionData)
+      .then((upsertedUser) => {
+        setUser(upsertedUser);
+        storeInCache("user", upsertedUser);
+        return upsertedUser;
+      })
+      .catch(async (error) => {
+        console.error("Failed to upsert user:", error);
+        const userFromCache = getFromCache("user");
+        if (!userFromCache) return null;
+
+        try {
+          const db = createAppDb();
+          const rows = await db
+            .select({ id: users.id })
+            .from(users)
+            .where(eq(users.id, userFromCache.id))
+            .limit(1);
+
+          if (rows.length > 0) {
+            setUser(userFromCache);
+            return userFromCache;
+          }
+        } catch {
+          // DB not ready
+        }
+
+        removeFromCache("user");
+        removeFromCache("session");
+        setSession(null);
+        return null;
+      })
+      .finally(() => {
+        upsertInFlight.current = null;
+      });
+
+    upsertInFlight.current = promise;
+    return promise;
+  }, []);
+
   useEffect(() => {
     if (window.electron) {
       window.electron.onAuthSessionReceived(async (newSession) => {
@@ -86,56 +146,20 @@ export const AuthContextProvider = ({ children }: { children: ReactElement }) =>
         setSession(newSession);
         storeInCache("session", newSession);
         if (newSession) {
-          const firebaseUser = await upsertUserFromSession(newSession);
-          setUser(firebaseUser);
-          storeInCache("user", firebaseUser);
+          await handleSession(newSession);
         } else {
           const user = getFromCache("user")
           setUser(user);
         }
       });
     }
-  }, []);
+  }, [handleSession]);
 
   useEffect(() => {
     const cachedSession = getFromCache("session");
     setSession(cachedSession);
     if (cachedSession) {
-      upsertUserFromSession(cachedSession)
-        .then((firebaseUser) => {
-          if (firebaseUser) {
-            setUser(firebaseUser);
-            storeInCache("user", firebaseUser);
-          }
-        })
-        .catch(async () => {
-          const userFromCache = getFromCache("user");
-          if (!userFromCache) return;
-
-          // Verify the cached user exists in the local DB. If the DB is fresh
-          // (new install, reset, etc.) the user row won't exist and proceeding
-          // with a stale cache would cause FK constraint errors everywhere.
-          try {
-            const db = createAppDb();
-            const rows = await db
-              .select({ id: users.id })
-              .from(users)
-              .where(eq(users.id, userFromCache.id))
-              .limit(1);
-
-            if (rows.length > 0) {
-              setUser(userFromCache);
-              return;
-            }
-          } catch {
-            // DB not ready — treat as fresh install
-          }
-
-          // Cached user not in local DB — clear stale cache
-          removeFromCache("user");
-          removeFromCache("session");
-          setSession(null);
-        });
+      void handleSession(cachedSession);
     }
   }, []);
 

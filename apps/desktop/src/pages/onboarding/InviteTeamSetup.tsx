@@ -6,6 +6,8 @@ import { Button } from 'components/ui/button';
 import { cn } from 'lib/utils';
 import { useOnboarding } from '../../context/onboarding';
 import { isValidEmail } from '../../lib/email';
+import { DevFillButton } from '../../dev/useDevFill';
+import { makeInviteTeamSetupValues } from '../../dev/formValues';
 
 export const InviteTeamSetup: React.FC = () => {
   const { onboardingData, updateData, setStepValidation } = useOnboarding();
@@ -113,10 +115,17 @@ export const InviteTeamSetup: React.FC = () => {
     }
   };
 
+  const handleDevFill = () => {
+    updateData({ invitations: makeInviteTeamSetupValues() });
+  };
+
   return (
     <div>
       {/* Header Section */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 relative">
+        <div className="absolute right-0 top-0">
+          <DevFillButton onFill={handleDevFill} />
+        </div>
         <div className="mb-4">
           <Users className="h-16 w-16 text-primary mx-auto" />
         </div>
