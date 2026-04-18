@@ -1,14 +1,4 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import {
-  Box,
-  Button,
-  Divider,
-  FormControl,
-  Grid,
-  TextField,
-  Typography,
-  Tooltip,
-} from "components/ui/form-compat";
 import { Controller, FormProvider } from "react-hook-form";
 import { SelectField, useProductCreateForm } from "./useProductCreateForm";
 import { Variants } from "./Variants";
@@ -23,8 +13,15 @@ import { CreateModeToggle } from 'components/CreateModeToggle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { useFormWrapper } from 'hooks/forms/useFormWrapper';
-import { EnhancedAutocomplete } from 'components/EnhancedAutocomplete';
+import { Autocomplete } from 'components/ui/autocomplete';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
+import { DevFillButton } from '../../dev/useDevFill';
+import { makeProductFormValuesFull } from '../../dev/formValues';
+import { Field, FieldLabel, FieldError } from 'components/ui/field';
+import { Input } from 'components/ui/input';
+import { Separator } from 'components/ui/separator';
+import { Button } from 'components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from 'components/ui/tooltip';
 
 interface ProductFormProps {
   productID?: string;
@@ -181,12 +178,12 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
     onBack: () => navigate(-1),
     autoFocusField: 'name',
     helpTitle: 'Atalhos do Teclado - Produto',
-    fieldRefs: [titleRef, descriptionRef, categoryRef, suppliersRef, baseUnitRef],
+    fieldRefs: allFieldRefs,
   });
 
   return (
     <FormProvider register={register} {...formMethods}>
-      <Box component="form" ref={formRef} sx={{ position: 'relative', pt: 8 }}>
+      <form ref={formRef} className="relative pt-16">
         <FormActions
           showDelete={!!productID}
           showInactivate={!!product && product.status === 'active'}
@@ -209,293 +206,298 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
           }}
           absolute={true}
         />
-        <Grid container spacing={1}>
-          <Grid item xs={12}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 3 }}>
+        <div className="grid grid-cols-12 gap-2">
+          <div className="col-span-12">
+            <div className="flex items-center gap-4 flex-wrap mb-6">
               <PageTitle>
                 {productID ? "Editar Produto" : "Cadastro de Produto"}
               </PageTitle>
               {product?.publicId && (
                 <PublicIdDisplay publicId={product.publicId} />
               )}
-            </Box>
-          </Grid>
-        </Grid>
-        <Grid container spacing={1}>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field }) => {
-                  return (
-                    <TextField
+              {!productID && (
+                <DevFillButton
+                  onFill={() =>
+                    formMethods.reset(
+                      makeProductFormValuesFull({ categories, suppliers, units }),
+                    )
+                  }
+                />
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-12 gap-2">
+          <div className="col-span-6">
+            <Controller
+              control={formMethods.control}
+              render={({ field, fieldState }) => {
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Nome do produto</FieldLabel>
+                    <Input
                       {...field}
                       ref={firstFieldRef || titleRef}
-                      variant="outlined"
-                      label="Nome do produto"
-                      error={!!formMethods.formState.errors.title}
-                      helperText={formMethods.formState.errors.title?.message}
+                      aria-invalid={fieldState.invalid}
                       onFocus={(e) => e.target.select()}
                     />
-                  );
-                }}
-                name="title"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field: { value: productCategory, ...props } }) => {
-                  const handleChange = (
-                    _: React.SyntheticEvent<Element, Event>,
-                    value: SelectField | null
-                  ) => {
-                    props.onChange(value);
-                  };
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                );
+              }}
+              name="title"
+            />
+          </div>
+          <div className="col-span-6">
+            <Controller
+              control={formMethods.control}
+              render={({ field: { value: productCategory, ...props } }) => {
+                const handleChange = (
+                  _: React.SyntheticEvent<Element, Event>,
+                  value: SelectField | null
+                ) => {
+                  props.onChange(value);
+                };
 
-                  return (
-                    <EnhancedAutocomplete
-                      value={productCategory}
-                      {...props}
-                      id="product-category"
-                      options={categories.map((c) => {
-                        return {
-                          label: c.name,
-                          value: c.id,
-                        } as SelectField;
-                      })}
-                      getOptionLabel={(option) => (option as SelectField)?.label ?? ''}
-                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
-                        option.value === value?.value
-                      }
-                      onChange={handleChange}
-                      label="Categoria"
-                      error={!!formMethods.formState.errors.productCategory}
-                      helperText={formMethods.formState.errors.productCategory?.label?.message}
-                      onNextField={() => focusNextField(categoryRef)}
-                      onPreviousField={() => focusPreviousField(categoryRef)}
-                      ref={categoryRef}
-                    />
-                  );
-                }}
-                name="productCategory"
-              />
-            </FormControl>
-          </Grid>
+                return (
+                  <Autocomplete
+                    value={productCategory}
+                    {...props}
+                    id="product-category"
+                    options={categories.map((c) => {
+                      return {
+                        label: c.name,
+                        value: c.id,
+                      } as SelectField;
+                    })}
+                    getOptionLabel={(option) => (option as SelectField)?.label ?? ''}
+                    isOptionEqualToValue={(option: SelectField, value: SelectField) =>
+                      option.value === value?.value
+                    }
+                    onChange={handleChange}
+                    label="Categoria"
+                    error={!!formMethods.formState.errors.productCategory}
+                    helperText={formMethods.formState.errors.productCategory?.label?.message}
+                    onNextField={() => focusNextField(categoryRef)}
+                    onPreviousField={() => focusPreviousField(categoryRef)}
+                    ref={categoryRef}
+                  />
+                );
+              }}
+              name="productCategory"
+            />
+          </div>
 
-          <Grid item xs={12}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field: { value: description, onChange } }) => {
-                  return (
-                    <TextField
+          <div className="col-span-12">
+            <Controller
+              control={formMethods.control}
+              render={({ field: { value: description, onChange }, fieldState }) => {
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>descrição</FieldLabel>
+                    <Input
                       ref={descriptionRef}
-                      label="descrição"
-                      variant="outlined"
-                      style={{
-                        width: "100%",
-                      }}
+                      className="w-full"
                       value={description}
                       onChange={onChange}
-                      error={!!formMethods.formState.errors.description}
-                      helperText={formMethods.formState.errors.description?.message}
+                      aria-invalid={fieldState.invalid}
                       onFocus={(e) => e.target.select()}
                     />
-                  );
-                }}
-                name="description"
-              />
-            </FormControl>
-          </Grid>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                );
+              }}
+              name="description"
+            />
+          </div>
 
-          <Grid item xs={4}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field: { ...props } }) => {
-                  return (
-                    <TextField
+          <div className="col-span-4">
+            <Controller
+              control={formMethods.control}
+              render={({ field: { ...props }, fieldState }) => {
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Comissão do vendedor</FieldLabel>
+                    <Input
                       {...props}
                       ref={commissionRef}
-                      variant="outlined"
-                      label="Comissão do vendedor"
+                      aria-invalid={fieldState.invalid}
                       onFocus={(e) => e.target.select()}
                     />
-                  );
-                }}
-                name="sailsmanComission"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={8}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field: { value: suppliersSelected, ...props } }) => {
-                  const handleChange = (
-                    _: React.SyntheticEvent<Element, Event>,
-                    value: SelectField[]
-                  ) => {
-                    props.onChange(value);
-                  };
-                  return (
-                    <EnhancedAutocomplete
-                      multiple
-                      id="suppliers"
-                      {...props}
-                      options={suppliers.map(
-                        (s) => ({ label: s.tradeName, value: s.id } as SelectField)
-                      )}
-                      getOptionLabel={(option: SelectField) => option.label}
-                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
-                        option.value === value?.value
-                      }
-                      value={suppliersSelected}
-                      label="Fornecedores"
-                      onNextField={() => focusNextField(suppliersRef)}
-                      onPreviousField={() => focusPreviousField(suppliersRef)}
-                      onChange={handleChange}
-                      ref={suppliersRef}
-                      renderTags={(list: SelectField[]) => {
-                        const displayList = list
-                          .map((item) => item.label)
-                          .join(", ");
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                );
+              }}
+              name="sailsmanComission"
+            />
+          </div>
+          <div className="col-span-8">
+            <Controller
+              control={formMethods.control}
+              render={({ field: { value: suppliersSelected, ...props } }) => {
+                const handleChange = (
+                  _: React.SyntheticEvent<Element, Event>,
+                  value: SelectField[]
+                ) => {
+                  props.onChange(value);
+                };
+                return (
+                  <Autocomplete
+                    multiple
+                    id="suppliers"
+                    {...props}
+                    options={suppliers.map(
+                      (s) => ({ label: s.tradeName, value: s.id } as SelectField)
+                    )}
+                    getOptionLabel={(option: SelectField) => option.label}
+                    isOptionEqualToValue={(option: SelectField, value: SelectField) =>
+                      option.value === value?.value
+                    }
+                    value={suppliersSelected}
+                    label="Fornecedores"
+                    onNextField={() => focusNextField(suppliersRef)}
+                    onPreviousField={() => focusPreviousField(suppliersRef)}
+                    onChange={handleChange}
+                    ref={suppliersRef}
+                    renderTags={(list: SelectField[]) => {
+                      const displayList = list
+                        .map((item) => item.label)
+                        .join(", ");
 
-                        return <span>{displayList}</span>;
-                      }}
-                    />
-                  );
-                }}
-                name="suppliers"
-              />
-            </FormControl>
-          </Grid>
-        </Grid>
-        <Divider style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }} />
-        <Typography variant="h6" gutterBottom>
+                      return <span>{displayList}</span>;
+                    }}
+                  />
+                );
+              }}
+              name="suppliers"
+            />
+          </div>
+        </div>
+        <Separator className="my-3" />
+        <h3 className="mb-2 scroll-m-20 text-xl font-semibold tracking-tight">
           Unidade base
-        </Typography>
-        <Grid container spacing={1}>
-          <Grid item xs={4}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field: { value: baseUnit, ...props } }) => {
-                  const handleChange = (
-                    _: React.SyntheticEvent<Element, Event>,
-                    value: SelectField | null
-                  ) => {
-                    props.onChange(value);
-                  };
-                  return (
-                    <EnhancedAutocomplete
-                      {...props}
-                      id="base-unit"
-                      value={baseUnit}
-                      options={units.map((c) => {
-                        return {
-                          label: c.description ? `${c.name} (${c.description})` : c.name,
-                          value: c.id,
-                        } as SelectField;
-                      })}
-                      getOptionLabel={(option: SelectField) => option.label}
-                      isOptionEqualToValue={(option: SelectField, value: SelectField) =>
-                        option.value === value?.value
-                      }
-                      onChange={handleChange}
-                      label="Unidade base"
-                      error={!!formMethods.formState.errors.baseUnit}
-                      helperText={formMethods.formState.errors.baseUnit?.label?.message}
-                      onNextField={() => focusNextField(baseUnitRef)}
-                      onPreviousField={() => focusPreviousField(baseUnitRef)}
-                      ref={baseUnitRef}
-                    />
-                  );
-                }}
-                name="baseUnit"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={4}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field }) => {
-                  return (
-                    <TextField {...field}
+        </h3>
+        <div className="grid grid-cols-12 gap-2">
+          <div className="col-span-4">
+            <Controller
+              control={formMethods.control}
+              render={({ field: { value: baseUnit, ...props } }) => {
+                const handleChange = (
+                  _: React.SyntheticEvent<Element, Event>,
+                  value: SelectField | null
+                ) => {
+                  props.onChange(value);
+                };
+                return (
+                  <Autocomplete
+                    {...props}
+                    id="base-unit"
+                    value={baseUnit}
+                    options={units.map((c) => {
+                      return {
+                        label: c.description ? `${c.name} (${c.description})` : c.name,
+                        value: c.id,
+                      } as SelectField;
+                    })}
+                    getOptionLabel={(option: SelectField) => option.label}
+                    isOptionEqualToValue={(option: SelectField, value: SelectField) =>
+                      option.value === value?.value
+                    }
+                    onChange={handleChange}
+                    label="Unidade base"
+                    error={!!formMethods.formState.errors.baseUnit}
+                    helperText={formMethods.formState.errors.baseUnit?.label?.message}
+                    onNextField={() => focusNextField(baseUnitRef)}
+                    onPreviousField={() => focusPreviousField(baseUnitRef)}
+                    ref={baseUnitRef}
+                  />
+                );
+              }}
+              name="baseUnit"
+            />
+          </div>
+          <div className="col-span-4">
+            <Controller
+              control={formMethods.control}
+              render={({ field, fieldState }) => {
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Estoque (unidades base)</FieldLabel>
+                    <Input
+                      {...field}
                       ref={inventoryRef}
-                      variant="outlined"
-                      label="Estoque (unidades base)"
+                      aria-invalid={fieldState.invalid}
                       onFocus={(e) => e.target.select()}
                     />
-                  );
-                }}
-                name="inventory"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={4}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field: { ...props } }) => {
-                  return (
-                    <TextField
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                );
+              }}
+              name="inventory"
+            />
+          </div>
+          <div className="col-span-4">
+            <Controller
+              control={formMethods.control}
+              render={({ field: { ...props }, fieldState }) => {
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Estoque Mínimo</FieldLabel>
+                    <Input
+                      {...props}
                       ref={minInventoryRef}
-                      variant="outlined"
-                      label="Estoque Mínimo"
-                      {...props}
+                      aria-invalid={fieldState.invalid}
                       onFocus={(e) => e.target.select()}
                     />
-                  );
-                }}
-                name="minInventory"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field: { ...props } }) => {
-                  return (
-                    <TextField
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                );
+              }}
+              name="minInventory"
+            />
+          </div>
+          <div className="col-span-6">
+            <Controller
+              control={formMethods.control}
+              render={({ field: { ...props }, fieldState }) => {
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Custo de compra</FieldLabel>
+                    <Input
+                      {...props}
                       ref={costRef}
-                      variant="outlined"
-                      label="Custo de compra"
-                      {...props}
+                      aria-invalid={fieldState.invalid}
                       onFocus={(e) => e.target.select()}
                     />
-                  );
-                }}
-                name="cost"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <FormControl fullWidth>
-              <Controller
-                control={formMethods.control}
-                render={({ field: { ...props } }) => {
-                  return (
-                    <TextField
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                );
+              }}
+              name="cost"
+            />
+          </div>
+          <div className="col-span-6">
+            <Controller
+              control={formMethods.control}
+              render={({ field: { ...props }, fieldState }) => {
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Peso (kg)</FieldLabel>
+                    <Input
+                      {...props}
                       ref={weightRef}
-                      variant="outlined"
-                      label="Peso (kg)"
-                      {...props}
+                      aria-invalid={fieldState.invalid}
                       onFocus={(e) => e.target.select()}
                     />
-                  );
-                }}
-                name="weight"
-              />
-            </FormControl>
-          </Grid>
-        </Grid>
-        <Divider style={{ width: "100%", marginTop: "12px", marginBottom: "12px" }} />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                );
+              }}
+              name="weight"
+            />
+          </div>
+        </div>
+        <Separator className="my-3" />
         <Variants 
           {...formMethods}
           focusNextField={focusNextField}
@@ -503,29 +505,39 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
           registerVariantRef={registerVariantRef}
           unregisterVariantRef={unregisterVariantRef}
         />
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, marginTop: "12px" }}>
+        <div className="flex items-center justify-end gap-4 mt-3">
           {productID ? (
-            <Tooltip title="Ctrl/Cmd + Enter" placement="top">
-              <Button onClick={handleSubmit} variant="contained">
-                Atualizar Produto
-              </Button>
-            </Tooltip>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={handleSubmit}>
+                    Atualizar Produto
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <div className="flex items-center gap-4">
               <CreateModeToggle
                 isCreateMode={isCreateMode}
                 onToggle={setIsCreateMode}
                 listingText="Redirecionar para listagem de produtos"
                 createText="Criar mais produtos"
               />
-              <Tooltip title="Ctrl/Cmd + Enter" placement="top">
-                <Button onClick={handleSubmit} variant="contained">
-                  Criar produto
-                </Button>
-              </Tooltip>
-            </Box>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button onClick={handleSubmit}>
+                      Criar produto
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           )}
-        </Box>
+        </div>
         <DeleteConfirmationDialog
           open={deleteDialogOpen}
           onClose={handleCancelDelete}
@@ -538,7 +550,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
           title="Atalhos do Teclado - Produto"
           showVariants={true}
         />
-      </Box>
+      </form>
     </FormProvider>
   );
 };
