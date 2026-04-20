@@ -25,6 +25,7 @@ import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { useFormWrapper } from '../../hooks/forms/useFormWrapper';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { Autocomplete } from 'components/ui/autocomplete';
+import { modKey } from 'lib/platform';
 import { DevFillButton } from '../../dev/useDevFill';
 import { makeSupplierFormValues } from '../../dev/formValues';
 import { pickSome, randInt } from '../../dev/factories';
@@ -444,7 +445,7 @@ export const SupplierForm = () => {
                     Editar Fornecedor
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
+                <TooltipContent side="top">{modKey} + Enter</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           ) : (
@@ -462,7 +463,7 @@ export const SupplierForm = () => {
                       Criar Fornecedor
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
+                  <TooltipContent side="top">{modKey} + Enter</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>

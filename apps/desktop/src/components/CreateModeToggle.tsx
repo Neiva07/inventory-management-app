@@ -6,6 +6,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from 'components/ui';
+import { modKey } from 'lib/platform';
 
 interface CreateModeToggleProps {
   isCreateMode: boolean;
@@ -25,17 +26,17 @@ export const CreateModeToggle: React.FC<CreateModeToggleProps> = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex min-w-fit items-center gap-2">
-            <span className="whitespace-nowrap text-sm text-muted-foreground">
-              {isCreateMode ? createText : listingText}
-            </span>
             <Switch
               checked={isCreateMode}
               onCheckedChange={onToggle}
               aria-label="Alternar modo de criação"
             />
+            <span className="whitespace-nowrap text-sm text-muted-foreground">
+              {isCreateMode ? createText : listingText}
+            </span>
           </div>
         </TooltipTrigger>
-        <TooltipContent side="top">Ctrl/Cmd + T</TooltipContent>
+        <TooltipContent side="top">{modKey} + T</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

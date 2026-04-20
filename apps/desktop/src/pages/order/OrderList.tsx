@@ -3,6 +3,9 @@ import { deleteOrder, getOrders, Order, OrderStatus } from 'model/orders';
 import { useNavigate } from 'react-router-dom';
 import { Customer, getCustomers } from 'model/customer';
 import { useAuth } from 'context/auth';
+import { modKey } from 'lib/platform';
+import { useShortcutHints } from 'context/shortcutHints';
+import { ShortcutHintBadge } from 'components/ShortcutHintBadge';
 import { statuses } from './useOrderForm';
 import { SelectField } from 'pages/product/useProductCreateForm';
 import { format } from "date-fns"
@@ -56,6 +59,7 @@ const columns: ColumnDefinition<Order>[] = [
 export const OrderList = () => {
   const { user, organization } = useAuth();
   const navigate = useNavigate();
+  const { showShortcutHints } = useShortcutHints();
 
   const [orders, setOrders] = React.useState<Array<Order>>([]);
   const [count, setCount] = React.useState<number>();
@@ -293,7 +297,7 @@ export const OrderList = () => {
             value={statusSelected ? statuses.find(s => s.value === statusSelected) : null}
           />
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -306,10 +310,11 @@ export const OrderList = () => {
                   Editar Venda
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + E</TooltipContent>
+              <TooltipContent side="top">{modKey} + E</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="E" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -322,10 +327,11 @@ export const OrderList = () => {
                   Deletar Venda
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + D</TooltipContent>
+              <TooltipContent side="top">{modKey} + D</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="D" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -336,8 +342,9 @@ export const OrderList = () => {
                   Cadastrar Venda
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + N</TooltipContent>
+              <TooltipContent side="top">{modKey} + N</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="N" />}
           </div>
 
           <div className="col-span-12 mt-5 min-h-[400px]">

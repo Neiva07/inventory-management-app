@@ -23,6 +23,7 @@ import { useFormWrapper } from '../../hooks/forms/useFormWrapper';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { Autocomplete } from 'components/ui/autocomplete';
 import { useAuth } from 'context/auth';
+import { modKey } from 'lib/platform';
 import { DevFillButton } from '../../dev/useDevFill';
 import { makeCustomerFormValues } from '../../dev/formValues';
 
@@ -370,7 +371,7 @@ export const CustomerForm = () => {
                     Editar Cliente
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
+                <TooltipContent side="top">{modKey} + Enter</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           ) : (
@@ -388,7 +389,7 @@ export const CustomerForm = () => {
                       Criar Cliente
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
+                  <TooltipContent side="top">{modKey} + Enter</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>

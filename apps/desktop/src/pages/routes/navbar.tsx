@@ -14,13 +14,26 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from 'context/auth';
+import { useShortcutHints } from 'context/shortcutHints';
+import { ShortcutHintBadge } from 'components/ShortcutHintBadge';
 import { Button } from 'components/ui';
 import logo from '../../../assets/icons/logo.png';
+
+/** Maps navbar item paths to their Ctrl/Cmd shortcut keys */
+const NAVBAR_SHORTCUT_MAP: Record<string, string> = {
+  'products': '1',
+  'orders': '3',
+  'inbound-orders': '5',
+  'supplier-bills': '7',
+  'installment-payments': '8',
+  'settings': ',',
+};
 
 export const Navbar = () => {
   const auth = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { showShortcutHints } = useShortcutHints();
 
   const menuItems = useMemo(
     () => [
@@ -55,26 +68,36 @@ export const Navbar = () => {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-white/10"
+            className="relative flex items-center gap-2 rounded-md px-1 py-1 hover:bg-white/10"
           >
             <img src={logo} alt="Logo" className="h-9 w-auto" />
             <span className="hidden text-lg font-semibold md:inline">Stockify</span>
+            {showShortcutHints && (
+              <ShortcutHintBadge shortcutKey="H" position="top-right" />
+            )}
           </button>
 
           {auth.user ? (
             <nav className="hidden items-center gap-1 md:flex">
-              {menuItems.map((item) => (
-                <Button
-                  key={item.text}
-                  type="button"
-                  variant="ghost"
-                  onClick={() => handleNavigation(item.path)}
-                  className="h-8 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
-                >
-                  {item.icon}
-                  {item.text}
-                </Button>
-              ))}
+              {menuItems.map((item) => {
+                const shortcutKey = NAVBAR_SHORTCUT_MAP[item.path];
+                return (
+                  <div key={item.text} className="relative">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => handleNavigation(item.path)}
+                      className="h-8 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+                    >
+                      {item.icon}
+                      {item.text}
+                    </Button>
+                    {showShortcutHints && shortcutKey && (
+                      <ShortcutHintBadge shortcutKey={shortcutKey} position="top-right" />
+                    )}
+                  </div>
+                );
+              })}
             </nav>
           ) : null}
         </div>

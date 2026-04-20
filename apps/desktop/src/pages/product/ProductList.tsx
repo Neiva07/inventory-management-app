@@ -6,6 +6,9 @@ import { ProductCategory, getProductCategories } from 'model/productCategories';
 import { useNavigate } from 'react-router-dom';
 import { SelectField } from './useProductCreateForm';
 import { useAuth } from 'context/auth';
+import { modKey } from 'lib/platform';
+import { useShortcutHints } from 'context/shortcutHints';
+import { ShortcutHintBadge } from 'components/ShortcutHintBadge';
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { Autocomplete } from 'components/ui/autocomplete';
@@ -96,6 +99,7 @@ export const ProductList = () => {
   const [showHelp, setShowHelp] = React.useState(false);
 
   const navigate = useNavigate();
+  const { showShortcutHints } = useShortcutHints();
 
   // Refs for focus management
   const searchFieldRef = React.useRef<HTMLDivElement>(null);
@@ -335,7 +339,7 @@ export const ProductList = () => {
             value={statusSelected}
           />
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -348,10 +352,11 @@ export const ProductList = () => {
                   Editar Produto
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + E</TooltipContent>
+              <TooltipContent side="top">{modKey} + E</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="E" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -364,10 +369,11 @@ export const ProductList = () => {
                   Deletar Produto
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + D</TooltipContent>
+              <TooltipContent side="top">{modKey} + D</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="D" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -380,10 +386,11 @@ export const ProductList = () => {
                   Desativar Produto
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + I</TooltipContent>
+              <TooltipContent side="top">{modKey} + I</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="I" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -394,8 +401,9 @@ export const ProductList = () => {
                   Cadastrar Produto
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + N</TooltipContent>
+              <TooltipContent side="top">{modKey} + N</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="N" />}
           </div>
 
           <div className="col-span-12 mt-5 min-h-[400px]">

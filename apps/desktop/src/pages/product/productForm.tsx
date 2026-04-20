@@ -20,6 +20,7 @@ import { makeProductFormValuesFull } from '../../dev/formValues';
 import { Field, FieldLabel, FieldError } from 'components/ui/field';
 import { Input } from 'components/ui/input';
 import { Separator } from 'components/ui/separator';
+import { modKey } from 'lib/platform';
 import { Button } from 'components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from 'components/ui/tooltip';
 
@@ -227,8 +228,9 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-12 gap-2">
-          <div className="col-span-6">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Informações gerais</p>
+        <div className="grid grid-cols-12 gap-x-4 gap-y-3">
+          <div className="col-span-7">
             <Controller
               control={formMethods.control}
               render={({ field, fieldState }) => {
@@ -248,7 +250,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
               name="title"
             />
           </div>
-          <div className="col-span-6">
+          <div className="col-span-5">
             <Controller
               control={formMethods.control}
               render={({ field: { value: productCategory, ...props } }) => {
@@ -294,7 +296,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
               render={({ field: { value: description, onChange }, fieldState }) => {
                 return (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>descrição</FieldLabel>
+                    <FieldLabel>Descrição</FieldLabel>
                     <Input
                       ref={descriptionRef}
                       className="w-full"
@@ -311,19 +313,22 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
             />
           </div>
 
-          <div className="col-span-4">
+          <div className="col-span-3">
             <Controller
               control={formMethods.control}
               render={({ field: { ...props }, fieldState }) => {
                 return (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Comissão do vendedor</FieldLabel>
-                    <Input
-                      {...props}
-                      ref={commissionRef}
-                      aria-invalid={fieldState.invalid}
-                      onFocus={(e) => e.target.select()}
-                    />
+                    <div className="relative">
+                      <Input
+                        {...props}
+                        ref={commissionRef}
+                        aria-invalid={fieldState.invalid}
+                        onFocus={(e) => e.target.select()}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">%</span>
+                    </div>
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 );
@@ -331,7 +336,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
               name="sailsmanComission"
             />
           </div>
-          <div className="col-span-8">
+          <div className="col-span-9">
             <Controller
               control={formMethods.control}
               render={({ field: { value: suppliersSelected, ...props } }) => {
@@ -373,11 +378,9 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
             />
           </div>
         </div>
-        <Separator className="my-3" />
-        <h3 className="mb-2 scroll-m-20 text-xl font-semibold tracking-tight">
-          Unidade base
-        </h3>
-        <div className="grid grid-cols-12 gap-2">
+        <Separator className="my-4" />
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Unidade base</p>
+        <div className="grid grid-cols-12 gap-x-4 gap-y-3">
           <div className="col-span-4">
             <Controller
               control={formMethods.control}
@@ -463,12 +466,16 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                 return (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Custo de compra</FieldLabel>
-                    <Input
-                      {...props}
-                      ref={costRef}
-                      aria-invalid={fieldState.invalid}
-                      onFocus={(e) => e.target.select()}
-                    />
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">R$</span>
+                      <Input
+                        {...props}
+                        ref={costRef}
+                        className="pl-9"
+                        aria-invalid={fieldState.invalid}
+                        onFocus={(e) => e.target.select()}
+                      />
+                    </div>
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 );
@@ -482,13 +489,16 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
               render={({ field: { ...props }, fieldState }) => {
                 return (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Peso (kg)</FieldLabel>
-                    <Input
-                      {...props}
-                      ref={weightRef}
-                      aria-invalid={fieldState.invalid}
-                      onFocus={(e) => e.target.select()}
-                    />
+                    <FieldLabel>Peso</FieldLabel>
+                    <div className="relative">
+                      <Input
+                        {...props}
+                        ref={weightRef}
+                        aria-invalid={fieldState.invalid}
+                        onFocus={(e) => e.target.select()}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">kg</span>
+                    </div>
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>
                 );
@@ -497,7 +507,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
             />
           </div>
         </div>
-        <Separator className="my-3" />
+        <Separator className="my-4" />
         <Variants 
           {...formMethods}
           focusNextField={focusNextField}
@@ -505,38 +515,30 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
           registerVariantRef={registerVariantRef}
           unregisterVariantRef={unregisterVariantRef}
         />
-        <div className="flex items-center justify-end gap-4 mt-3">
-          {productID ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={handleSubmit}>
-                    Atualizar Produto
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 mt-5">
+          {!productID && (
+            <div className="mr-auto">
               <CreateModeToggle
                 isCreateMode={isCreateMode}
                 onToggle={setIsCreateMode}
                 listingText="Redirecionar para listagem de produtos"
                 createText="Criar mais produtos"
               />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button onClick={handleSubmit}>
-                      Criar produto
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           )}
+          <div className="ml-auto">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={handleSubmit} className="gap-2">
+                    {productID ? "Atualizar Produto" : "Criar produto"}
+                    <kbd className="text-[10px] opacity-50 bg-black/10 dark:bg-white/10 rounded px-1 py-0.5 font-mono">{modKey}+Enter</kbd>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">{modKey} + Enter</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
         <DeleteConfirmationDialog
           open={deleteDialogOpen}

@@ -6,6 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { Supplier, getSuppliers, deactiveSupplier, deleteSupplier, activeSupplier } from 'model/suppliers';
 import { useAuth } from 'context/auth';
+import { modKey } from 'lib/platform';
+import { useShortcutHints } from 'context/shortcutHints';
+import { ShortcutHintBadge } from 'components/ShortcutHintBadge';
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { Autocomplete } from 'components/ui/autocomplete';
@@ -49,6 +52,7 @@ const statuses = [
 export const SupplierList = () => {
   const { user, organization } = useAuth();
   const navigate = useNavigate();
+  const { showShortcutHints } = useShortcutHints();
 
   const [suppliers, setSuppliers] = React.useState<Array<Supplier>>([]);
   const [count, setCount] = React.useState<number>();
@@ -300,7 +304,7 @@ export const SupplierList = () => {
             value={statusSelected}
           />
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -313,10 +317,11 @@ export const SupplierList = () => {
                   Editar Fornecedor
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + E</TooltipContent>
+              <TooltipContent side="top">{modKey} + E</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="E" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -329,10 +334,11 @@ export const SupplierList = () => {
                   Deletar Fornecedor
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + D</TooltipContent>
+              <TooltipContent side="top">{modKey} + D</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="D" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -345,10 +351,11 @@ export const SupplierList = () => {
                   Desativar Fornecedor
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + I</TooltipContent>
+              <TooltipContent side="top">{modKey} + I</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="I" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -359,8 +366,9 @@ export const SupplierList = () => {
                   Cadastrar Fornecedor
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + N</TooltipContent>
+              <TooltipContent side="top">{modKey} + N</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="N" />}
           </div>
 
           <div className="col-span-12 mt-5 min-h-[400px]">

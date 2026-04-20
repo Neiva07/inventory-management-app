@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from 'components/ui';
+import { modKey } from 'lib/platform';
 
 interface GlobalKeyboardHelpProps {
   open: boolean;
@@ -30,19 +31,19 @@ export const GlobalKeyboardHelp: React.FC<GlobalKeyboardHelpProps> = ({
 }) => {
   const globalShortcuts = [
     { shortcut: 'F1', description: 'Mostrar esta ajuda global' },
-    { shortcut: 'Ctrl/Cmd + ,', description: 'Ir para Configurações' },
-    { shortcut: 'Ctrl/Cmd + H', description: 'Ir para o Painel de Controle' },
+    { shortcut: `${modKey} + ,`, description: 'Ir para Configurações' },
+    { shortcut: `${modKey} + H`, description: 'Ir para o Painel de Controle' },
   ];
 
   const navigationShortcuts = [
-    { shortcut: 'Ctrl/Cmd + 1', description: 'Lista de Produtos' },
-    { shortcut: 'Ctrl/Cmd + 2', description: 'Criar Produto' },
-    { shortcut: 'Ctrl/Cmd + 3', description: 'Lista de Vendas' },
-    { shortcut: 'Ctrl/Cmd + 4', description: 'Criar Venda' },
-    { shortcut: 'Ctrl/Cmd + 5', description: 'Lista de Compras' },
-    { shortcut: 'Ctrl/Cmd + 6', description: 'Criar Compra' },
-    { shortcut: 'Ctrl/Cmd + 7', description: 'Contas a Pagar' },
-    { shortcut: 'Ctrl/Cmd + 8', description: 'Parcelas' },
+    { shortcut: `${modKey} + 1`, description: 'Lista de Produtos' },
+    { shortcut: `${modKey} + 2`, description: 'Criar Produto' },
+    { shortcut: `${modKey} + 3`, description: 'Lista de Vendas' },
+    { shortcut: `${modKey} + 4`, description: 'Criar Venda' },
+    { shortcut: `${modKey} + 5`, description: 'Lista de Compras' },
+    { shortcut: `${modKey} + 6`, description: 'Criar Compra' },
+    { shortcut: `${modKey} + 7`, description: 'Contas a Pagar' },
+    { shortcut: `${modKey} + 8`, description: 'Parcelas' },
   ];
 
   return (

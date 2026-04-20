@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "components/ui";
 import { cn } from "lib/utils";
+import { modKey } from 'lib/platform';
 
 export const OrderForm = () => {
   const { orderID } = useParams();
@@ -160,7 +161,7 @@ export const OrderForm = () => {
     autoFocusField: 'customer',
     helpTitle: 'Atalhos do Teclado - Venda',
     customShortcuts: {
-      'Ctrl/Cmd + P': handleAddItem,
+      [`${modKey} + P`]: handleAddItem,
     },
     fieldRefs: [
       customerRef, // Header row 1
@@ -249,7 +250,7 @@ export const OrderForm = () => {
                     Editar Nota
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
+                <TooltipContent side="top">{modKey} + Enter</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           ) : (
@@ -282,7 +283,7 @@ export const OrderForm = () => {
                   <TooltipContent side="top">
                     {!hasItems
                       ? "Você precisa adicionar ao menos 1 item para fechar a nota"
-                      : "Ctrl/Cmd + Enter"}
+                      : `${modKey} + Enter`}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -302,7 +303,7 @@ export const OrderForm = () => {
           title="Atalhos do Teclado - Venda"
           showVariants={false}
           customShortcuts={[
-            { shortcut: 'Ctrl/Cmd + P', description: 'Adicionar item (quando disponível)' }
+            { shortcut: `${modKey} + P`, description: 'Adicionar item (quando disponível)' }
           ]}
         />
       </form>

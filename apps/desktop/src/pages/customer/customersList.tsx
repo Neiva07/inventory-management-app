@@ -5,6 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import { SelectField } from '../product/useProductCreateForm';
 import { Customer, deactiveCustomer, deleteCustomer, getCustomers, activeCustomer } from 'model/customer';
 import { useAuth } from 'context/auth';
+import { modKey } from 'lib/platform';
+import { useShortcutHints } from 'context/shortcutHints';
+import { ShortcutHintBadge } from 'components/ShortcutHintBadge';
 import { PageTitle } from 'components/PageTitle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { Autocomplete } from 'components/ui/autocomplete';
@@ -48,6 +51,7 @@ const statuses = [
 export const CustomerList = () => {
   const { user, organization } = useAuth();
   const navigate = useNavigate();
+  const { showShortcutHints } = useShortcutHints();
 
   const [customers, setCustomers] = React.useState<Array<Customer>>([]);
   const [count, setCount] = React.useState<number>();
@@ -270,7 +274,7 @@ export const CustomerList = () => {
             value={statusSelected}
           />
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -283,10 +287,11 @@ export const CustomerList = () => {
                   Editar Cliente
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + E</TooltipContent>
+              <TooltipContent side="top">{modKey} + E</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="E" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -299,10 +304,11 @@ export const CustomerList = () => {
                   Deletar Cliente
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + D</TooltipContent>
+              <TooltipContent side="top">{modKey} + D</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="D" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -315,10 +321,11 @@ export const CustomerList = () => {
                   Desativar Cliente
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + I</TooltipContent>
+              <TooltipContent side="top">{modKey} + I</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="I" />}
           </div>
-          <div className="col-span-12 sm:col-span-6 lg:col-span-3">
+          <div className="relative col-span-12 sm:col-span-6 lg:col-span-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -329,8 +336,9 @@ export const CustomerList = () => {
                   Cadastrar Cliente
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + N</TooltipContent>
+              <TooltipContent side="top">{modKey} + N</TooltipContent>
             </Tooltip>
+            {showShortcutHints && <ShortcutHintBadge shortcutKey="N" />}
           </div>
 
           <div className="col-span-12 mt-5 min-h-[400px]">

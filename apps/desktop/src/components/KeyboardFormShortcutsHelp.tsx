@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from 'components/ui';
+import { modKey } from 'lib/platform';
 
 interface ShortcutDef {
   shortcut: string;
@@ -80,18 +81,18 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
         <div className="columns-1 md:columns-2 md:gap-4">
           <section className="mb-3 break-inside-avoid">
             <SectionTitle>Ações do Formulário</SectionTitle>
-            <ShortcutRow shortcut="Ctrl/Cmd + Enter" description="Enviar formulário" />
-            <ShortcutRow shortcut="Ctrl/Cmd + D" description="Deletar (modo edição)" />
-            <ShortcutRow shortcut="Ctrl/Cmd + I" description="Inativar/Ativar" />
-            <ShortcutRow shortcut="Ctrl/Cmd + R" description="Resetar formulário" />
-            <ShortcutRow shortcut="Ctrl/Cmd + T" description="Alternar modo de criação" />
+            <ShortcutRow shortcut={`${modKey} + Enter`} description="Enviar formulário" />
+            <ShortcutRow shortcut={`${modKey} + D`} description="Deletar (modo edição)" />
+            <ShortcutRow shortcut={`${modKey} + I`} description="Inativar/Ativar" />
+            <ShortcutRow shortcut={`${modKey} + R`} description="Resetar formulário" />
+            <ShortcutRow shortcut={`${modKey} + T`} description="Alternar modo de criação" />
           </section>
 
           {showVariants && (
             <section className="mb-3 break-inside-avoid">
               <SectionTitle>Variantes</SectionTitle>
-              <ShortcutRow shortcut="Ctrl/Cmd + O" description="Adicionar nova variante" />
-              <ShortcutRow shortcut="Ctrl/Cmd + P" description="Adicionar novo preço" />
+              <ShortcutRow shortcut={`${modKey} + O`} description="Adicionar nova variante" />
+              <ShortcutRow shortcut={`${modKey} + P`} description="Adicionar novo preço" />
             </section>
           )}
 
@@ -110,7 +111,7 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
 
           <section className="mb-3 break-inside-avoid">
             <SectionTitle>Navegação</SectionTitle>
-            <ShortcutRow shortcut="Ctrl/Cmd + ←" description="Voltar à página anterior" />
+            <ShortcutRow shortcut={`${modKey} + ←`} description="Voltar à página anterior" />
             <ShortcutRow shortcut="Tab" description="Próximo campo / Selecionar opção no dropdown" />
             <ShortcutRow shortcut="Shift + Tab" description="Campo anterior" />
             <ShortcutRow shortcut="Setas" description="Navegar opções do dropdown" />
@@ -129,18 +130,18 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
               <ShortcutRow shortcut="F1" description="Mostrar ajuda global" />
-              <ShortcutRow shortcut="Ctrl/Cmd + ," description="Ir para Configurações" />
-              <ShortcutRow shortcut="Ctrl/Cmd + H" description="Ir para o Painel de Controle" />
+              <ShortcutRow shortcut={`${modKey} + ,`} description="Ir para Configurações" />
+              <ShortcutRow shortcut={`${modKey} + H`} description="Ir para o Painel de Controle" />
             </div>
             <div>
-              <ShortcutRow shortcut="Ctrl/Cmd + 1" description="Lista de Produtos" />
-              <ShortcutRow shortcut="Ctrl/Cmd + 2" description="Criar Produto" />
-              <ShortcutRow shortcut="Ctrl/Cmd + 3" description="Lista de Vendas" />
-              <ShortcutRow shortcut="Ctrl/Cmd + 4" description="Criar Venda" />
-              <ShortcutRow shortcut="Ctrl/Cmd + 5" description="Lista de Compras" />
-              <ShortcutRow shortcut="Ctrl/Cmd + 6" description="Criar Compra" />
-              <ShortcutRow shortcut="Ctrl/Cmd + 7" description="Contas a Pagar" />
-              <ShortcutRow shortcut="Ctrl/Cmd + 8" description="Parcelas" />
+              <ShortcutRow shortcut={`${modKey} + 1`} description="Lista de Produtos" />
+              <ShortcutRow shortcut={`${modKey} + 2`} description="Criar Produto" />
+              <ShortcutRow shortcut={`${modKey} + 3`} description="Lista de Vendas" />
+              <ShortcutRow shortcut={`${modKey} + 4`} description="Criar Venda" />
+              <ShortcutRow shortcut={`${modKey} + 5`} description="Lista de Compras" />
+              <ShortcutRow shortcut={`${modKey} + 6`} description="Criar Compra" />
+              <ShortcutRow shortcut={`${modKey} + 7`} description="Contas a Pagar" />
+              <ShortcutRow shortcut={`${modKey} + 8`} description="Parcelas" />
             </div>
           </div>
         </section>

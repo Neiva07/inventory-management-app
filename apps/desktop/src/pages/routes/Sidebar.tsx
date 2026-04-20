@@ -25,10 +25,22 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from 'context/auth';
+import { useShortcutHints } from 'context/shortcutHints';
+import { ShortcutHintBadge } from 'components/ShortcutHintBadge';
 
 import { Button, SparklesText } from 'components/ui';
 import { cn } from 'lib/utils';
 import logo from '../../../assets/icons/logo.png';
+
+/** Maps sidebar item paths to their Ctrl/Cmd shortcut keys */
+const SIDEBAR_SHORTCUT_MAP: Record<string, string> = {
+  '/products/create': '2',
+  '/customers/create': '',
+  '/suppliers/create': '',
+  '/inbound-orders': '5',
+  '/orders': '3',
+  '/supplier-bills': '7',
+};
 
 const DISABLED_PATHS = new Set([
   '/employees/create',
@@ -80,6 +92,7 @@ function Section({
   toggle,
   isActive,
   navigate,
+  showShortcutHints,
 }: {
   title: string;
   items: Array<{ text: string; icon: React.ReactNode; path: string }>;
@@ -88,6 +101,7 @@ function Section({
   toggle: () => void;
   isActive: (path: string) => boolean;
   navigate: (path: string) => void;
+  showShortcutHints: boolean;
 }) {
   return (
     <div className="py-1">
@@ -107,13 +121,14 @@ function Section({
             return aDisabled - bDisabled;
           }).map((item) => {
             const disabled = DISABLED_PATHS.has(item.path);
+            const shortcutKey = SIDEBAR_SHORTCUT_MAP[item.path];
             return (
               <button
                 key={item.text}
                 type="button"
                 onClick={disabled ? undefined : () => navigate(item.path)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm',
+                  'relative flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm',
                   disabled
                     ? 'cursor-not-allowed opacity-50'
                     : 'hover:bg-white/10',
@@ -133,6 +148,9 @@ function Section({
                     ) : null}
                   </>
                 ) : null}
+                {showShortcutHints && shortcutKey && (
+                  <ShortcutHintBadge shortcutKey={shortcutKey} position={open ? 'top-right' : 'top-right'} />
+                )}
               </button>
             );
           })}
@@ -149,6 +167,7 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
+  const { showShortcutHints } = useShortcutHints();
 
   const width = open ? drawerWidth : collapsedWidth;
   const isActive = (path: string) => location.pathname === path;
@@ -168,10 +187,13 @@ export const Sidebar = () => {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className={cn('flex min-w-0 items-center rounded-md hover:bg-white/10', open ? 'gap-2 px-1 py-1' : 'justify-center p-1')}
+            className={cn('relative flex min-w-0 items-center rounded-md hover:bg-white/10', open ? 'gap-2 px-1 py-1' : 'justify-center p-1')}
           >
             <img src={logo} alt="Logo" className="h-9 w-auto" />
             {open ? <span className="truncate text-lg font-semibold">Stockify</span> : null}
+            {showShortcutHints && (
+              <ShortcutHintBadge shortcutKey="H" position="top-right" />
+            )}
           </button>
 
           <Button
@@ -195,6 +217,7 @@ export const Sidebar = () => {
             toggle={() => setOpenCadastros((v) => !v)}
             isActive={isActive}
             navigate={navigate}
+            showShortcutHints={showShortcutHints}
           />
           <div className="my-2 h-px bg-white/15" />
           <Section
@@ -205,6 +228,7 @@ export const Sidebar = () => {
             toggle={() => setOpenMovimentos((v) => !v)}
             isActive={isActive}
             navigate={navigate}
+            showShortcutHints={showShortcutHints}
           />
         </div>
 
@@ -213,13 +237,16 @@ export const Sidebar = () => {
             type="button"
             onClick={() => navigate(footerItem.path)}
             className={cn(
-              'flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-white/10',
+              'relative flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-white/10',
               isActive(footerItem.path) && 'bg-primary-foreground/15'
             )}
             title={!open ? footerItem.text : undefined}
           >
             {footerItem.icon}
             {open ? <span>{footerItem.text}</span> : null}
+            {showShortcutHints && (
+              <ShortcutHintBadge shortcutKey="," position="top-right" />
+            )}
           </button>
           <button
             type="button"

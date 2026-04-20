@@ -12,6 +12,7 @@ import {
 import { Input } from 'components/ui/input';
 import { Field, FieldLabel } from 'components/ui/field';
 import { useUI } from '../../../../context/ui';
+import { modKey } from 'lib/platform';
 import { useAuth } from '../../../../context/auth';
 import { getAppSettings, setAppSettings } from '../../../../model/appSettings';
 
@@ -155,7 +156,7 @@ export const PreferencesPage = () => {
         <Alert>
           <AlertDescription>
             <p className="text-sm">
-              <strong>Dica:</strong> Use Ctrl/Cmd + , para acessar as configurações rapidamente.
+              <strong>Dica:</strong> Use {modKey} + , para acessar as configurações rapidamente.
             </p>
           </AlertDescription>
         </Alert>

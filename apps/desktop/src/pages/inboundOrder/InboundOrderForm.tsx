@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
 } from "components/ui";
 import { cn } from "lib/utils";
+import { modKey } from 'lib/platform';
 
 export const InboundOrderForm = () => {
   const { inboundOrderID } = useParams();
@@ -289,8 +290,8 @@ export const InboundOrderForm = () => {
     autoFocusField: 'supplier',
     helpTitle: 'Atalhos do Teclado - Compra',
     customShortcuts: {
-      'Ctrl/Cmd + P': handleAddItem,
-      'Ctrl/Cmd + Y': handleToggleProductUpdate,
+      [`${modKey} + P`]: handleAddItem,
+      [`${modKey} + Y`]: handleToggleProductUpdate,
     },
     fieldRefs: [
       supplierRef, // Header row 1
@@ -381,7 +382,7 @@ export const InboundOrderForm = () => {
                   Editar Nota
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="top">Ctrl/Cmd + Enter</TooltipContent>
+              <TooltipContent side="top">{modKey} + Enter</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         ) : (
@@ -414,7 +415,7 @@ export const InboundOrderForm = () => {
                 <TooltipContent side="top">
                   {!hasItems
                     ? "Você precisa adicionar ao menos 1 item para fechar a compra"
-                    : "Ctrl/Cmd + Enter"}
+                    : `${modKey} + Enter`}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -454,8 +455,8 @@ export const InboundOrderForm = () => {
           title="Atalhos do Teclado - Compra"
           showVariants={false}
           customShortcuts={[
-            { shortcut: 'Ctrl/Cmd + P', description: 'Adicionar item (quando disponível)' },
-            { shortcut: 'Ctrl/Cmd + Y', description: 'Alternar atualização de custo do produto' }
+            { shortcut: `${modKey} + P`, description: 'Adicionar item (quando disponível)' },
+            { shortcut: `${modKey} + Y`, description: 'Alternar atualização de custo do produto' }
           ]}
         />
       </form>

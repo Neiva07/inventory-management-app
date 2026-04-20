@@ -40,6 +40,7 @@ import { GlobalKeyboardHelp } from "./components/GlobalKeyboardHelp";
 import { OnboardingRouter } from "./pages/onboarding/OnboardingRouter";
 import { bootstrapDatabase } from "./db/bootstrap";
 import { startSyncRuntime, stopSyncRuntime } from "./db/syncRuntime";
+import { ShortcutHintsProvider } from "./context/shortcutHints";
 
 const initialOverdueChecksStarted = new Set<string>();
 
@@ -177,11 +178,13 @@ function render() {
     <React.StrictMode>
       <AuthContextProvider>
         <UIContextProvider>
-          <OnboardingProvider>
-            <OnboardingRouter>
-              <AppRouter />
-            </OnboardingRouter>
-          </OnboardingProvider>
+          <ShortcutHintsProvider>
+            <OnboardingProvider>
+              <OnboardingRouter>
+                <AppRouter />
+              </OnboardingRouter>
+            </OnboardingProvider>
+          </ShortcutHintsProvider>
         </UIContextProvider>
       </AuthContextProvider>
     </React.StrictMode>
