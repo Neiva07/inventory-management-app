@@ -26,11 +26,6 @@ import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable'
 import { ColumnDefinition } from 'components/CustomDataTable/types';
 
 const columns: ColumnDefinition<InboundOrder>[] = [
-  { 
-    field: 'publicId', 
-    headerName: 'ID', 
-    width: 200,
-  },
   {
     field: 'supplier.name',
     headerName: 'Fornecedor',

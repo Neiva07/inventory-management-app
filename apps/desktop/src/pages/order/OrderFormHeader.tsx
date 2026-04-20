@@ -82,7 +82,7 @@ export const OrderFormHeader = ({ onDelete, onBack, order, firstFieldRef, focusN
             {orderID ? "Editar Nota Fiscal" : "Cadastro de Nota Fiscal"}
           </PageTitle>
           {order?.publicId && (
-            <PublicIdDisplay publicId={order.publicId} />
+            <PublicIdDisplay publicId={order.publicId} recordType="pedido" />
           )}
         </div>
         <div className="flex min-w-0 items-center gap-2">

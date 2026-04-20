@@ -131,7 +131,7 @@ export const SupplierBillDetail = () => {
         {/* Public ID with PublicIdDisplay component */}
         {supplierBill.publicId && (
           <div className="flex items-center gap-2">
-            <PublicIdDisplay publicId={supplierBill.publicId} showLabel={false} variant="list" />
+            <PublicIdDisplay publicId={supplierBill.publicId} recordType="conta" showLabel={false} variant="list" />
             <Badge
               className="ml-4 font-semibold"
               style={{

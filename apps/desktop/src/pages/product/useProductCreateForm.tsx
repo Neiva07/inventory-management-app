@@ -53,7 +53,7 @@ export const DEFAULT_VARIANT_VALUE: FormVariant = {
   prices: [DEFAULT_PRICE],
 }
 
-const INITIAL_PRODUCT_FORM_STATE = {
+export const INITIAL_PRODUCT_FORM_STATE = {
   title: "",
   description: "",
   variants: [DEFAULT_VARIANT_VALUE],
@@ -136,13 +136,13 @@ export const useProductCreateForm = (productID?: string) => {
   }, [fetchedProductForm])
 
 
-  const onSubmit: SubmitHandler<ProductFormDataInterface> = useCallback((data) => {
+  const onSubmit: SubmitHandler<ProductFormDataInterface> = useCallback(async (data) => {
 
     const smallestUnit = data.variants.reduce((highest, current) => {
       return (current.conversionRate > highest.conversionRate) ? current : highest;
     }, data.variants[0]);
     try {
-      createProduct({
+      await createProduct({
         productCategory: data.productCategory ? {
           name: data.productCategory.label,
           id: data.productCategory.value,
@@ -197,9 +197,9 @@ export const useProductCreateForm = (productID?: string) => {
   }, [organization?.id, user.id])
 
 
-  const onUpdate = useCallback((data: ProductFormDataInterface) => {
+  const onUpdate = useCallback(async (data: ProductFormDataInterface) => {
     try {
-      updateProduct(productID, {
+      await updateProduct(productID, {
         productCategory: {
           name: data.productCategory.label,
           id: data.productCategory.value,
@@ -252,9 +252,9 @@ export const useProductCreateForm = (productID?: string) => {
   }, [organization?.id, productID])
 
 
-  const onDelete = useCallback((onSuccess?: () => void) => {
+  const onDelete = useCallback(async (onSuccess?: () => void) => {
     try {
-      deleteProduct(productID);
+      await deleteProduct(productID);
       toast.success('Produto deletado com sucesso')
       onSuccess?.()
 

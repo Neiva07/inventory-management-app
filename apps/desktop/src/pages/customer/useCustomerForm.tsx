@@ -20,7 +20,7 @@ export interface CustomerFormDataInterface {
   rg?: string;
 }
 
-const INITIAL_CUSTOMER_VALUES: CustomerFormDataInterface = {
+export const INITIAL_CUSTOMER_VALUES: CustomerFormDataInterface = {
   name: '',
   address: {
     postalCode: '',
@@ -131,7 +131,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
     form.reset(fetchedCustomerForm)
   }, [fetchedCustomerForm, form.reset])
 
-  const onSubmit = useCallback((data: CustomerFormDataInterface) => {
+  const onSubmit = useCallback(async (data: CustomerFormDataInterface) => {
     const { address, companyPhone, contactPhone, contactName, rg, cpf, name } = data;
 
     const { region, city, postalCode, ...restAddress } = address;
@@ -142,7 +142,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
     const cleanedCompanyPhone = companyPhone.replace(/[^0-9]/gi, "");
     const cleanedContactPhone = contactPhone.replace(/[^0-9]/gi, "");
     try {
-      createCustomer({
+      await createCustomer({
         address: {
           country: 'Brazil',
           region: region.value,
@@ -169,7 +169,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
     }
   }, [organization?.id, user.id]);
 
-  const onUpdate = useCallback((data: CustomerFormDataInterface) => {
+  const onUpdate = useCallback(async (data: CustomerFormDataInterface) => {
     const { address, companyPhone, contactPhone, contactName, rg, cpf, name } = data;
 
     const { region, city, postalCode, ...restAddress } = address;
@@ -181,7 +181,7 @@ export const useCustomerCreateForm = (customerID?: string) => {
     const cleanedContactPhone = contactPhone.replace(/[^0-9]/gi, "");
 
     try {
-      updateCustomer(customerID, {
+      await updateCustomer(customerID, {
         address: {
           country: 'Brazil',
           region: region?.value ?? '',
@@ -209,9 +209,9 @@ export const useCustomerCreateForm = (customerID?: string) => {
   }, [customerID]);
 
 
-  const onDelete = useCallback((onSuccess?: () => void) => {
+  const onDelete = useCallback(async (onSuccess?: () => void) => {
     try {
-      deleteCustomer(customerID)
+      await deleteCustomer(customerID)
       toast.success('Cliente deletado com sucesso')
       onSuccess?.()
 

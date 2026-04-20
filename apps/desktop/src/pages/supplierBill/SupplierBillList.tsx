@@ -16,13 +16,8 @@ import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable'
 import { ColumnDefinition } from 'components/CustomDataTable/types';
 
 const columns: ColumnDefinition<SupplierBill>[] = [
-  { 
-    field: 'publicId', 
-    headerName: 'ID', 
-    width: 200,
-  },
-  { 
-    field: 'supplier.supplierName', 
+  {
+    field: 'supplier.supplierName',
     headerName: 'Fornecedor', 
     flex: 1,
     valueGetter: (row) => row.supplier?.supplierName ?? '',

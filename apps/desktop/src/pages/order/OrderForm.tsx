@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { OrderFormHeader } from "./OrderFormHeader";
 import { OrderFormLineItemForm } from "./OrderFormLineItemForm";
 import { OrderFormLineItemList } from "./OrderFormLineItemList";
-import { ItemDataInterface, useOrderForm } from "./useOrderForm";
+import { ItemDataInterface, useOrderForm, INITIAL_ORDER_VALUES } from "./useOrderForm";
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import React, { useState, useRef } from 'react';
@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "components/ui";
 import { cn } from "lib/utils";
+import { toast } from 'sonner';
 import { modKey } from 'lib/platform';
 
 export const OrderForm = () => {
@@ -66,11 +67,19 @@ export const OrderForm = () => {
   const hasItems = items && items.length > 0;
 
   const handleSubmit = async () => {
-    onFormSubmit();
-    if (orderID || !isCreateMode) {
-      navigate('/orders');
-    } else {
-        reset();
+    try {
+      await onFormSubmit();
+      if (orderID || !isCreateMode) {
+        navigate('/orders');
+      } else {
+        setTimeout(() => {
+          reset(INITIAL_ORDER_VALUES);
+          customerRef.current?.querySelector('input')?.focus();
+        }, 100);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde');
     }
   };
 
@@ -196,7 +205,7 @@ export const OrderForm = () => {
 
   return (
     <FormProvider register={register} reset={reset} {...formMethods}>
-      <form ref={formRef}>
+      <form ref={formRef} onSubmit={(e) => e.preventDefault()}>
         <OrderFormHeader 
           onDelete={handleDelete} 
           onBack={() => navigate(-1)}
@@ -254,28 +263,24 @@ export const OrderForm = () => {
               </Tooltip>
             </TooltipProvider>
           ) : (
-            <>  
-            <div className="mt-8 flex items-center justify-end gap-2">
-              <CreateModeToggle
-                isCreateMode={isCreateMode}
-                onToggle={setIsCreateMode}
-                listingText="Redirecionar para listagem de vendas"
-                createText="Criar mais vendas"
-              />
-            </div>
-
+            <div className="mt-8 flex items-center gap-2">
+              <div className="mr-auto">
+                <CreateModeToggle
+                  isCreateMode={isCreateMode}
+                  onToggle={setIsCreateMode}
+                  listingText="Redirecionar para listagem de vendas"
+                  createText="Criar mais vendas"
+                />
+              </div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      onClick={hasItems ? handleSubmit : undefined} 
-                      variant="outline" 
+                    <Button
+                      onClick={hasItems ? handleSubmit : undefined}
+                      variant="outline"
                       size="lg"
                       aria-disabled={!hasItems}
-                      className={cn(
-                        "mt-5",
-                        !hasItems && "cursor-not-allowed opacity-60"
-                      )}
+                      className={cn(!hasItems && "cursor-not-allowed opacity-60")}
                     >
                       Fechar Nota
                     </Button>
@@ -287,7 +292,7 @@ export const OrderForm = () => {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            </>
+            </div>
           )}
         
         <DeleteConfirmationDialog

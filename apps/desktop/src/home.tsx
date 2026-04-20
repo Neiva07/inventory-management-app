@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CircleHelp, Plus, Search } from 'lucide-react';
 
 import { ShadcnFoundationSmoke } from 'components/ui/ShadcnFoundationSmoke';
+import { OfflineIndicator } from 'components/OfflineIndicator';
 import {
   Button,
   Card,
@@ -74,6 +75,7 @@ export const Home = () => {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-4">
+      <OfflineIndicator />
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
           <h1 className="mb-1 text-3xl font-bold text-primary">Painel de Controle</h1>
@@ -100,8 +102,8 @@ export const Home = () => {
         <GuideCard title="Vendas" description="Crie, consulte, edite e delete suas vendas" link1="orders" link2="orders/create" />
         <GuideCard title="Compras" description="Crie, consulte, edite e delete suas compras" link1="inbound-orders" link2="inbound-orders/create" />
         <GuideCard title="Contas a Pagar" description="Gerencie suas contas a pagar e parcelamentos" link1="supplier-bills" link2="installment-payments" createButtonText="Parcelas" />
-        <GuideCard title="Categoria de Produtos" description="Cadastre e consulte as categorias de produtos" link1="units" />
-        <GuideCard title="Unidade de Produtos" description="Cadastre e consulte suas unidades de produtos" link1="productCategories" />
+        <GuideCard title="Categoria de Produtos" description="Cadastre e consulte as categorias de produtos" link1="productCategories" />
+        <GuideCard title="Unidade de Produtos" description="Cadastre e consulte suas unidades de produtos" link1="units" />
       </div>
 
       {process.env.NODE_ENV === 'development' && (

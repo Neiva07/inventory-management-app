@@ -61,7 +61,7 @@ export interface InboundOrderFormDataInterface {
   pendingItem: PendingItemInterface;
 }
 
-const INITIAL_INBOUND_ORDER_VALUES: InboundOrderFormDataInterface = {
+export const INITIAL_INBOUND_ORDER_VALUES: InboundOrderFormDataInterface = {
   supplier: {
     label: '',
     value: '',
@@ -219,9 +219,9 @@ export const useInboundOrderForm = (inboundOrderID?: string) => {
     }
   }, [inboundOrderID, organization?.id, user.id]);
 
-  const onDelete = useCallback((onSuccess?: () => void) => {
+  const onDelete = useCallback(async (onSuccess?: () => void) => {
     try {
-      deleteInboundOrder(inboundOrderID)
+      await deleteInboundOrder(inboundOrderID)
       toast.success('Compra deletada com sucesso')
       // Call the success callback (navigation) after successful deletion
       onSuccess?.()

@@ -253,7 +253,7 @@ export const ProductCategories = () => {
                 {editingCategory ? "Editar categoria" : "Nova categoria"}
               </CardTitle>
               {editingCategory?.publicId ? (
-                <PublicIdDisplay publicId={editingCategory.publicId} />
+                <PublicIdDisplay publicId={editingCategory.publicId} recordType="categoria" />
               ) : null}
             </div>
           </CardHeader>

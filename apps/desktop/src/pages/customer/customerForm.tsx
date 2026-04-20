@@ -11,7 +11,7 @@ import {
 import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useCustomerCreateForm } from './useCustomerForm';
+import { useCustomerCreateForm, INITIAL_CUSTOMER_VALUES } from './useCustomerForm';
 import { states } from '../../model/region';
 import { PageTitle } from 'components/PageTitle';
 import { FormActions } from 'components/FormActions';
@@ -48,16 +48,23 @@ export const CustomerForm = () => {
   const contactPhoneRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async () => {
-    if (customerID) {
-      await onFormUpdate();
-      navigate('/customers');
-    } else {
-      await onFormSubmit();
-      if (isCreateMode) {
-        form.reset();
-      } else {
+    try {
+      if (customerID) {
+        await onFormUpdate();
         navigate('/customers');
+      } else {
+        await onFormSubmit();
+        if (isCreateMode) {
+          setTimeout(() => {
+            form.reset(INITIAL_CUSTOMER_VALUES);
+            nameRef.current?.focus();
+          }, 100);
+        } else {
+          navigate('/customers');
+        }
       }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -107,7 +114,7 @@ export const CustomerForm = () => {
 
   return (
     <FormProvider {...form}>
-      <form className="relative pt-16" ref={formRef}>
+      <form className="relative pt-16" ref={formRef} onSubmit={(e) => e.preventDefault()}>
         <FormActions
           showDelete={!!customerID}
           showInactivate={!!customer && customer.status === 'active'}
@@ -136,7 +143,7 @@ export const CustomerForm = () => {
                 {customerID ? "Editar Cliente" : "Cadastro de Cliente"}
               </PageTitle>
               {customer?.publicId && (
-                <PublicIdDisplay publicId={customer.publicId} />
+                <PublicIdDisplay publicId={customer.publicId} recordType="cliente" />
               )}
               {!customerID && (
                 <DevFillButton onFill={() => form.reset(makeCustomerFormValues())} />
@@ -362,38 +369,29 @@ export const CustomerForm = () => {
             />
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-end gap-4">
-          {customerID ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={handleSubmit}>
-                    Editar Cliente
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">{modKey} + Enter</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <div className="flex items-center gap-4">
+        <div className="mt-3 flex items-center gap-4">
+          {!customerID && (
+            <div className="mr-auto">
               <CreateModeToggle
                 isCreateMode={isCreateMode}
                 onToggle={setIsCreateMode}
                 listingText="Redirecionar para listagem de clientes"
                 createText="Criar mais clientes"
               />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button onClick={handleSubmit}>
-                      Criar Cliente
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">{modKey} + Enter</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           )}
+          <div className="ml-auto">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={handleSubmit}>
+                    {customerID ? 'Editar Cliente' : 'Criar Cliente'}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">{modKey} + Enter</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
         <DeleteConfirmationDialog
           open={deleteDialogOpen}

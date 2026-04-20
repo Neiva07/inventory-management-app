@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Controller, FormProvider } from "react-hook-form";
-import { SelectField, useProductCreateForm } from "./useProductCreateForm";
+import { SelectField, useProductCreateForm, INITIAL_PRODUCT_FORM_STATE } from "./useProductCreateForm";
 import { Variants } from "./Variants";
 import { getProductCategories, ProductCategory } from "../../model/productCategories";
 import { Supplier, getSuppliers } from "model/suppliers";
@@ -60,26 +60,33 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
   }, [organization?.id, user]);
 
   const handleSubmit = async () => {
-    if (productID) {
-      // Edit mode
-      await onFormUpdate();
-      if (isModal) {
-        onProductUpdated?.();
+    try {
+      if (productID) {
+        // Edit mode
+        await onFormUpdate();
+        if (isModal) {
+          onProductUpdated?.();
+        } else {
+          navigate('/products');
+        }
       } else {
-        navigate('/products');
+        // Create mode
+        await onFormSubmit();
+        if (isModal) {
+          onProductUpdated?.();
+        } else if (isCreateMode) {
+          // Reset form for new record
+          setTimeout(() => {
+            formMethods.reset(INITIAL_PRODUCT_FORM_STATE);
+            titleRef.current?.focus();
+          }, 100);
+        } else {
+          // Redirect to listing
+          navigate('/products');
+        }
       }
-    } else {
-      // Create mode
-      await onFormSubmit();
-      if (isModal) {
-        onProductUpdated?.();
-      } else if (isCreateMode) {
-        // Reset form for new record
-        formMethods.reset();
-      } else {
-        // Redirect to listing
-        navigate('/products');
-      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -184,7 +191,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
 
   return (
     <FormProvider register={register} {...formMethods}>
-      <form ref={formRef} className="relative pt-16">
+      <form ref={formRef} className="relative pt-16" onSubmit={(e) => e.preventDefault()}>
         <FormActions
           showDelete={!!productID}
           showInactivate={!!product && product.status === 'active'}
@@ -214,7 +221,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                 {productID ? "Editar Produto" : "Cadastro de Produto"}
               </PageTitle>
               {product?.publicId && (
-                <PublicIdDisplay publicId={product.publicId} />
+                <PublicIdDisplay publicId={product.publicId} recordType="produto" />
               )}
               {!productID && (
                 <DevFillButton

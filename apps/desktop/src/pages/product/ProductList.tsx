@@ -18,13 +18,8 @@ import { CustomDataTable, CustomDataTableRef } from 'components/CustomDataTable'
 import { ColumnDefinition } from 'components/CustomDataTable/types';
 
 const columns: ColumnDefinition<Product>[] = [
-  { 
-    field: 'publicId', 
-    headerName: 'ID', 
-    width: 200,
-  },
-  { 
-    field: 'title', 
+  {
+    field: 'title',
     headerName: 'Nome', 
     width: 200,
     flex: 1 

@@ -234,6 +234,7 @@ const Price = ({ formMethods, index, parentIndex, focusNextField, focusPreviousF
       </div>
       <button
         type="button"
+        tabIndex={-1}
         className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all p-1.5 rounded-md hover:bg-destructive/10 shrink-0"
         onClick={handleRemovePrice}
         title="Remover preço"
@@ -330,6 +331,7 @@ const VariantItem = ({ formMethods, index, focusNextField, focusPreviousField, r
       {/* Collapsible header */}
       <button
         type="button"
+        tabIndex={-1}
         className="flex items-center gap-3 px-4 py-3.5 w-full text-left hover:bg-muted/50 transition-colors select-none"
         onClick={() => setIsExpanded(!isExpanded)}
       >
@@ -449,6 +451,7 @@ const VariantItem = ({ formMethods, index, focusNextField, focusPreviousField, r
                 <Button
                   variant="outline"
                   size="sm"
+                  tabIndex={-1}
                   className="text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/10"
                   onClick={handleRemoveVariant}
                 >
@@ -492,6 +495,7 @@ const VariantItem = ({ formMethods, index, focusNextField, focusPreviousField, r
               {/* Add price button */}
               <button
                 type="button"
+                tabIndex={-1}
                 className="w-full border border-dashed border-border rounded-lg py-2 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 hover:bg-muted/50 transition-all"
                 onClick={handleAddPrice}
               >
@@ -603,6 +607,7 @@ export const Variants = ({
       {/* Add variant button */}
       <button
         type="button"
+        tabIndex={-1}
         className="w-full border border-dashed border-border rounded-xl py-3.5 text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 hover:bg-muted/50 transition-all flex items-center justify-center gap-2"
         onClick={handleAddNewVariant}
       >

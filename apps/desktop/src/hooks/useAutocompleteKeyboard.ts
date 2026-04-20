@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 interface AutocompleteKeyboardOptions<T> {
   isOpen: boolean;
+  multiple?: boolean;
   onSelect: (value: any) => void;
   onClose: () => void;
   onNextField?: () => void;
@@ -21,14 +22,26 @@ export const useAutocompleteKeyboard = <T,>(options: AutocompleteKeyboardOptions
     return;
   }
 
-    // Tab: Select current option and move to next field
+    // Tab: Multi-select — select option and close, but stay on field (don't navigate)
+    if (event.key === 'Tab' && options.isOpen && options.multiple) {
+      event.preventDefault();
+      if (options.highlightedValue) {
+        options.onSelect(options.highlightedValue);
+      }
+      options.onClose();
+      return;
+    }
+
+    // Tab: Single-select — select option, close, and navigate to next field
     if (event.key === 'Tab' && options.isOpen) {
       event.preventDefault();
       if (options.highlightedValue) {
         options.onSelect(options.highlightedValue);
       }
       options.onClose();
-   
+      setTimeout(() => {
+        options.onNextField?.();
+      }, 50);
       return;
     }
 

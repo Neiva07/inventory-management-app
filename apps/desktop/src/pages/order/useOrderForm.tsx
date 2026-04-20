@@ -60,7 +60,7 @@ export interface OrderFormDataInterface {
   pendingItem: PendingItemInterface;
 }
 
-const INITIAL_ORDER_VALUES: OrderFormDataInterface = {
+export const INITIAL_ORDER_VALUES: OrderFormDataInterface = {
   customer: {
     label: '',
     value: '',
@@ -183,7 +183,7 @@ export const useOrderForm = (orderID?: string) => {
     formMethods.reset(fetchedOrderForm)
   }, [fetchedOrderForm])
 
-  const onSubmit = useCallback((data: OrderFormDataInterface) => {
+  const onSubmit = useCallback(async (data: OrderFormDataInterface) => {
     const { customer, dueDate, status, paymentMethod, items, orderDate, pendingItem, ...rest } = data;
 
     const order = {
@@ -207,7 +207,7 @@ export const useOrderForm = (orderID?: string) => {
     } as Order
 
     try {
-      orderID ? updateOrder(orderID, order) : createOrder(order);
+      orderID ? await updateOrder(orderID, order) : await createOrder(order);
 
       toast.success('Venda realizada com sucesso')
 
@@ -217,9 +217,9 @@ export const useOrderForm = (orderID?: string) => {
     }
   }, [orderID, organization?.id, user.id]);
 
-  const onDelete = useCallback((onSuccess?: () => void) => {
+  const onDelete = useCallback(async (onSuccess?: () => void) => {
     try {
-      deleteOrder(orderID)
+      await deleteOrder(orderID)
       toast.success('Venda deletada com sucesso')
       // Call the success callback (navigation) after successful deletion
       onSuccess?.()

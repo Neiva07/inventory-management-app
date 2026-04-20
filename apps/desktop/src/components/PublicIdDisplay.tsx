@@ -9,6 +9,7 @@ import {
 
 interface PublicIdDisplayProps {
   publicId?: string;
+  recordType?: string;
   variant?: 'form' | 'list';
   showLabel?: boolean;
 }
@@ -17,6 +18,7 @@ const COPY_TOAST_MS = 2000;
 
 export const PublicIdDisplay: React.FC<PublicIdDisplayProps> = ({
   publicId,
+  recordType,
   variant = 'form',
   showLabel = true,
 }) => {
@@ -58,55 +60,54 @@ export const PublicIdDisplay: React.FC<PublicIdDisplayProps> = ({
       ? 'gap-2 px-2.5 py-1.5'
       : 'gap-2.5 px-3 py-2';
 
+  const tooltipLabel = recordType
+    ? `Identificador único deste ${recordType}`
+    : 'Identificador único deste registro';
+
   return (
     <>
       <TooltipProvider>
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => {
-            void handleCopy();
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              void handleCopy();
-            }
-          }}
-          className={[
-            'group inline-flex cursor-pointer items-center rounded-md border bg-muted/30 transition',
-            'hover:-translate-y-px hover:border-primary/40 hover:bg-muted/50',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-            sizeClass,
-          ].join(' ')}
-        >
-          {showLabel && (
-            <span className="text-xs font-semibold uppercase tracking-[0.5px] text-muted-foreground">
-              ID:
-            </span>
-          )}
-
-          <span className="select-none font-mono text-sm font-medium tracking-[0.5px] text-foreground">
-            {publicId}
-          </span>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                void handleCopy();
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
                   void handleCopy();
-                }}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-primary transition hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                }
+              }}
+              className={[
+                'group inline-flex cursor-pointer items-center rounded-md border bg-muted/30 transition',
+                'hover:-translate-y-px hover:border-primary/40 hover:bg-muted/50',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                sizeClass,
+              ].join(' ')}
+            >
+              {showLabel && (
+                <span className="text-xs font-semibold uppercase tracking-[0.5px] text-muted-foreground">
+                  ID:
+                </span>
+              )}
+
+              <span className="select-none font-mono text-sm font-medium tracking-[0.5px] text-foreground">
+                {publicId}
+              </span>
+
+              <span
+                className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-primary transition hover:bg-primary/10"
                 aria-label="Copiar ID"
               >
                 <Copy className="h-3.5 w-3.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top">Copiar ID</TooltipContent>
-          </Tooltip>
-        </div>
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top">{tooltipLabel}</TooltipContent>
+        </Tooltip>
       </TooltipProvider>
 
       {showCopiedMessage && (

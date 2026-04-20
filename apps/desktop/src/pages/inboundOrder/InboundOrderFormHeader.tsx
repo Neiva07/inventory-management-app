@@ -60,7 +60,7 @@ export const InboundOrderFormHeader = ({ onDelete, onBack, inboundOrder, firstFi
             {inboundOrderID ? "Editar Nota de Compra" : "Cadastro de Compra"}
           </PageTitle>
           {inboundOrder?.publicId && (
-            <PublicIdDisplay publicId={inboundOrder.publicId} />
+            <PublicIdDisplay publicId={inboundOrder.publicId} recordType="pedido de entrada" />
           )}
         </div>
         <div className="flex min-w-0 items-center gap-2">

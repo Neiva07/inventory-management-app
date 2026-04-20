@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from 'components/ui/tooltip';
-import { useSupplierCreateForm } from './useSupplierCreateForm';
+import { useSupplierCreateForm, INITIAL_SUPPLIER_FORM_STATE } from './useSupplierCreateForm';
 import { Controller, FormProvider } from 'react-hook-form';
 import { SelectField } from '../product/useProductCreateForm';
 import { ProductCategory, getProductCategories } from '../../model/productCategories';
@@ -59,16 +59,23 @@ export const SupplierForm = () => {
   }, [organization?.id, user]);
 
   const handleSubmit = async () => {
-    if (supplierID) {
-      await onFormUpdate();
-      navigate('/suppliers');
-    } else {
-      await onFormSubmit();
-      if (isCreateMode) {
-        form.reset();
-      } else {
+    try {
+      if (supplierID) {
+        await onFormUpdate();
         navigate('/suppliers');
+      } else {
+        await onFormSubmit();
+        if (isCreateMode) {
+          setTimeout(() => {
+            form.reset(INITIAL_SUPPLIER_FORM_STATE);
+            tradeNameRef.current?.focus();
+          }, 100);
+        } else {
+          navigate('/suppliers');
+        }
       }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -123,7 +130,7 @@ export const SupplierForm = () => {
 
   return (
     <FormProvider {...form}>
-      <form className="relative pt-16" ref={formRef}>
+      <form className="relative pt-16" ref={formRef} onSubmit={(e) => e.preventDefault()}>
         <FormActions
           showDelete={!!supplierID}
           showInactivate={!!supplier && supplier.status === 'active'}
@@ -152,7 +159,7 @@ export const SupplierForm = () => {
                 {supplierID ? "Editar Fornecedor" : "Cadastro de Fornecedor"}
               </PageTitle>
               {supplier?.publicId && (
-                <PublicIdDisplay publicId={supplier.publicId} />
+                <PublicIdDisplay publicId={supplier.publicId} recordType="fornecedor" />
               )}
               {!supplierID && (
                 <DevFillButton
@@ -436,38 +443,29 @@ export const SupplierForm = () => {
             />
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-end gap-4">
-          {supplierID ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={handleSubmit}>
-                    Editar Fornecedor
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">{modKey} + Enter</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <div className="flex items-center gap-4">
+        <div className="mt-3 flex items-center gap-4">
+          {!supplierID && (
+            <div className="mr-auto">
               <CreateModeToggle
                 isCreateMode={isCreateMode}
                 onToggle={setIsCreateMode}
                 listingText="Redirecionar para listagem de fornecedores"
                 createText="Criar mais fornecedores"
               />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button onClick={handleSubmit}>
-                      Criar Fornecedor
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">{modKey} + Enter</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           )}
+          <div className="ml-auto">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={handleSubmit}>
+                    {supplierID ? 'Editar Fornecedor' : 'Criar Fornecedor'}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">{modKey} + Enter</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
         <DeleteConfirmationDialog
           open={deleteDialogOpen}

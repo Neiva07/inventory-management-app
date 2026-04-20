@@ -75,13 +75,8 @@ export const InstallmentPaymentList = () => {
 
   // Define columns inside component to access navigate function
   const columns: ColumnDefinition<InstallmentPayment>[] = [
-    { 
-      field: 'publicId', 
-      headerName: 'ID', 
-      width: 180,
-    },
-    { 
-      field: 'installmentNumber', 
+    {
+      field: 'installmentNumber',
       headerName: '# Parcela', 
       width: 80,
     },

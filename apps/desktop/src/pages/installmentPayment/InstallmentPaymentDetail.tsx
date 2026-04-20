@@ -142,7 +142,7 @@ export const InstallmentPaymentDetail = () => {
         </Button>
         <div className="flex items-center gap-4 flex-1">
           <PageTitle>Parcela #{installmentPayment.installmentNumber}</PageTitle>
-          <PublicIdDisplay publicId={installmentPayment.publicId} />
+          <PublicIdDisplay publicId={installmentPayment.publicId} recordType="pagamento" />
           <Badge
             className="font-bold"
             style={{

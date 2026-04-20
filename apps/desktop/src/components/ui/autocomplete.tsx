@@ -234,6 +234,7 @@ const AutocompleteInner = <T,>(
 
   const { handleKeyDown: handleShortcutKeyDown } = useAutocompleteKeyboard<T>({
     isOpen,
+    multiple,
     onSelect: (selectedOption: T) => selectOption(selectedOption, {} as React.SyntheticEvent),
     onClose: () => closeList('escapeKeyDown', {} as React.SyntheticEvent),
     onNextField,

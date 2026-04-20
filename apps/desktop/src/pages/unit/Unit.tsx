@@ -237,7 +237,7 @@ export const Units = () => {
               <CardTitle className="text-base">
                 {editingUnit ? "Editar unidade" : "Nova unidade"}
               </CardTitle>
-              {editingUnit?.publicId ? <PublicIdDisplay publicId={editingUnit.publicId} /> : null}
+              {editingUnit?.publicId ? <PublicIdDisplay publicId={editingUnit.publicId} recordType="unidade" /> : null}
             </div>
           </CardHeader>
           <CardContent className="space-y-3 pt-0">

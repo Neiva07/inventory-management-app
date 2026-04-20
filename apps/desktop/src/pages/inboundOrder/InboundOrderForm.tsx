@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { InboundOrderFormHeader } from "./InboundOrderFormHeader";
 import { InboundOrderFormLineItemForm } from "./InboundOrderFormLineItemForm";
 import { InboundOrderFormLineItemList } from "./InboundOrderFormLineItemList";
-import { InboundOrderItemDataInterface, useInboundOrderForm } from "./useInboundOrderForm";
+import { InboundOrderItemDataInterface, useInboundOrderForm, INITIAL_INBOUND_ORDER_VALUES } from "./useInboundOrderForm";
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { CreateModeToggle } from 'components/CreateModeToggle';
 import React, { useState, useRef } from 'react';
@@ -87,11 +87,19 @@ export const InboundOrderForm = () => {
   const hasItems = items && items.length > 0;
 
   const handleSubmit = async () => {
-    onFormSubmit();
-    if (inboundOrderID || !isCreateMode) {
-      navigate('/inbound-orders');
-    } else {
-      reset();
+    try {
+      await onFormSubmit();
+      if (inboundOrderID || !isCreateMode) {
+        navigate('/inbound-orders');
+      } else {
+        setTimeout(() => {
+          reset(INITIAL_INBOUND_ORDER_VALUES);
+          supplierRef.current?.querySelector('input')?.focus();
+        }, 100);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Alguma coisa deu errado. Tente novamente mais tarde');
     }
   };
 
@@ -146,11 +154,14 @@ export const InboundOrderForm = () => {
       await createMultipleInstallmentPayments(installmentPayments);
       
       toast.success('Plano de parcelamento criado com sucesso!');
-      
+
       if (inboundOrderID || !isCreateMode) {
         navigate('/inbound-orders');
       } else {
-        reset();
+        setTimeout(() => {
+          reset(INITIAL_INBOUND_ORDER_VALUES);
+          supplierRef.current?.querySelector('input')?.focus();
+        }, 100);
       }
     } catch (error) {
       console.error('Error creating installment plan:', error);
@@ -323,7 +334,7 @@ export const InboundOrderForm = () => {
 
   return (
     <FormProvider register={register} reset={reset} {...formMethods}>
-      <form ref={formRef}>
+      <form ref={formRef} onSubmit={(e) => e.preventDefault()}>
         <InboundOrderFormHeader 
           onDelete={handleDelete} 
           onBack={() => navigate(-1)}
@@ -386,28 +397,24 @@ export const InboundOrderForm = () => {
             </Tooltip>
           </TooltipProvider>
         ) : (
-          <>  
-          <div className="mt-8 flex items-center justify-end gap-2">
-            <CreateModeToggle
-              isCreateMode={isCreateMode}
-              onToggle={setIsCreateMode}
-              listingText="Redirecionar para listagem de compras"
-              createText="Criar mais compras"
-            />
-          </div>
-
+          <div className="mt-8 flex items-center gap-2">
+            <div className="mr-auto">
+              <CreateModeToggle
+                isCreateMode={isCreateMode}
+                onToggle={setIsCreateMode}
+                listingText="Redirecionar para listagem de compras"
+                createText="Criar mais compras"
+              />
+            </div>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button 
-                    onClick={hasItems ? () => setInstallmentModalOpen(true) : undefined} 
-                    variant="outline" 
+                  <Button
+                    onClick={hasItems ? () => setInstallmentModalOpen(true) : undefined}
+                    variant="outline"
                     size="lg"
                     aria-disabled={!hasItems}
-                    className={cn(
-                      "mt-5",
-                      !hasItems && "cursor-not-allowed opacity-60"
-                    )}
+                    className={cn(!hasItems && "cursor-not-allowed opacity-60")}
                   >
                     Fechar Compra
                   </Button>
@@ -419,7 +426,7 @@ export const InboundOrderForm = () => {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            </>
+          </div>
         )}
         
         <DeleteConfirmationDialog

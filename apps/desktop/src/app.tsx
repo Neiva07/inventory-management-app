@@ -27,7 +27,6 @@ import { UpdateNotification } from './components/UpdateNotification';
 import { SettingsRouter } from "pages/routes/settings/index";
 import { UIContextProvider, useUI } from './context/ui';
 import { Sidebar } from './pages/routes/Sidebar';
-import { OfflineIndicator } from './components/OfflineIndicator';
 import { InboundOrderForm } from "pages/inboundOrder/InboundOrderForm";
 import { InboundOrderList } from "pages/inboundOrder/InboundOrderList";
 import { SupplierBillList } from "pages/supplierBill/SupplierBillList";
@@ -80,8 +79,7 @@ const App = () => {
   
   return (
     <div className="flex min-h-screen">
-      <OfflineIndicator />
-      {user && (layout === 'navbar' ? <Navbar /> : <Sidebar />)}
+{user && (layout === 'navbar' ? <Navbar /> : <Sidebar />)}
       <main
         className="flex max-w-full flex-1 flex-col overflow-hidden px-4 py-3 sm:px-6 sm:py-4"
         style={{ marginTop: user && layout === "navbar" ? 60 : 0, transition: "margin 0.2s" }}

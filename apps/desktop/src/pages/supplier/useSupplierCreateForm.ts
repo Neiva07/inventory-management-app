@@ -31,7 +31,7 @@ export interface SupplierFormDataInterface {
   daysToPay: number;
 }
 
-const INITIAL_SUPPLIER_FORM_STATE: SupplierFormDataInterface = {
+export const INITIAL_SUPPLIER_FORM_STATE: SupplierFormDataInterface = {
   tradeName: '',
   legalName: '',
   description: '',
@@ -145,7 +145,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
 
 
 
-  const onSubmit = useCallback((data: SupplierFormDataInterface) => {
+  const onSubmit = useCallback(async (data: SupplierFormDataInterface) => {
     const { productCategories, address, contactPhone, companyPhone, entityID, ...restData } = data;
 
     const { region, city, postalCode, ...restAddress } = address;
@@ -156,7 +156,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
     const cleanedContactPhone = contactPhone.replace(/[^0-9]/gi, "");
 
     try {
-      createSupplier({
+      await createSupplier({
         address: {
           ...restAddress,
 
@@ -189,7 +189,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
 
   }, [organization?.id, user.id]);
 
-  const onUpdate = useCallback((data: SupplierFormDataInterface) => {
+  const onUpdate = useCallback(async (data: SupplierFormDataInterface) => {
     const { productCategories, address, contactPhone, companyPhone, entityID, ...restData } = data;
 
     const { region, city, postalCode, ...restAddress } = address;
@@ -201,7 +201,7 @@ export const useSupplierCreateForm = (supplierID?: string) => {
 
     try {
 
-      updateSupplier(supplierID, {
+      await updateSupplier(supplierID, {
         address: {
           country: 'Brazil',
           region: region?.value ?? '',
@@ -232,9 +232,9 @@ export const useSupplierCreateForm = (supplierID?: string) => {
   }, [supplierID]);
 
 
-  const onDelete = useCallback((onSuccess?: () => void) => {
+  const onDelete = useCallback(async (onSuccess?: () => void) => {
     try {
-      deleteSupplier(supplierID)
+      await deleteSupplier(supplierID)
       toast.success('Fornecedor deletado com sucesso')
       // Call the success callback (navigation) after successful deletion
       onSuccess?.()
