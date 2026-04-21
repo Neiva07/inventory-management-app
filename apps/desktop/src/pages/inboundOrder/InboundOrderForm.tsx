@@ -16,6 +16,7 @@ import { getSupplier } from 'model/suppliers';
 import { useAuth } from 'context/auth';
 import { toast } from 'sonner';
 import { useFormWrapper } from '../../hooks/forms/useFormWrapper';
+import { useCreateModePreference } from '../../hooks/forms/useCreateModePreference';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { ProductUpdateModal } from 'components/ProductUpdateModal';
 import { ProductUpdateToggle } from 'components/ProductUpdateToggle';
@@ -34,7 +35,7 @@ export const InboundOrderForm = () => {
   const { inboundOrderID } = useParams();
   const navigate = useNavigate();
   const { user, organization } = useAuth();
-  const [isCreateMode, setIsCreateMode] = useState(false);
+  const [isCreateMode, setIsCreateMode] = useCreateModePreference('inboundOrder');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [installmentModalOpen, setInstallmentModalOpen] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);

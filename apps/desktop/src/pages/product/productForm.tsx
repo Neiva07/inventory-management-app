@@ -13,6 +13,7 @@ import { CreateModeToggle } from 'components/CreateModeToggle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { useFormWrapper } from 'hooks/forms/useFormWrapper';
+import { useCreateModePreference } from 'hooks/forms/useCreateModePreference';
 import { Autocomplete } from 'components/ui/autocomplete';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { DevFillButton } from '../../dev/useDevFill';
@@ -23,6 +24,23 @@ import { Separator } from 'components/ui/separator';
 import { modKey } from 'lib/platform';
 import { Button } from 'components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from 'components/ui/tooltip';
+
+const toProductNameCase = (value: string): string => {
+  return value
+    .split(/(\s+)/)
+    .map((segment) => {
+      if (segment.length === 0 || /^\s+$/.test(segment)) return segment;
+      const lower = segment.toLowerCase();
+      const firstAlphaIndex = lower.search(/\p{L}/u);
+      if (firstAlphaIndex === -1) return lower;
+      return (
+        lower.slice(0, firstAlphaIndex) +
+        lower.charAt(firstAlphaIndex).toUpperCase() +
+        lower.slice(firstAlphaIndex + 1)
+      );
+    })
+    .join('');
+};
 
 interface ProductFormProps {
   productID?: string;
@@ -35,9 +53,9 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
 
   const { productID: paramProductID } = useParams();
   const navigate = useNavigate();
-  const [isCreateMode, setIsCreateMode] = useState(false);
+  const [isCreateMode, setIsCreateMode] = useCreateModePreference('product');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  
+
   // Use prop productID if provided (for modal), otherwise use param (for page)
   const productID = propProductID ?? paramProductID;
   
@@ -249,6 +267,13 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                       ref={titleRef}
                       aria-invalid={fieldState.invalid}
                       onFocus={(e) => e.target.select()}
+                      onBlur={(e) => {
+                        const transformed = toProductNameCase(e.target.value);
+                        if (transformed !== e.target.value) {
+                          field.onChange(transformed);
+                        }
+                        field.onBlur();
+                      }}
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                   </Field>

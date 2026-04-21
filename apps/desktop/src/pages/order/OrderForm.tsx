@@ -10,6 +10,7 @@ import React, { useState, useRef } from 'react';
 import { integerDivide, multiply } from "lib/math";
 import { subtract } from "lib/math";
 import { useFormWrapper } from '../../hooks/forms/useFormWrapper';
+import { useCreateModePreference } from '../../hooks/forms/useCreateModePreference';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import {
   Button,
@@ -25,7 +26,7 @@ import { modKey } from 'lib/platform';
 export const OrderForm = () => {
   const { orderID } = useParams();
   const navigate = useNavigate();
-  const [isCreateMode, setIsCreateMode] = useState(false);
+  const [isCreateMode, setIsCreateMode] = useCreateModePreference('order');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   

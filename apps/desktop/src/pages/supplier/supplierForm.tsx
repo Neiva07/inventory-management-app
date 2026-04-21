@@ -23,6 +23,7 @@ import { CreateModeToggle } from 'components/CreateModeToggle';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { useFormWrapper } from '../../hooks/forms/useFormWrapper';
+import { useCreateModePreference } from '../../hooks/forms/useCreateModePreference';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { Autocomplete } from 'components/ui/autocomplete';
 import { modKey } from 'lib/platform';
@@ -34,7 +35,7 @@ export const SupplierForm = () => {
   const { user, organization } = useAuth();
   const { supplierID } = useParams();
   const navigate = useNavigate();
-  const [isCreateMode, setIsCreateMode] = useState(false);
+  const [isCreateMode, setIsCreateMode] = useCreateModePreference('supplier');
   const [categories, setCategories] = useState<Array<ProductCategory>>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 

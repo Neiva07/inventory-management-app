@@ -20,6 +20,7 @@ import { useState, useRef } from 'react';
 import { DeleteConfirmationDialog } from 'components/DeleteConfirmationDialog';
 import { PublicIdDisplay } from 'components/PublicIdDisplay';
 import { useFormWrapper } from '../../hooks/forms/useFormWrapper';
+import { useCreateModePreference } from '../../hooks/forms/useCreateModePreference';
 import { KeyboardShortcutsHelp } from 'components/KeyboardFormShortcutsHelp';
 import { Autocomplete } from 'components/ui/autocomplete';
 import { useAuth } from 'context/auth';
@@ -31,7 +32,7 @@ export const CustomerForm = () => {
   const { customerID } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isCreateMode, setIsCreateMode] = useState(false);
+  const [isCreateMode, setIsCreateMode] = useCreateModePreference('customer');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { form, customer, onFormSubmit, onFormUpdate, onDelete, onDeactivate, onActivate, availableCities } = useCustomerCreateForm(customerID);
