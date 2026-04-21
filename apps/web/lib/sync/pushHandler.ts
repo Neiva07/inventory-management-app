@@ -135,7 +135,7 @@ async function applySingleChange(
         const updateData = { ...change.payload, updatedAt: serverTimestamp };
         await db.update(table).set(updateData as any).where(eq(table.id, change.recordId));
       } else {
-        const insertData = { ...change.payload, createdAt: serverTimestamp, updatedAt: serverTimestamp };
+        const insertData = { id: change.recordId, ...change.payload, createdAt: serverTimestamp, updatedAt: serverTimestamp };
         await db.insert(table).values(insertData as any);
       }
       return true;
@@ -144,7 +144,7 @@ async function applySingleChange(
     case "update": {
       if (existing.length === 0) {
         // Row doesn't exist — treat as create (offline create+update sequence)
-        const insertData = { ...change.payload, createdAt: serverTimestamp, updatedAt: serverTimestamp };
+        const insertData = { id: change.recordId, ...change.payload, createdAt: serverTimestamp, updatedAt: serverTimestamp };
         await db.insert(table).values(insertData as any);
         return true;
       }

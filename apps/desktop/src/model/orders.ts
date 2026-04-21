@@ -298,7 +298,7 @@ export const createOrder = async (orderInfo: Partial<Order>) => {
     organizationId: orderInfo.organizationId,
   });
 
-  await db.insert(orders).values({
+  const row = {
     id: orderID,
     publicId,
     userId: userID,
@@ -312,6 +312,10 @@ export const createOrder = async (orderInfo: Partial<Order>) => {
     dueDate: orderInfo.dueDate,
     totalCommissionCents: (converted.totalComission as number) ?? 0,
     totalCostCents: (converted.totalCost as number) ?? 0,
+  };
+
+  await db.insert(orders).values({
+    ...row,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -346,7 +350,7 @@ export const createOrder = async (orderInfo: Partial<Order>) => {
     tableName: "orders",
     recordId: orderID,
     operation: "create",
-    payload: orderInfo,
+    payload: row,
   });
 };
 
@@ -379,18 +383,22 @@ export const updateOrder = async (orderID: string, currentOrder: Partial<Order>)
 
   const converted = convertOrderUnitsStore(currentOrder);
 
+  const changes = {
+    customerId: currentOrder.customer?.id,
+    customerJson: currentOrder.customer ? JSON.stringify(currentOrder.customer) : undefined,
+    status: currentOrder.status,
+    paymentMethodId: currentOrder.paymentMethod?.id,
+    paymentMethodLabel: currentOrder.paymentMethod?.label,
+    orderDate: currentOrder.orderDate,
+    dueDate: currentOrder.dueDate,
+    totalCommissionCents: converted.totalComission as number,
+    totalCostCents: converted.totalCost as number,
+  };
+
   await db
     .update(orders)
     .set({
-      customerId: currentOrder.customer?.id,
-      customerJson: currentOrder.customer ? JSON.stringify(currentOrder.customer) : undefined,
-      status: currentOrder.status,
-      paymentMethodId: currentOrder.paymentMethod?.id,
-      paymentMethodLabel: currentOrder.paymentMethod?.label,
-      orderDate: currentOrder.orderDate,
-      dueDate: currentOrder.dueDate,
-      totalCommissionCents: converted.totalComission as number,
-      totalCostCents: converted.totalCost as number,
+      ...changes,
       updatedAt: Date.now(),
     })
     .where(eq(orders.id, orderID));
@@ -438,6 +446,6 @@ export const updateOrder = async (orderID: string, currentOrder: Partial<Order>)
     tableName: "orders",
     recordId: orderID,
     operation: "update",
-    payload: currentOrder,
+    payload: changes,
   });
 };

@@ -196,7 +196,7 @@ export const createSupplierBill = async (supplierBillInfo: Partial<SupplierBill>
     organizationId: supplierBillInfo.organizationId,
   });
 
-  await db.insert(supplierBills).values({
+  const row = {
     id: supplierBillID,
     publicId,
     userId: userID,
@@ -209,6 +209,10 @@ export const createSupplierBill = async (supplierBillInfo: Partial<SupplierBill>
     dueDate: supplierBillInfo.startDate,
     totalAmountCents: (converted.totalValue as number) ?? 0,
     paidAmountCents: (converted.initialCashInstallment as number) ?? 0,
+  };
+
+  await db.insert(supplierBills).values({
+    ...row,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -218,7 +222,7 @@ export const createSupplierBill = async (supplierBillInfo: Partial<SupplierBill>
     tableName: "supplier_bills",
     recordId: supplierBillID,
     operation: "create",
-    payload: supplierBillInfo,
+    payload: row,
   });
 
   return supplierBillID;
@@ -229,18 +233,22 @@ export const updateSupplierBill = async (supplierBillID: string, supplierBillInf
   const converted = convertSupplierBillUnitsStore(supplierBillInfo);
   const existing = await db.select({ organizationId: supplierBills.organizationId }).from(supplierBills).where(eq(supplierBills.id, supplierBillID)).limit(1);
 
+  const changes = {
+    supplierId: supplierBillInfo.supplier?.supplierID,
+    supplierJson: supplierBillInfo.supplier ? JSON.stringify(supplierBillInfo.supplier) : undefined,
+    inboundOrderId: supplierBillInfo.inboundOrder?.id,
+    inboundOrderJson: supplierBillInfo.inboundOrder ? JSON.stringify(supplierBillInfo.inboundOrder) : undefined,
+    status: supplierBillInfo.status,
+    dueDate: supplierBillInfo.startDate,
+    totalAmountCents: converted.totalValue as number,
+    paidAmountCents: converted.initialCashInstallment as number,
+  };
+
   await db
     .update(supplierBills)
     .set({
+      ...changes,
       updatedAt: Date.now(),
-      supplierId: supplierBillInfo.supplier?.supplierID,
-      supplierJson: supplierBillInfo.supplier ? JSON.stringify(supplierBillInfo.supplier) : undefined,
-      inboundOrderId: supplierBillInfo.inboundOrder?.id,
-      inboundOrderJson: supplierBillInfo.inboundOrder ? JSON.stringify(supplierBillInfo.inboundOrder) : undefined,
-      status: supplierBillInfo.status,
-      dueDate: supplierBillInfo.startDate,
-      totalAmountCents: converted.totalValue as number,
-      paidAmountCents: converted.initialCashInstallment as number,
     })
     .where(eq(supplierBills.id, supplierBillID));
 
@@ -249,7 +257,7 @@ export const updateSupplierBill = async (supplierBillID: string, supplierBillInf
     tableName: "supplier_bills",
     recordId: supplierBillID,
     operation: "update",
-    payload: supplierBillInfo,
+    payload: changes,
   });
 };
 

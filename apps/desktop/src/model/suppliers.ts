@@ -183,7 +183,7 @@ export const createSupplier = async (supplierInfo: Supplier) => {
     organizationId: supplierInfo.organizationId,
   });
 
-  await db.insert(suppliers).values({
+  const row = {
     id: supplierID,
     publicId,
     userId: supplierInfo.userID,
@@ -198,6 +198,10 @@ export const createSupplier = async (supplierInfo: Supplier) => {
     contactPhone: supplierInfo.contactPhone,
     contactName: supplierInfo.contactName,
     addressJson: supplierInfo.address ? JSON.stringify(supplierInfo.address) : null,
+  };
+
+  await db.insert(suppliers).values({
+    ...row,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -221,7 +225,7 @@ export const createSupplier = async (supplierInfo: Supplier) => {
     tableName: "suppliers",
     recordId: supplierID,
     operation: "create",
-    payload: supplierInfo,
+    payload: row,
   });
 };
 
@@ -301,20 +305,24 @@ export const updateSupplier = async (supplierID: string, supplierInfo: Partial<S
   const db = createAppDb();
   const existing = await db.select({ organizationId: suppliers.organizationId }).from(suppliers).where(eq(suppliers.id, supplierID)).limit(1);
 
+  const changes = {
+    tradeName: supplierInfo.tradeName,
+    legalName: supplierInfo.legalName,
+    entityId: supplierInfo.entityID,
+    notes: supplierInfo.description,
+    status: supplierInfo.status,
+    daysToPay: supplierInfo.daysToPay,
+    companyPhone: supplierInfo.companyPhone,
+    contactPhone: supplierInfo.contactPhone,
+    contactName: supplierInfo.contactName,
+    addressJson: supplierInfo.address ? JSON.stringify(supplierInfo.address) : undefined,
+  };
+
   await db
     .update(suppliers)
     .set({
+      ...changes,
       updatedAt: Date.now(),
-      tradeName: supplierInfo.tradeName,
-      legalName: supplierInfo.legalName,
-      entityId: supplierInfo.entityID,
-      notes: supplierInfo.description,
-      status: supplierInfo.status,
-      daysToPay: supplierInfo.daysToPay,
-      companyPhone: supplierInfo.companyPhone,
-      contactPhone: supplierInfo.contactPhone,
-      contactName: supplierInfo.contactName,
-      addressJson: supplierInfo.address ? JSON.stringify(supplierInfo.address) : undefined,
     })
     .where(eq(suppliers.id, supplierID));
 
@@ -341,6 +349,6 @@ export const updateSupplier = async (supplierID: string, supplierInfo: Partial<S
     tableName: "suppliers",
     recordId: supplierID,
     operation: "update",
-    payload: supplierInfo,
+    payload: changes,
   });
 };

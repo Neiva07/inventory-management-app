@@ -195,7 +195,7 @@ export const createInstallmentPayment = async (installmentPaymentInfo: Partial<I
     organizationId: installmentPaymentInfo.organizationId,
   });
 
-  await db.insert(installmentPayments).values({
+  const row = {
     id: installmentPaymentID,
     publicId,
     supplierBillId: installmentPaymentInfo.supplierBillID,
@@ -209,6 +209,10 @@ export const createInstallmentPayment = async (installmentPaymentInfo: Partial<I
     paidAmountCents: (converted.paidAmount as number) ?? 0,
     paymentMethodId: installmentPaymentInfo.paymentMethod?.id,
     paymentMethodLabel: installmentPaymentInfo.paymentMethod?.label,
+  };
+
+  await db.insert(installmentPayments).values({
+    ...row,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -218,7 +222,7 @@ export const createInstallmentPayment = async (installmentPaymentInfo: Partial<I
     tableName: "installment_payments",
     recordId: installmentPaymentID,
     operation: "create",
-    payload: installmentPaymentInfo,
+    payload: row,
   });
 };
 
@@ -235,7 +239,7 @@ export const createMultipleInstallmentPayments = async (installments: Partial<In
     });
     const installmentId = uuidv4();
 
-    await db.insert(installmentPayments).values({
+    const row = {
       id: installmentId,
       publicId: await generatePublicId(INSTALLMENT_PAYMENT_COLLECTION),
       supplierBillId: installment.supplierBillID,
@@ -249,6 +253,10 @@ export const createMultipleInstallmentPayments = async (installments: Partial<In
       paidAmountCents: (converted.paidAmount as number) ?? 0,
       paymentMethodId: installment.paymentMethod?.id,
       paymentMethodLabel: installment.paymentMethod?.label,
+    };
+
+    await db.insert(installmentPayments).values({
+      ...row,
       createdAt: timestamp,
       updatedAt: timestamp,
     });
@@ -258,7 +266,7 @@ export const createMultipleInstallmentPayments = async (installments: Partial<In
       tableName: "installment_payments",
       recordId: installmentId,
       operation: "create",
-      payload: installment,
+      payload: row,
     });
   }
 };
@@ -272,18 +280,22 @@ export const updateInstallmentPayment = async (installmentPaymentID: string, ins
     .where(eq(installmentPayments.id, installmentPaymentID))
     .limit(1);
 
+  const changes = {
+    installmentNumber: installmentPaymentInfo.installmentNumber,
+    status: installmentPaymentInfo.status,
+    dueDate: installmentPaymentInfo.dueDate,
+    paidDate: installmentPaymentInfo.paidAt,
+    amountCents: converted.amount as number,
+    paidAmountCents: converted.paidAmount as number,
+    paymentMethodId: installmentPaymentInfo.paymentMethod?.id,
+    paymentMethodLabel: installmentPaymentInfo.paymentMethod?.label,
+  };
+
   await db
     .update(installmentPayments)
     .set({
+      ...changes,
       updatedAt: Date.now(),
-      installmentNumber: installmentPaymentInfo.installmentNumber,
-      status: installmentPaymentInfo.status,
-      dueDate: installmentPaymentInfo.dueDate,
-      paidDate: installmentPaymentInfo.paidAt,
-      amountCents: converted.amount as number,
-      paidAmountCents: converted.paidAmount as number,
-      paymentMethodId: installmentPaymentInfo.paymentMethod?.id,
-      paymentMethodLabel: installmentPaymentInfo.paymentMethod?.label,
     })
     .where(eq(installmentPayments.id, installmentPaymentID));
 
@@ -292,7 +304,7 @@ export const updateInstallmentPayment = async (installmentPaymentID: string, ins
     tableName: "installment_payments",
     recordId: installmentPaymentID,
     operation: "update",
-    payload: installmentPaymentInfo,
+    payload: changes,
   });
 };
 
@@ -327,14 +339,18 @@ export const recordPayment = async (
     status: "paid",
   });
 
+  const changes = {
+    status: "paid" as const,
+    paidDate: Date.now(),
+    paidAmountCents: converted.paidAmount as number,
+    paymentMethodId: paymentMethod?.id,
+    paymentMethodLabel: paymentMethod?.label,
+  };
+
   await db
     .update(installmentPayments)
     .set({
-      status: "paid",
-      paidDate: Date.now(),
-      paidAmountCents: converted.paidAmount as number,
-      paymentMethodId: paymentMethod?.id,
-      paymentMethodLabel: paymentMethod?.label,
+      ...changes,
       updatedAt: Date.now(),
     })
     .where(eq(installmentPayments.id, installmentPaymentID));
@@ -344,12 +360,7 @@ export const recordPayment = async (
     tableName: "installment_payments",
     recordId: installmentPaymentID,
     operation: "update",
-    payload: {
-      id: installmentPaymentID,
-      paidAmount,
-      paymentMethod,
-      status: "paid",
-    },
+    payload: changes,
   });
 };
 

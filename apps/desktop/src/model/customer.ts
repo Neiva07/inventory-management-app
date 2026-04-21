@@ -117,7 +117,7 @@ export const createCustomer = async (customerInfo: Customer) => {
     updatedAt: timestamp,
   };
 
-  await db.insert(customers).values({
+  const row = {
     id: customerID,
     publicId,
     userId: customerInfo.userID,
@@ -130,6 +130,10 @@ export const createCustomer = async (customerInfo: Customer) => {
     contactPhone: customerInfo.contactPhone,
     contactName: customerInfo.contactName,
     addressJson: customerInfo.address ? JSON.stringify(customerInfo.address) : null,
+  };
+
+  await db.insert(customers).values({
+    ...row,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -139,7 +143,7 @@ export const createCustomer = async (customerInfo: Customer) => {
     tableName: "customers",
     recordId: customerID,
     operation: "create",
-    payload: customerInfo,
+    payload: row,
   });
 
   return customerData;
@@ -213,18 +217,22 @@ export const updateCustomer = async (customerID: string, customerInfo: Partial<C
   const db = createAppDb();
   const existing = await db.select({ organizationId: customers.organizationId }).from(customers).where(eq(customers.id, customerID)).limit(1);
 
+  const changes = {
+    name: customerInfo.name,
+    status: customerInfo.status,
+    cpf: customerInfo.cpf,
+    rg: customerInfo.rg,
+    companyPhone: customerInfo.companyPhone,
+    contactPhone: customerInfo.contactPhone,
+    contactName: customerInfo.contactName,
+    addressJson: customerInfo.address ? JSON.stringify(customerInfo.address) : undefined,
+  };
+
   await db
     .update(customers)
     .set({
+      ...changes,
       updatedAt: Date.now(),
-      name: customerInfo.name,
-      status: customerInfo.status,
-      cpf: customerInfo.cpf,
-      rg: customerInfo.rg,
-      companyPhone: customerInfo.companyPhone,
-      contactPhone: customerInfo.contactPhone,
-      contactName: customerInfo.contactName,
-      addressJson: customerInfo.address ? JSON.stringify(customerInfo.address) : undefined,
     })
     .where(eq(customers.id, customerID));
 
@@ -233,6 +241,6 @@ export const updateCustomer = async (customerID: string, customerInfo: Partial<C
     tableName: "customers",
     recordId: customerID,
     operation: "update",
-    payload: customerInfo,
+    payload: changes,
   });
 };

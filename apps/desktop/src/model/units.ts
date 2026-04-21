@@ -56,7 +56,7 @@ export const createUnit = async (unitInfo: Partial<Unit>) => {
   const userID = unitInfo.userID ?? "";
   const organizationId = resolveOrganizationId({ userID, organizationId: unitInfo.organizationId });
 
-  await db.insert(units).values({
+  const row = {
     id,
     publicId,
     userId: userID,
@@ -64,6 +64,10 @@ export const createUnit = async (unitInfo: Partial<Unit>) => {
     name: unitInfo.name ?? "",
     description: unitInfo.description ?? "",
     status: unitInfo.status ?? "active",
+  };
+
+  await db.insert(units).values({
+    ...row,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -73,7 +77,7 @@ export const createUnit = async (unitInfo: Partial<Unit>) => {
     tableName: "units",
     recordId: id,
     operation: "create",
-    payload: unitInfo,
+    payload: row,
   });
 };
 
@@ -81,11 +85,15 @@ export const updateUnit = async (id: string, unitInfo: Partial<Unit>) => {
   const db = createAppDb();
   const existing = await db.select({ organizationId: units.organizationId }).from(units).where(eq(units.id, id)).limit(1);
 
+  const changes = {
+    name: unitInfo.name,
+    description: unitInfo.description,
+  };
+
   await db
     .update(units)
     .set({
-      name: unitInfo.name,
-      description: unitInfo.description,
+      ...changes,
       updatedAt: Date.now(),
     })
     .where(eq(units.id, id));
@@ -95,7 +103,7 @@ export const updateUnit = async (id: string, unitInfo: Partial<Unit>) => {
     tableName: "units",
     recordId: id,
     operation: "update",
-    payload: unitInfo,
+    payload: changes,
   });
 };
 

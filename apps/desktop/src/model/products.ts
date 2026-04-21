@@ -208,7 +208,7 @@ export const createProduct = async (productInfo: Partial<Product>) => {
   const userID = productInfo.userID ?? "";
   const organizationId = resolveOrganizationId({ userID, organizationId: productInfo.organizationId });
 
-  await db.insert(products).values({
+  const row = {
     id: productID,
     publicId,
     userId: userID,
@@ -230,6 +230,10 @@ export const createProduct = async (productInfo: Partial<Product>) => {
     suppliersJson: JSON.stringify(productInfo.suppliers ?? []),
     productCategoryJson: productInfo.productCategory ? JSON.stringify(productInfo.productCategory) : null,
     variantsJson: JSON.stringify(converted.variants ?? []),
+  };
+
+  await db.insert(products).values({
+    ...row,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -239,7 +243,7 @@ export const createProduct = async (productInfo: Partial<Product>) => {
     tableName: "products",
     recordId: productID,
     operation: "create",
-    payload: productInfo,
+    payload: row,
   });
 };
 
@@ -303,27 +307,31 @@ export const updateProduct = async (productID: string, productInfo: Partial<Prod
   const converted = convertProductUnitsStore(productInfo);
   const existing = await db.select({ organizationId: products.organizationId }).from(products).where(eq(products.id, productID)).limit(1);
 
+  const changes = {
+    categoryId: productInfo.productCategory?.id,
+    supplierId: productInfo.suppliers?.[0]?.supplierID,
+    baseUnitId: productInfo.baseUnit?.id,
+    title: productInfo.title,
+    sku: productInfo.ncm,
+    barcode: productInfo.ean,
+    description: productInfo.description,
+    status: productInfo.status,
+    inventoryBaseUnit: productInfo.inventory,
+    costCents: converted.cost as number,
+    sailsmanCommissionCents: converted.sailsmanComission as number,
+    weight: productInfo.weight,
+    minInventory: productInfo.minInventory,
+    baseUnitJson: productInfo.baseUnit ? JSON.stringify(productInfo.baseUnit) : undefined,
+    suppliersJson: productInfo.suppliers ? JSON.stringify(productInfo.suppliers) : undefined,
+    productCategoryJson: productInfo.productCategory ? JSON.stringify(productInfo.productCategory) : undefined,
+    variantsJson: converted.variants ? JSON.stringify(converted.variants) : undefined,
+  };
+
   await db
     .update(products)
     .set({
+      ...changes,
       updatedAt: Date.now(),
-      categoryId: productInfo.productCategory?.id,
-      supplierId: productInfo.suppliers?.[0]?.supplierID,
-      baseUnitId: productInfo.baseUnit?.id,
-      title: productInfo.title,
-      sku: productInfo.ncm,
-      barcode: productInfo.ean,
-      description: productInfo.description,
-      status: productInfo.status,
-      inventoryBaseUnit: productInfo.inventory,
-      costCents: converted.cost as number,
-      sailsmanCommissionCents: converted.sailsmanComission as number,
-      weight: productInfo.weight,
-      minInventory: productInfo.minInventory,
-      baseUnitJson: productInfo.baseUnit ? JSON.stringify(productInfo.baseUnit) : undefined,
-      suppliersJson: productInfo.suppliers ? JSON.stringify(productInfo.suppliers) : undefined,
-      productCategoryJson: productInfo.productCategory ? JSON.stringify(productInfo.productCategory) : undefined,
-      variantsJson: converted.variants ? JSON.stringify(converted.variants) : undefined,
     })
     .where(eq(products.id, productID));
 
@@ -332,7 +340,7 @@ export const updateProduct = async (productID: string, productInfo: Partial<Prod
     tableName: "products",
     recordId: productID,
     operation: "update",
-    payload: productInfo,
+    payload: changes,
   });
 };
 
@@ -343,10 +351,12 @@ export const adjustProductInventory = async (productID: string, deltaBaseUnit: n
     return;
   }
 
+  const newInventoryBaseUnit = (current[0].inventoryBaseUnit ?? 0) + deltaBaseUnit;
+
   await db
     .update(products)
     .set({
-      inventoryBaseUnit: (current[0].inventoryBaseUnit ?? 0) + deltaBaseUnit,
+      inventoryBaseUnit: newInventoryBaseUnit,
       updatedAt: Date.now(),
     })
     .where(eq(products.id, productID));
@@ -356,6 +366,6 @@ export const adjustProductInventory = async (productID: string, deltaBaseUnit: n
     tableName: "products",
     recordId: productID,
     operation: "update",
-    payload: { id: productID, deltaBaseUnit },
+    payload: { inventoryBaseUnit: newInventoryBaseUnit },
   });
 };

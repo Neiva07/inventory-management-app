@@ -340,7 +340,7 @@ export const createInboundOrder = async (inboundOrderInfo: Partial<InboundOrder>
     organizationId: inboundOrderInfo.organizationId,
   });
 
-  await db.insert(inboundOrders).values({
+  const row = {
     id: inboundOrderID,
     publicId,
     userId: userID,
@@ -351,6 +351,10 @@ export const createInboundOrder = async (inboundOrderInfo: Partial<InboundOrder>
     orderDate: inboundOrderInfo.orderDate ?? timestamp,
     dueDate: inboundOrderInfo.dueDate,
     totalCostCents: (converted.totalCost as number) ?? 0,
+  };
+
+  await db.insert(inboundOrders).values({
+    ...row,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -395,7 +399,7 @@ export const createInboundOrder = async (inboundOrderInfo: Partial<InboundOrder>
     tableName: "inbound_order",
     recordId: inboundOrderID,
     operation: "create",
-    payload: inboundOrderInfo,
+    payload: row,
   });
 
   return { id: inboundOrderID, publicId };
@@ -430,15 +434,19 @@ export const updateInboundOrder = async (inboundOrderID: string, currentInboundO
 
   const converted = convertInboundOrderUnitsStore(currentInboundOrder);
 
+  const changes = {
+    supplierId: currentInboundOrder.supplier?.id,
+    supplierJson: currentInboundOrder.supplier ? JSON.stringify(currentInboundOrder.supplier) : undefined,
+    status: currentInboundOrder.status,
+    orderDate: currentInboundOrder.orderDate,
+    dueDate: currentInboundOrder.dueDate,
+    totalCostCents: converted.totalCost as number,
+  };
+
   await db
     .update(inboundOrders)
     .set({
-      supplierId: currentInboundOrder.supplier?.id,
-      supplierJson: currentInboundOrder.supplier ? JSON.stringify(currentInboundOrder.supplier) : undefined,
-      status: currentInboundOrder.status,
-      orderDate: currentInboundOrder.orderDate,
-      dueDate: currentInboundOrder.dueDate,
-      totalCostCents: converted.totalCost as number,
+      ...changes,
       updatedAt: Date.now(),
     })
     .where(eq(inboundOrders.id, inboundOrderID));
@@ -497,6 +505,6 @@ export const updateInboundOrder = async (inboundOrderID: string, currentInboundO
     tableName: "inbound_order",
     recordId: inboundOrderID,
     operation: "update",
-    payload: currentInboundOrder,
+    payload: changes,
   });
 };

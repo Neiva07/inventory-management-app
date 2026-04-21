@@ -61,7 +61,7 @@ export const createProductCategories = async (productCategoryInfo: Partial<Produ
   const userID = productCategoryInfo.userID ?? "";
   const organizationId = resolveOrganizationId({ userID, organizationId: productCategoryInfo.organizationId });
 
-  await db.insert(productCategories).values({
+  const row = {
     id,
     publicId,
     userId: userID,
@@ -69,6 +69,10 @@ export const createProductCategories = async (productCategoryInfo: Partial<Produ
     name: productCategoryInfo.name ?? "",
     description: productCategoryInfo.description ?? "",
     status: productCategoryInfo.status ?? "active",
+  };
+
+  await db.insert(productCategories).values({
+    ...row,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -78,7 +82,7 @@ export const createProductCategories = async (productCategoryInfo: Partial<Produ
     tableName: "product_categories",
     recordId: id,
     operation: "create",
-    payload: productCategoryInfo,
+    payload: row,
   });
 };
 
@@ -90,11 +94,15 @@ export const updateProductCategory = async (id: string, productCategoryInfo: Par
     .where(eq(productCategories.id, id))
     .limit(1);
 
+  const changes = {
+    name: productCategoryInfo.name,
+    description: productCategoryInfo.description,
+  };
+
   await db
     .update(productCategories)
     .set({
-      name: productCategoryInfo.name,
-      description: productCategoryInfo.description,
+      ...changes,
       updatedAt: Date.now(),
     })
     .where(eq(productCategories.id, id));
@@ -104,7 +112,7 @@ export const updateProductCategory = async (id: string, productCategoryInfo: Par
     tableName: "product_categories",
     recordId: id,
     operation: "update",
-    payload: productCategoryInfo,
+    payload: changes,
   });
 };
 

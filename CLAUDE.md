@@ -44,7 +44,7 @@ There are two physical databases: desktop's local SQLite (`apps/desktop/data/sto
 
 - **Shared domain tables** (users, organizations, products, orders, suppliers, invitations, memberships, etc. + their `relations()` + `lifecycleColumns` helper) → `packages/db-schema/src/`. This is the single source of truth.
 - **Desktop-only tables** (`sync_meta`, `sync_queue`) → `apps/desktop/src/db/schema.ts`.
-- **Cloud-only tables** (`sync_events`, `runtime_log_entries`) → `apps/web/lib/db/schema.ts`.
+- **Cloud-only tables** (`sync_events`, `runtime_log_entries`, `runtime_log_launches`, `runtime_log_meta`) → `apps/web/lib/db/schema.ts`.
 
 Each app's `schema.ts` starts with `export * from "@stockify/db-schema"` and then declares its own app-specific tables. Drizzle-kit in each app follows that import and sees the full table set.
 
