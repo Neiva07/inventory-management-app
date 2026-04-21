@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq, like, notInArray, sql } from "drizzle-orm";
-import { requireAuth } from "@/lib/auth";
+import { requireRequestAuth } from "@/lib/auth";
 import { handleApiError } from "@/lib/errors";
 import { db } from "@/lib/db/client";
 import { organizations, userMemberships } from "@/lib/db/schema";
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await requireAuth();
+    const { userId } = await requireRequestAuth(request);
     const query = request.nextUrl.searchParams.get("q") ?? "";
 
     if (query.length < 2) {

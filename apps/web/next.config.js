@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@stockify/runtime-logging'],
   images: {
     remotePatterns: [
       {

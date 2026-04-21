@@ -296,6 +296,8 @@ export const ProductList = () => {
           <div className="col-span-12 lg:col-span-4">
             <SearchField
             ref={searchFieldRef}
+            id="product-search"
+            label="Buscar"
             value={searchTitle}
             onChange={handleSearchTitle}
             placeholder={"Busque pelo nome do produto..."}

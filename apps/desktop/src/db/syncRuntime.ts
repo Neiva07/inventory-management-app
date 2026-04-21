@@ -35,8 +35,9 @@ export const configureSyncScope = async (
   }
 
   const clientId = await getOrCreateClientId();
+  void window.electron?.setRuntimeLogContext({ syncClientId: clientId });
 
-  initSyncApiClient({ baseUrl, getSessionToken, clientId });
+  initSyncApiClient({ baseUrl, getSessionToken, clientId, userId });
 
   if (runtimeEngine) {
     runtimeEngine.setScope({ userId, organizationIds });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq, gt, isNull } from "drizzle-orm";
-import { requireAuth } from "@/lib/auth";
+import { requireRequestAuth } from "@/lib/auth";
 import { handleApiError, ApiError } from "@/lib/errors";
 import { db } from "@/lib/db/client";
 import { invitationCodes, userMemberships, syncEvents } from "@/lib/db/schema";
@@ -11,7 +11,7 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { userId } = await requireAuth();
+    const { userId } = await requireRequestAuth(request);
     const { orgId } = await context.params;
     const { invitationCode, message } = await request.json();
 

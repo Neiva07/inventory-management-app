@@ -5,6 +5,7 @@ import {
   Navigate,
   Routes,
   HashRouter as Router,
+  useLocation,
 } from "react-router-dom";
 import React from "react";
 import { Navbar } from "./pages/routes/navbar";
@@ -114,6 +115,7 @@ function PrivateRoute() {
 const AppRouter = () => {
   return <>
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <RuntimeLogRouteBridge />
       <Routes>
         <Route
           path="/" element={<App />}
@@ -161,6 +163,18 @@ const AppRouter = () => {
     </Router>
   </>
 }
+
+const RuntimeLogRouteBridge = (): null => {
+  const location = useLocation();
+
+  React.useEffect(() => {
+    void window.electron?.setRuntimeLogContext({
+      route: location.pathname,
+    });
+  }, [location.pathname]);
+
+  return null;
+};
 
 function render() {
   // Create a root container if it doesn't exist

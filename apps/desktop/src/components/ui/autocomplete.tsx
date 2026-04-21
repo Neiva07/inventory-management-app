@@ -296,7 +296,7 @@ const AutocompleteInner = <T,>(
         <label
           htmlFor={id}
           className={cn(
-            'mb-1.5 block text-sm font-medium leading-snug',
+            'mb-3 block text-sm font-medium leading-snug',
             error ? 'text-destructive' : ''
           )}
         >
@@ -380,7 +380,7 @@ const AutocompleteInner = <T,>(
       <label
         htmlFor={id}
         className={cn(
-          'mb-1.5 block text-sm font-medium leading-snug',
+          'mb-3 block text-sm font-medium leading-snug',
           error ? 'text-destructive' : ''
         )}
       >

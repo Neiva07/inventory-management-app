@@ -31,6 +31,10 @@ interface PullResult {
   serverTimestamp: number;
 }
 
+interface PullOptions {
+  skipOrgAccessValidation?: boolean;
+}
+
 const MAX_LIMIT = 1000;
 const DEFAULT_LIMIT = 500;
 
@@ -39,6 +43,7 @@ export async function processPullRequest(
   userId: string,
   scopes: PullScope[],
   requestLimit?: number,
+  options: PullOptions = {},
 ): Promise<PullResult> {
   const limit = Math.min(requestLimit ?? DEFAULT_LIMIT, MAX_LIMIT);
   const results: PullScopeResult[] = [];
@@ -48,7 +53,7 @@ export async function processPullRequest(
     if (scope.type === "user" && scope.id !== userId) {
       throw new ApiError(403, "Cannot pull data for a different user");
     }
-    if (scope.type === "organization") {
+    if (scope.type === "organization" && !options.skipOrgAccessValidation) {
       await requireOrgMembership(userId, scope.id);
     }
 

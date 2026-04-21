@@ -4,14 +4,34 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { Session } from 'model/session';
 import type { UpdateInfo } from 'electron-updater';
+import type { RuntimeLogContextUpdate } from '@stockify/runtime-logging';
+import { installPreloadRuntimeLogging, emitPreloadRuntimeLog } from './logging/preloadLogging';
+import { runtimeLogChannels } from './logging/channels';
+
+installPreloadRuntimeLogging();
+
+const invokeWithLogging = async <T>(channel: string, ...args: unknown[]): Promise<T> => {
+  try {
+    return await ipcRenderer.invoke(channel, ...args) as T;
+  } catch (error) {
+    emitPreloadRuntimeLog({
+      level: 'error',
+      eventCode: 'bridge.ipc_error',
+      message: `IPC invoke failed: ${channel}`,
+      payload: { channel },
+      error,
+    });
+    throw error;
+  }
+};
 
 const electronApi = {
   onAuthSessionReceived: (callback: (session: Session) => void) => {
     ipcRenderer.on('auth-session-received', (event, session) => callback(session));
   },
-  fetchClerkUser: (user_id: string) => ipcRenderer.invoke('fetch-clerk-user', user_id),
-  clerkLogout: (sessionId: string) => ipcRenderer.invoke('clerk-logout', sessionId),
-  openExternal: (url: string) => ipcRenderer.invoke('open-external-url', url),
+  fetchClerkUser: (user_id: string) => invokeWithLogging('fetch-clerk-user', user_id),
+  clerkLogout: (sessionId: string) => invokeWithLogging('clerk-logout', sessionId),
+  openExternal: (url: string) => invokeWithLogging('open-external-url', url),
   onUpdateAvailable: (callback: (info: UpdateInfo) => void) => {
     ipcRenderer.on('update-available', (_, info) => callback(info));
   },
@@ -21,8 +41,15 @@ const electronApi = {
   onUpdateError: (callback: (error: Error) => void) => {
     ipcRenderer.on('update-error', (_, error) => callback(error));
   },
-  downloadUpdate: () => ipcRenderer.invoke('download-update'),
-  installUpdate: () => ipcRenderer.invoke('install-update'),
+  downloadUpdate: () => invokeWithLogging('download-update'),
+  installUpdate: () => invokeWithLogging('install-update'),
+  emitRuntimeLog: (event: unknown) => invokeWithLogging(runtimeLogChannels.emit, event),
+  setRuntimeLogContext: (context: RuntimeLogContextUpdate) => invokeWithLogging(runtimeLogChannels.setContext, context),
+  getRuntimeInfo: () => invokeWithLogging(runtimeLogChannels.getInfo),
+  exportDiagnostics: (options: { scope: 'current-launch' | 'last-24h' }) =>
+    invokeWithLogging(runtimeLogChannels.exportDiagnostics, options),
+  getLaunchContext: () => invokeWithLogging(runtimeLogChannels.getLaunchContext),
+  elevateRuntimeLogVerbosityForNextLaunch: () => invokeWithLogging(runtimeLogChannels.elevateNextLaunch),
 };
 
 const resolveLocalDbUrl = (): string => {
@@ -49,15 +76,25 @@ const envApi = {
   SYNC_API_URL: process.env.SYNC_API_URL,
 };
 
-if (process.contextIsolated) {
-  contextBridge.exposeInMainWorld('electron', electronApi);
-  contextBridge.exposeInMainWorld('env', envApi);
-} else {
-  const preloadWindow = window as unknown as {
-    electron?: typeof electronApi;
-    env?: typeof envApi;
-  };
+try {
+  if (process.contextIsolated) {
+    contextBridge.exposeInMainWorld('electron', electronApi);
+    contextBridge.exposeInMainWorld('env', envApi);
+  } else {
+    const preloadWindow = window as unknown as {
+      electron?: typeof electronApi;
+      env?: typeof envApi;
+    };
 
-  preloadWindow.electron = electronApi;
-  preloadWindow.env = envApi;
+    preloadWindow.electron = electronApi;
+    preloadWindow.env = envApi;
+  }
+} catch (error) {
+  emitPreloadRuntimeLog({
+    level: 'fatal',
+    eventCode: 'bridge.exposure_failed',
+    message: 'Failed to expose Electron preload bridge',
+    error,
+  });
+  throw error;
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
+import { cn } from 'lib/utils';
 import { Input } from 'components/ui/input';
 
 interface SearchFieldProps {
@@ -8,18 +9,42 @@ interface SearchFieldProps {
   placeholder: string;
   fullWidth?: boolean;
   autoFocus?: boolean;
+  id?: string;
+  label?: React.ReactNode;
+  className?: string;
 }
 
 export const SearchField = React.forwardRef<HTMLDivElement, SearchFieldProps>(
-  ({ value, onChange, placeholder, fullWidth = true, autoFocus = false }, ref) => {
+  (
+    {
+      value,
+      onChange,
+      placeholder,
+      fullWidth = true,
+      autoFocus = false,
+      id,
+      label,
+      className,
+    },
+    ref
+  ) => {
     return (
-      <div ref={ref} className={fullWidth ? 'w-full' : undefined}>
+      <div ref={ref} className={cn(fullWidth ? 'w-full' : undefined, className)}>
+        {label && (
+          <label
+            htmlFor={id}
+            className="mb-3 block text-sm font-medium leading-snug"
+          >
+            {label}
+          </label>
+        )}
         <div className="relative">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
           />
           <Input
+            id={id}
             value={value}
             onChange={onChange}
             placeholder={placeholder}

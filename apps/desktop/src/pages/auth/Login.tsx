@@ -35,6 +35,13 @@ export const Login = () => {
           size="lg"
           className="w-full gap-2"
           onClick={() => {
+            void window.electron?.emitRuntimeLog({
+              level: "info",
+              runtime: "renderer",
+              runtimeInstanceId: "auth-ui",
+              eventCode: "auth.login_begin",
+              message: "User began desktop login",
+            });
             window.electron.openExternal(window.env.LOGIN_URL);
           }}
         >

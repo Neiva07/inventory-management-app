@@ -91,11 +91,14 @@ export const DatePickerField = React.forwardRef<HTMLDivElement, DatePickerFieldP
     };
 
     return (
-      <div ref={ref} className={cn('w-full space-y-1', className)}>
+      <div ref={ref} className={cn('w-full', className)}>
         {label && (
           <label
             htmlFor={id}
-            className={cn('block text-sm font-medium', error && 'text-destructive')}
+            className={cn(
+              'mb-3 block text-sm font-medium leading-snug',
+              error && 'text-destructive'
+            )}
           >
             {label}
           </label>
@@ -168,7 +171,7 @@ export const DatePickerField = React.forwardRef<HTMLDivElement, DatePickerFieldP
           <p
             id={helperTextId}
             className={cn(
-              'text-xs',
+              'mt-1 text-xs',
               error ? 'text-destructive' : 'text-muted-foreground'
             )}
           >

@@ -88,6 +88,13 @@ export const AuthContextProvider = ({ children }: { children: ReactElement }) =>
       setSession(null);
       removeFromCache("user");
       removeFromCache("session");
+      void window.electron?.setRuntimeLogContext({
+        userId: null,
+        orgId: null,
+        membershipRole: null,
+        authState: "logged_out",
+        sessionId: null,
+      });
     }
   };
 
@@ -106,6 +113,14 @@ export const AuthContextProvider = ({ children }: { children: ReactElement }) =>
         return upsertedUser;
       })
       .catch(async (error) => {
+        void window.electron?.emitRuntimeLog({
+          level: "error",
+          runtime: "renderer",
+          runtimeInstanceId: "auth-context",
+          eventCode: "auth.login_failed",
+          message: "Failed to finish desktop login session",
+          error,
+        });
         console.error("Failed to upsert user:", error);
         const userFromCache = getFromCache("user");
         if (!userFromCache) return null;
@@ -162,6 +177,16 @@ export const AuthContextProvider = ({ children }: { children: ReactElement }) =>
       void handleSession(cachedSession);
     }
   }, []);
+
+  useEffect(() => {
+    void window.electron?.setRuntimeLogContext({
+      userId: user?.id ?? null,
+      orgId: organization?.id ?? null,
+      membershipRole: membership?.role ?? null,
+      authState: user?.id ? "authenticated" : session?.id ? "authenticating" : "pre_auth",
+      sessionId: session?.id ?? null,
+    });
+  }, [membership?.role, organization?.id, session?.id, user?.id]);
 
   return (
     <AuthContext.Provider value={{ 

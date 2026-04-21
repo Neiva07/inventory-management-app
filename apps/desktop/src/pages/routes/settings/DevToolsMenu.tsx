@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import {
   AlertTriangle,
+  Clipboard,
   Croissant,
+  Download,
+  Gauge,
   Loader2,
   PackageX,
   Receipt,
@@ -38,7 +41,11 @@ type ActionId =
   | 'wipeOrgData'
   | 'seedSmallBakery'
   | 'seedOverdueBills'
-  | 'seedOutOfStock';
+  | 'seedOutOfStock'
+  | 'exportCurrentLaunch'
+  | 'exportLast24h'
+  | 'elevateLogVerbosity'
+  | 'copyRuntimeIds';
 
 interface ActionConfig {
   id: ActionId;
@@ -92,6 +99,34 @@ const actionConfigs: ActionConfig[] = [
     description: 'Cria alguns produtos abaixo do estoque mínimo',
     destructive: false,
   },
+  {
+    id: 'exportCurrentLaunch',
+    icon: <Download className="h-4 w-4 text-sky-600" />,
+    label: 'Exportar logs do launch atual',
+    description: 'Salva um JSON com os logs desta execução',
+    destructive: false,
+  },
+  {
+    id: 'exportLast24h',
+    icon: <Download className="h-4 w-4 text-cyan-600" />,
+    label: 'Exportar logs das últimas 24h',
+    description: 'Salva um JSON com diagnósticos recentes',
+    destructive: false,
+  },
+  {
+    id: 'elevateLogVerbosity',
+    icon: <Gauge className="h-4 w-4 text-violet-600" />,
+    label: 'Elevar verbosidade no próximo launch',
+    description: 'Marca o próximo início para diagnóstico detalhado',
+    destructive: false,
+  },
+  {
+    id: 'copyRuntimeIds',
+    icon: <Clipboard className="h-4 w-4 text-slate-600" />,
+    label: 'Copiar launchId e deviceId',
+    description: 'Copia os identificadores atuais de logging',
+    destructive: false,
+  },
 ];
 
 const runLabelMap: Record<ActionId, string> = {
@@ -100,6 +135,10 @@ const runLabelMap: Record<ActionId, string> = {
   seedSmallBakery: 'Semeando...',
   seedOverdueBills: 'Semeando...',
   seedOutOfStock: 'Semeando...',
+  exportCurrentLaunch: 'Exportando...',
+  exportLast24h: 'Exportando...',
+  elevateLogVerbosity: 'Atualizando...',
+  copyRuntimeIds: 'Copiando...',
 };
 
 export const DevToolsMenu: React.FC = () => {
@@ -157,6 +196,30 @@ export const DevToolsMenu: React.FC = () => {
           toast.success('Produtos em falta semeados');
           window.location.reload();
           return;
+        case 'exportCurrentLaunch': {
+          const result = await window.electron.exportDiagnostics({ scope: 'current-launch' });
+          if (result.filePath) {
+            toast.success('Logs do launch atual exportados');
+          }
+          return;
+        }
+        case 'exportLast24h': {
+          const result = await window.electron.exportDiagnostics({ scope: 'last-24h' });
+          if (result.filePath) {
+            toast.success('Logs das últimas 24h exportados');
+          }
+          return;
+        }
+        case 'elevateLogVerbosity':
+          await window.electron.elevateRuntimeLogVerbosityForNextLaunch();
+          toast.success('Verbosidade elevada para o próximo launch');
+          return;
+        case 'copyRuntimeIds': {
+          const context = await window.electron.getLaunchContext();
+          await navigator.clipboard.writeText(`launchId=${context.launchId}\ndeviceId=${context.deviceId}`);
+          toast.success('IDs de runtime copiados');
+          return;
+        }
       }
     } catch (error) {
       console.error(`Failed to run dev action ${id}:`, error);

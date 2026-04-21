@@ -25,11 +25,16 @@ interface PushResult {
   serverTimestamp: number;
 }
 
+interface PushOptions {
+  skipOrgAccessValidation?: boolean;
+}
+
 /** Processes a batch of push changes with last-write-wins conflict resolution. */
 export async function processPushChanges(
   userId: string,
   clientId: string,
   changes: PushChange[],
+  options: PushOptions = {},
 ): Promise<PushResult> {
   const accepted: string[] = [];
   const rejected: PushRejection[] = [];
@@ -40,6 +45,11 @@ export async function processPushChanges(
   const orgAccessMap = new Map<string, boolean>();
 
   for (const orgId of orgIds) {
+    if (options.skipOrgAccessValidation) {
+      orgAccessMap.set(orgId, true);
+      continue;
+    }
+
     try {
       await requireOrgMembership(userId, orgId);
       orgAccessMap.set(orgId, true);
@@ -113,7 +123,6 @@ async function applySingleChange(
 
   const { table } = entry;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const existing = await db.select().from(table).where(eq(table.id, change.recordId)).limit(1) as any[];
 
   switch (change.operation) {
@@ -124,11 +133,9 @@ async function applySingleChange(
           return false; // cloud is newer
         }
         const updateData = { ...change.payload, updatedAt: serverTimestamp };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await db.update(table).set(updateData as any).where(eq(table.id, change.recordId));
       } else {
         const insertData = { ...change.payload, createdAt: serverTimestamp, updatedAt: serverTimestamp };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await db.insert(table).values(insertData as any);
       }
       return true;
@@ -138,7 +145,6 @@ async function applySingleChange(
       if (existing.length === 0) {
         // Row doesn't exist — treat as create (offline create+update sequence)
         const insertData = { ...change.payload, createdAt: serverTimestamp, updatedAt: serverTimestamp };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await db.insert(table).values(insertData as any);
         return true;
       }
@@ -146,7 +152,6 @@ async function applySingleChange(
         return false; // cloud is newer
       }
       const updateData = { ...change.payload, updatedAt: serverTimestamp };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.update(table).set(updateData as any).where(eq(table.id, change.recordId));
       return true;
     }

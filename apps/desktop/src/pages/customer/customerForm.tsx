@@ -384,8 +384,9 @@ export const CustomerForm = () => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={handleSubmit}>
+                  <Button onClick={handleSubmit} className="gap-2">
                     {customerID ? 'Editar Cliente' : 'Criar Cliente'}
+                    <kbd className="text-[10px] opacity-50 bg-black/10 dark:bg-white/10 rounded px-1 py-0.5 font-mono">{modKey}+Enter</kbd>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top">{modKey} + Enter</TooltipContent>

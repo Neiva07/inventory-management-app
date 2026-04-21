@@ -261,6 +261,8 @@ export const SupplierList = () => {
           <div className="col-span-12 lg:col-span-4">
             <SearchField
             ref={searchFieldRef}
+            id="supplier-search"
+            label="Buscar"
             value={searchTitle}
             onChange={handleSearchTitle}
             placeholder={"Busque pelo nome do fornecedor..."}

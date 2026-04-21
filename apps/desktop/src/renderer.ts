@@ -27,6 +27,9 @@
  */
 
 import './index.css';
+import { installRendererRuntimeLogging } from './logging/rendererLogging';
+
+installRendererRuntimeLogging();
 import './app';
 
 

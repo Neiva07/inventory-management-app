@@ -6,6 +6,12 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env.production' });
 
+const syncApiUrl =
+  process.env.SYNC_API_URL ??
+  (process.env.NODE_ENV === 'development' || process.env.npm_lifecycle_event === 'start'
+    ? 'http://localhost:3111'
+    : undefined);
+
 import { rules } from './webpack.rules';
 import { plugins } from './webpack.plugins';
 
@@ -50,6 +56,7 @@ export const rendererConfig: Configuration = {
       'process.env.TURSO_LOCAL_DATABASE_URL': JSON.stringify(process.env.TURSO_LOCAL_DATABASE_URL),
       'process.env.TURSO_AUTH_TOKEN': JSON.stringify(process.env.TURSO_AUTH_TOKEN),
       'process.env.LOGIN_URL': JSON.stringify(process.env.LOGIN_URL),
+      'process.env.SYNC_API_URL': JSON.stringify(syncApiUrl),
     }),
   ],
   resolve: {

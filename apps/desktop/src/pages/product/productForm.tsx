@@ -184,7 +184,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
     onReset: handleReset,
     onToggleCreateMode: handleToggleCreateMode,
     onBack: () => navigate(-1),
-    autoFocusField: 'name',
+    autoFocusField: 'title',
     helpTitle: 'Atalhos do Teclado - Produto',
     fieldRefs: allFieldRefs,
   });
@@ -246,7 +246,7 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                     <FieldLabel>Nome do produto</FieldLabel>
                     <Input
                       {...field}
-                      ref={firstFieldRef || titleRef}
+                      ref={titleRef}
                       aria-invalid={fieldState.invalid}
                       onFocus={(e) => e.target.select()}
                     />

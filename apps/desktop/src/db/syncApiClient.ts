@@ -103,6 +103,7 @@ export interface SyncApiClientConfig {
   baseUrl: string;
   getSessionToken: () => string | null;
   clientId: string;
+  userId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -126,6 +127,9 @@ export class SyncApiClient {
       const token = config.getSessionToken();
       if (token) {
         req.headers.Authorization = `Bearer ${token}`;
+      }
+      if (config.userId) {
+        req.headers["X-Local-User-Id"] = config.userId;
       }
       req.headers["X-Client-Id"] = this.clientId;
       return req;
