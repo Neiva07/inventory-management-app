@@ -413,12 +413,6 @@ export const SupplierForm = () => {
                     onNextField={() => focusNextField(productCategoriesRef)}
                     onPreviousField={() => focusPreviousField(productCategoriesRef)}
                     ref={productCategoriesRef}
-                    renderTags={(list: SelectField[]) => {
-                      const displayList = list
-                        .map((item: SelectField) => item.label)
-                        .join(", ");
-                      return <span>{displayList}</span>;
-                    }}
                   />
                 );
               }}

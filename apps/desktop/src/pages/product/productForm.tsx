@@ -396,13 +396,6 @@ export const ProductForm = ({ productID: propProductID, onProductUpdated, isModa
                     onPreviousField={() => focusPreviousField(suppliersRef)}
                     onChange={handleChange}
                     ref={suppliersRef}
-                    renderTags={(list: SelectField[]) => {
-                      const displayList = list
-                        .map((item) => item.label)
-                        .join(", ");
-
-                      return <span>{displayList}</span>;
-                    }}
                   />
                 );
               }}
