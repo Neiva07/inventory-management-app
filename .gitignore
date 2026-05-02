@@ -98,3 +98,4 @@ typings/
 
 # Electron-Forge
 out/
+.vercel
