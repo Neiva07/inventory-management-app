@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
-import { createAppDb } from "./client";
+import { createAppDb, createAppDbClient } from "./client";
 import { syncMeta } from "./schema";
+import { getSyncTableNames } from "./syncTableMap";
 
 type SyncScopeType = "organization" | "user";
 
@@ -88,4 +89,54 @@ export const setClientId = async (clientId: string): Promise<void> => {
     .insert(syncMeta)
     .values({ id: "client_id", key: "clientId", value: clientId, createdAt: now, updatedAt: now })
     .onConflictDoUpdate({ target: syncMeta.id, set: { value: clientId, updatedAt: now } });
+};
+
+export const getSeenResetGeneration = async (): Promise<number | null> => {
+  const db = createAppDb();
+  const rows = await db.select().from(syncMeta).where(eq(syncMeta.id, "server_reset_generation")).limit(1);
+  if (!rows.length) {
+    return null;
+  }
+  return Number(rows[0].value) || 0;
+};
+
+export const setSeenResetGeneration = async (generation: number): Promise<void> => {
+  const db = createAppDb();
+  const now = Date.now();
+
+  await db
+    .insert(syncMeta)
+    .values({
+      id: "server_reset_generation",
+      key: "serverResetGeneration",
+      value: String(generation),
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: syncMeta.id,
+      set: { value: String(generation), updatedAt: now },
+    });
+};
+
+export const hasLocalSyncData = async (): Promise<boolean> => {
+  const client = createAppDbClient();
+
+  try {
+    const queueRows = await client.execute("SELECT 1 FROM sync_queue LIMIT 1");
+    if (queueRows.rows.length > 0) {
+      return true;
+    }
+
+    for (const tableName of getSyncTableNames()) {
+      const rows = await client.execute(`SELECT 1 FROM ${tableName} LIMIT 1`);
+      if (rows.rows.length > 0) {
+        return true;
+      }
+    }
+
+    return false;
+  } finally {
+    client.close();
+  }
 };

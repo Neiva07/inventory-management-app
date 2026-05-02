@@ -16,6 +16,10 @@ const getBearerToken = (request: Request): string | null => {
   return match?.[1]?.trim() || null;
 };
 
+const getDesktopSessionId = (request: Request): string | null => {
+  return request.headers.get("x-desktop-session-id")?.trim() || getBearerToken(request);
+};
+
 export const isRuntimeLogsLocalDevelopmentRequest = (request: Request): boolean => {
   return isLocalDevelopmentRequest(request);
 };
@@ -116,12 +120,12 @@ export const requireRuntimeLogsDesktopAuth = async (request: Request): Promise<{
     return { userId: "local-desktop" };
   }
 
-  const bearerToken = getBearerToken(request);
-  if (!bearerToken) {
+  const desktopSessionId = getDesktopSessionId(request);
+  if (!desktopSessionId) {
     throw new ApiError(401, "Unauthorized");
   }
 
-  const userId = await getUserIdFromDesktopSessionId(bearerToken);
+  const userId = await getUserIdFromDesktopSessionId(desktopSessionId);
   if (!userId) {
     throw new ApiError(401, "Unauthorized");
   }

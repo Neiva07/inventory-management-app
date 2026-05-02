@@ -10,9 +10,10 @@ import { InviteTeamSetup } from './InviteTeamSetup';
 import { OnboardingComplete } from './OnboardingComplete';
 import { TaxDataSetup } from './TaxDataSetup';
 import { CadastrosBasicosSetup } from './CadastrosBasicosSetup';
+import { KeyboardShortcutsSetup } from './KeyboardShortcutsSetup';
 import { OnboardingExitDialog } from './OnboardingExitDialog';
 
-const OPTIONAL_STEP = 5;
+const OPTIONAL_STEPS = new Set([5, 6]);
 
 const STEP_LABELS = [
   'Bem-vindo',
@@ -20,6 +21,7 @@ const STEP_LABELS = [
   'Dados Fiscais',
   'Equipe',
   'Cadastros Básicos',
+  'Atalhos',
   'Concluído',
 ];
 
@@ -102,7 +104,8 @@ export const OnboardingFlow: React.FC<{ onShowOnboarding: (show: boolean) => voi
     if (currentStep === 3) return <TaxDataSetup showErrors={attemptedNext} />;
     if (currentStep === 4) return <InviteTeamSetup />;
     if (currentStep === 5) return <CadastrosBasicosSetup />;
-    if (currentStep === 6) return <OnboardingComplete />;
+    if (currentStep === 6) return <KeyboardShortcutsSetup />;
+    if (currentStep === 7) return <OnboardingComplete />;
     return <OnboardingWelcome />;
   };
 
@@ -133,7 +136,7 @@ export const OnboardingFlow: React.FC<{ onShowOnboarding: (show: boolean) => voi
             const stepNumber = index + 1;
             const isActive = stepNumber === currentStep;
             const isCompleted = stepNumber < currentStep;
-            const isOptional = stepNumber === OPTIONAL_STEP;
+            const isOptional = OPTIONAL_STEPS.has(stepNumber);
 
             return (
               <React.Fragment key={label}>

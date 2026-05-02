@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db/client";
-import { syncEvents } from "../db/schema";
-import { TABLE_REGISTRY, isKnownTable, getScopeForTable } from "./tableRegistry";
+import { organizations, syncEvents } from "../db/schema";
+import { getScopeForTable, getTableRegistryEntry, isKnownTable } from "./tableRegistry";
 import { requireOrgMembership } from "../auth";
 
 interface PushChange {
@@ -40,24 +40,6 @@ export async function processPushChanges(
   const rejected: PushRejection[] = [];
   const serverNow = Date.now();
 
-  // Pre-validate org memberships (deduplicated)
-  const orgIds = [...new Set(changes.map((c) => c.organizationId))];
-  const orgAccessMap = new Map<string, boolean>();
-
-  for (const orgId of orgIds) {
-    if (options.skipOrgAccessValidation) {
-      orgAccessMap.set(orgId, true);
-      continue;
-    }
-
-    try {
-      await requireOrgMembership(userId, orgId);
-      orgAccessMap.set(orgId, true);
-    } catch {
-      orgAccessMap.set(orgId, false);
-    }
-  }
-
   for (let i = 0; i < changes.length; i++) {
     const change = changes[i];
     // Offset ensures batch ordering is preserved in updatedAt
@@ -70,7 +52,7 @@ export async function processPushChanges(
     }
 
     // Validate org access
-    if (!orgAccessMap.get(change.organizationId)) {
+    if (!(await canApplyChange(userId, change, options))) {
       rejected.push({ syncQueueId: change.syncQueueId, reason: "unauthorized" });
       continue;
     }
@@ -110,6 +92,116 @@ export async function processPushChanges(
   return { accepted, rejected, serverTimestamp: serverNow };
 }
 
+const getPayloadString = (payload: Record<string, unknown>, key: string): string | null => {
+  const value = payload[key];
+  return typeof value === "string" && value.trim() ? value : null;
+};
+
+const hasOrgMembership = async (userId: string, organizationId: string): Promise<boolean> => {
+  try {
+    await requireOrgMembership(userId, organizationId);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const getOrganizationCreatedBy = async (
+  organizationId: string,
+): Promise<string | null> => {
+  const rows = await db
+    .select({ createdBy: organizations.createdBy })
+    .from(organizations)
+    .where(eq(organizations.id, organizationId))
+    .limit(1);
+
+  return rows[0]?.createdBy ?? null;
+};
+
+const isOrganizationCreatedByUser = async (
+  organizationId: string,
+  userId: string,
+): Promise<boolean> => {
+  return (await getOrganizationCreatedBy(organizationId)) === userId;
+};
+
+const canApplyUserScopedChange = (userId: string, change: PushChange): boolean => {
+  if (change.tableName === "users") {
+    const payloadId = getPayloadString(change.payload, "id");
+    return change.recordId === userId && (!payloadId || payloadId === userId);
+  }
+
+  const payloadUserId = getPayloadString(change.payload, "userId");
+  return payloadUserId === userId;
+};
+
+const canApplyOrganizationChange = async (
+  userId: string,
+  change: PushChange,
+): Promise<boolean> => {
+  if (await hasOrgMembership(userId, change.organizationId)) {
+    return true;
+  }
+
+  const payloadCreatedBy = getPayloadString(change.payload, "createdBy");
+  if (
+    change.recordId !== change.organizationId ||
+    payloadCreatedBy !== userId
+  ) {
+    return false;
+  }
+
+  const existingCreatedBy = await getOrganizationCreatedBy(change.organizationId);
+  if (existingCreatedBy) {
+    return existingCreatedBy === userId;
+  }
+
+  return change.operation === "create";
+};
+
+const canApplyMembershipChange = async (
+  userId: string,
+  change: PushChange,
+): Promise<boolean> => {
+  if (await hasOrgMembership(userId, change.organizationId)) {
+    return true;
+  }
+
+  const payloadUserId = getPayloadString(change.payload, "userId");
+  const payloadOrganizationId = getPayloadString(change.payload, "organizationId");
+  return (
+    payloadUserId === userId &&
+    payloadOrganizationId === change.organizationId &&
+    await isOrganizationCreatedByUser(change.organizationId, userId)
+  );
+};
+
+const canApplyChange = async (
+  userId: string,
+  change: PushChange,
+  options: PushOptions,
+): Promise<boolean> => {
+  const scope = getScopeForTable(change.tableName);
+
+  if (scope === "user") {
+    return canApplyUserScopedChange(userId, change);
+  }
+
+  if (options.skipOrgAccessValidation) {
+    return true;
+  }
+
+  if (change.tableName === "organizations") {
+    return canApplyOrganizationChange(userId, change);
+  }
+
+  if (change.tableName === "user_memberships") {
+    return canApplyMembershipChange(userId, change);
+  }
+
+  return hasOrgMembership(userId, change.organizationId);
+};
+
 /**
  * Applies a single change to the data table with last-write-wins.
  * Returns true if applied, false if rejected due to conflict.
@@ -118,7 +210,7 @@ async function applySingleChange(
   change: PushChange,
   serverTimestamp: number,
 ): Promise<boolean> {
-  const entry = TABLE_REGISTRY[change.tableName];
+  const entry = getTableRegistryEntry(change.tableName);
   if (!entry) return false;
 
   const { table } = entry;

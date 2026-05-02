@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { existsSync } from 'fs';
+import { rm } from 'fs/promises';
+import path from 'path';
 import * as dotenv from 'dotenv';
 import {updateElectronApp, IUpdateDialogStrings, makeUserNotifier} from 'update-electron-app';
 import { runtimeLogBroker } from './logging/LogBroker';
@@ -137,6 +139,48 @@ ipcMain.handle('get-env-variable', (event, key: string) => {
 
 ipcMain.on('get-user-data-path', (event) => {
   event.returnValue = app.getPath('userData');
+});
+
+const resolveLocalDatabaseFilePath = (): string => {
+  const configuredUrl = process.env.TURSO_LOCAL_DATABASE_URL?.trim();
+  const fallbackPath =
+    process.env.NODE_ENV !== 'production'
+      ? path.resolve(process.cwd(), 'data', 'stockify.db')
+      : path.join(app.getPath('userData'), 'stockify.db');
+
+  if (!configuredUrl) {
+    return fallbackPath;
+  }
+
+  if (!configuredUrl.startsWith('file:')) {
+    throw new Error('Local device reset only supports file-backed SQLite databases.');
+  }
+
+  const rawPath = configuredUrl.slice('file:'.length).split('?')[0];
+  if (!rawPath || rawPath === ':memory:') {
+    throw new Error('Local device reset requires a persistent SQLite database file.');
+  }
+
+  return rawPath.startsWith('/') ? rawPath : path.resolve(process.cwd(), rawPath);
+};
+
+ipcMain.handle('reset-local-device-data', async () => {
+  const dbPath = resolveLocalDatabaseFilePath();
+
+  if (mainWindow) {
+    await mainWindow.webContents.session.clearStorageData();
+    await mainWindow.webContents.session.clearCache();
+  }
+
+  await Promise.all([
+    rm(dbPath, { force: true }),
+    rm(`${dbPath}-shm`, { force: true }),
+    rm(`${dbPath}-wal`, { force: true }),
+  ]);
+
+  app.relaunch();
+  app.exit(0);
+  return true;
 });
 
 console.log('IPC handlers registered');

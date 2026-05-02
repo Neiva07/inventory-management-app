@@ -32,6 +32,7 @@ const electronApi = {
   fetchClerkUser: (user_id: string) => invokeWithLogging('fetch-clerk-user', user_id),
   clerkLogout: (sessionId: string) => invokeWithLogging('clerk-logout', sessionId),
   openExternal: (url: string) => invokeWithLogging('open-external-url', url),
+  resetLocalDeviceData: () => invokeWithLogging('reset-local-device-data'),
   onUpdateAvailable: (callback: (info: UpdateInfo) => void) => {
     ipcRenderer.on('update-available', (_, info) => callback(info));
   },

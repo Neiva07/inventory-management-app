@@ -27,6 +27,13 @@ export const syncEvents = sqliteTable(
   })
 );
 
+// Cloud-only: reset/sync control state that must survive environment wipes.
+export const syncControl = sqliteTable("sync_control", {
+  id: text("id").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at", { mode: "number" }).notNull(),
+});
+
 // ---------------------------------------------------------------------------
 // Cloud-only: distributed desktop runtime logs
 // ---------------------------------------------------------------------------

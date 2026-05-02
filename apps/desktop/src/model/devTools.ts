@@ -28,6 +28,8 @@ import {
 } from "../dev/factories";
 import { states } from "./region";
 import { createCustomer, deleteCustomer, getCustomers, type Customer } from "./customer";
+import { deleteOnboardingSession } from "./organizationOnboardingSession";
+import { deleteOrganization } from "./organization";
 import {
   createProductCategories,
   deleteProductCategory,
@@ -41,6 +43,7 @@ import { createOrder, deleteOrder, type Item, type OrderStatus } from "./orders"
 import { deleteInboundOrder } from "./inboundOrder";
 import { createSupplierBill, deleteSupplierBill, type SupplierBill } from "./supplierBill";
 import { paymentMethods } from "./paymentMethods";
+import { deleteUserMembership } from "./userMembership";
 
 interface OrgScope {
   userId: string;
@@ -57,10 +60,30 @@ interface OrgScope {
  */
 export const resetUserOnboarding = async (userID: string): Promise<void> => {
   const db = createAppDb();
+  const membershipRows = await db
+    .select({ id: userMemberships.id })
+    .from(userMemberships)
+    .where(eq(userMemberships.userId, userID));
+  const organizationRows = await db
+    .select({ id: organizations.id })
+    .from(organizations)
+    .where(eq(organizations.createdBy, userID));
+  const onboardingRows = await db
+    .select({ id: onboardingSessions.id })
+    .from(onboardingSessions)
+    .where(eq(onboardingSessions.userId, userID));
 
-  await db.delete(userMemberships).where(eq(userMemberships.userId, userID));
-  await db.delete(organizations).where(eq(organizations.createdBy, userID));
-  await db.delete(onboardingSessions).where(eq(onboardingSessions.userId, userID));
+  for (const { id } of membershipRows) {
+    await deleteUserMembership(id);
+  }
+
+  for (const { id } of organizationRows) {
+    await deleteOrganization(id);
+  }
+
+  for (const { id } of onboardingRows) {
+    await deleteOnboardingSession(id);
+  }
 };
 
 /**

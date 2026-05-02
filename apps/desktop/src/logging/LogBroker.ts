@@ -847,7 +847,7 @@ export class LogBroker {
       timeout: 10_000,
       headers:
         lane === "authenticated" && this.context.sessionId
-          ? { Authorization: `Bearer ${this.context.sessionId}` }
+          ? { "X-Desktop-Session-Id": this.context.sessionId }
           : undefined,
     });
 

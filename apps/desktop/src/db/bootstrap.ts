@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import * as schema from "./schema";
 import { createAppDb, createAppDbClient, getLocalDatabaseUrl } from "./client";
+import { runLegacySyncQueueBackfill } from "./legacySyncBackfill";
 
 let bootstrapPromise: Promise<ReturnType<typeof createAppDb>> | null = null;
 
@@ -107,6 +108,8 @@ const bootstrapDatabaseOnce = async () => {
       throw error;
     }
   }
+
+  await runLegacySyncQueueBackfill();
 
   return createAppDb();
 };

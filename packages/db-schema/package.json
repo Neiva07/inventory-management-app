@@ -9,6 +9,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./sync-catalog": {
+      "types": "./sync-catalog.ts",
+      "default": "./sync-catalog.ts"
     }
   },
   "peerDependencies": {

@@ -10,6 +10,7 @@ declare global {
       onAuthSessionReceived: (callback: (session: Session) => void) => void;
       clerkLogout: (sessionId: string) => Promise<boolean>;
       openExternal: (url: string) => void;
+      resetLocalDeviceData: () => Promise<boolean>;
       onUpdateAvailable: (callback: (info: UpdateInfo) => void) => void;
       onUpdateDownloaded: (callback: (info: UpdateInfo) => void) => void;
       onUpdateError: (callback: (error: Error) => void) => void;

@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { appSettings } from "../db/schema";
+import { trackUserScopedSyncChange } from "../db/syncTracking";
 
 export type UILayout = "navbar" | "sidebar";
 
@@ -12,7 +13,7 @@ export interface AppSettings {
   language?: string;
   timezone?: string;
   notifications?: boolean;
-  keyboardShortcuts?: boolean;
+  navigationMode?: 'tab' | 'enter';
 }
 
 /** Get app settings for a user. */
@@ -43,11 +44,18 @@ export async function setAppSettings(settings: AppSettings): Promise<void> {
 
   const { user_id, ...settingsData } = settings;
   const settingsJson = JSON.stringify(settingsData);
+  const existing = await db
+    .select()
+    .from(appSettings)
+    .where(eq(appSettings.userId, user_id))
+    .limit(1);
+  const operation = existing.length > 0 ? "update" : "create";
+  const id = existing[0]?.id ?? uuidv4();
 
   await db
     .insert(appSettings)
     .values({
-      id: uuidv4(),
+      id,
       userId: user_id,
       settingsJson,
       createdAt: now,
@@ -60,4 +68,17 @@ export async function setAppSettings(settings: AppSettings): Promise<void> {
         updatedAt: now,
       },
     });
+
+  await trackUserScopedSyncChange({
+    userId: user_id,
+    tableName: "app_settings",
+    recordId: id,
+    operation,
+    payload: {
+      id,
+      userId: user_id,
+      organizationId: existing[0]?.organizationId ?? null,
+      settingsJson,
+    },
+  });
 }

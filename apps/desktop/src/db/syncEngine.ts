@@ -8,11 +8,14 @@ import {
 import { setSyncState } from "./syncState";
 import { pullAndApplyDelta } from "./syncDown";
 import { type SyncTransportResult } from "./syncTransport";
+import { SyncResetRequiredError } from "./syncApiClient";
 
 type SyncTransport = (changes: PendingSyncRecord[]) => Promise<SyncTransportResult>;
 
 export interface SyncEngineOptions {
   transport: SyncTransport;
+  beforeSync?: () => Promise<boolean>;
+  onResetRequired?: (resetGeneration: number) => Promise<void>;
   intervalMs?: number;
 }
 
@@ -23,6 +26,8 @@ export interface SyncScope {
 
 export class SyncEngine {
   private readonly transport: SyncTransport;
+  private readonly beforeSync?: () => Promise<boolean>;
+  private readonly onResetRequired?: (resetGeneration: number) => Promise<void>;
   private readonly intervalMs: number;
   private timer: ReturnType<typeof setInterval> | null = null;
   private isRunning = false;
@@ -30,6 +35,8 @@ export class SyncEngine {
 
   constructor(options: SyncEngineOptions) {
     this.transport = options.transport;
+    this.beforeSync = options.beforeSync;
+    this.onResetRequired = options.onResetRequired;
     this.intervalMs = options.intervalMs ?? 15_000;
   }
 
@@ -75,6 +82,10 @@ export class SyncEngine {
       return;
     }
 
+    if (!this.scope) {
+      return;
+    }
+
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
       setSyncState({ status: "offline" });
       return;
@@ -82,11 +93,26 @@ export class SyncEngine {
 
     this.isRunning = true;
     try {
+      if (this.beforeSync && !(await this.beforeSync())) {
+        return;
+      }
       await this.syncUp();
       await this.syncDown();
     } finally {
       this.isRunning = false;
     }
+  }
+
+  private async handleResetRequired(error: unknown): Promise<boolean> {
+    if (!(error instanceof SyncResetRequiredError)) {
+      return false;
+    }
+
+    if (this.onResetRequired) {
+      await this.onResetRequired(error.resetGeneration);
+    }
+
+    return true;
   }
 
   private async syncUp(): Promise<void> {
@@ -125,6 +151,10 @@ export class SyncEngine {
         });
       }
     } catch (error) {
+      if (await this.handleResetRequired(error)) {
+        return;
+      }
+
       await Promise.all(
         pending.map((change) =>
           markSyncChangeAsFailed(change.id, error instanceof Error ? error.message : String(error)),
@@ -151,6 +181,10 @@ export class SyncEngine {
     try {
       await pullAndApplyDelta(scopes);
     } catch (error) {
+      if (await this.handleResetRequired(error)) {
+        return;
+      }
+
       // Sync-down failures are logged but don't override the primary sync status.
       // The sync-up status is what the user cares about for data safety.
       console.error("Sync-down failed:", error);

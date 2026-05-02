@@ -10,14 +10,28 @@ interface TrackPendingSyncChangeArgs {
   payload: unknown;
 }
 
-export const trackPendingSyncChange = async ({
-  organizationId,
+interface TrackUserScopedSyncChangeArgs {
+  userId?: string | null;
+  tableName: string;
+  recordId: string;
+  operation: SyncOperation;
+  payload: unknown;
+}
+
+const enqueueTrackedChange = async ({
+  scopeId,
   tableName,
   recordId,
   operation,
   payload,
-}: TrackPendingSyncChangeArgs): Promise<void> => {
-  if (!organizationId) {
+}: {
+  scopeId?: string | null;
+  tableName: string;
+  recordId: string;
+  operation: SyncOperation;
+  payload: unknown;
+}): Promise<void> => {
+  if (!scopeId) {
     return;
   }
 
@@ -28,7 +42,7 @@ export const trackPendingSyncChange = async ({
 
   try {
     await enqueueSyncChange({
-      organizationId,
+      organizationId: scopeId,
       tableName,
       recordId,
       operation,
@@ -49,3 +63,35 @@ export const trackPendingSyncChange = async ({
     console.error("Failed to enqueue sync change:", error);
   }
 };
+
+export const trackPendingSyncChange = async ({
+  organizationId,
+  tableName,
+  recordId,
+  operation,
+  payload,
+}: TrackPendingSyncChangeArgs): Promise<void> =>
+  enqueueTrackedChange({
+    scopeId: organizationId,
+    tableName,
+    recordId,
+    operation,
+    payload,
+  });
+
+// `sync_queue.organization_id` stores the effective sync scope id.
+// For user-scoped tables, that is the user id.
+export const trackUserScopedSyncChange = async ({
+  userId,
+  tableName,
+  recordId,
+  operation,
+  payload,
+}: TrackUserScopedSyncChangeArgs): Promise<void> =>
+  enqueueTrackedChange({
+    scopeId: userId,
+    tableName,
+    recordId,
+    operation,
+    payload,
+  });

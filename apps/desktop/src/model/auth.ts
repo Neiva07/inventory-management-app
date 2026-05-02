@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { createAppDb } from "../db/client";
 import { users } from "../db/schema";
+import { trackUserScopedSyncChange } from "../db/syncTracking";
 import { Session } from "model/session";
 import { fetchClerkUser } from "./clerk";
 
@@ -43,15 +44,40 @@ export const upsertUserFromSession = async (session: Session): Promise<User> => 
     .where(eq(users.id, user_id))
     .limit(1);
 
+  const syncPayload = {
+    id: user_id,
+    email,
+    fullName: name,
+  };
+
   if (existing.length > 0) {
-    await db
-      .update(users)
-      .set({ email, fullName: name, updatedAt: now })
-      .where(eq(users.id, user_id));
+    const current = existing[0];
+    if (current.email !== email || current.fullName !== name) {
+      await db
+        .update(users)
+        .set({ email, fullName: name, updatedAt: now })
+        .where(eq(users.id, user_id));
+
+      await trackUserScopedSyncChange({
+        userId: user_id,
+        tableName: "users",
+        recordId: user_id,
+        operation: "update",
+        payload: syncPayload,
+      });
+    }
   } else {
     await db
       .insert(users)
       .values({ id: user_id, email, fullName: name, createdAt: now, updatedAt: now });
+
+    await trackUserScopedSyncChange({
+      userId: user_id,
+      tableName: "users",
+      recordId: user_id,
+      operation: "create",
+      payload: syncPayload,
+    });
   }
 
   const rows = await db

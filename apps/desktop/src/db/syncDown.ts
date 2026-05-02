@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { createAppDb } from "./client";
 import { getSyncApiClient, SyncPullChange, SyncPullResponse, SyncPullScope } from "./syncApiClient";
-import { getSyncWatermark, setSyncWatermark, markInitialSyncComplete } from "./syncMeta";
-import { SYNC_TABLE_MAP } from "./syncTableMap";
+import { getSyncWatermark, setSyncWatermark, markInitialSyncComplete, getSeenResetGeneration } from "./syncMeta";
+import { getSyncCatalogEntry } from "./syncTableMap";
 
 // ---------------------------------------------------------------------------
 // Sync-loop prevention flag
@@ -39,7 +39,10 @@ export const pullAndApplyDelta = async (
   let hasMoreAnyScope = true;
 
   while (hasMoreAnyScope) {
-    const response = await apiClient.pullChanges({ scopes: pullScopes });
+    const response = await apiClient.pullChanges({
+      clientResetGeneration: await getSeenResetGeneration() ?? 0,
+      scopes: pullScopes,
+    });
 
     if (response.scopes.some((s) => s.changes.length > 0)) {
       syncingDown = true;
@@ -115,7 +118,7 @@ const applySingleChange = async (
   db: ReturnType<typeof createAppDb>,
   change: SyncPullChange,
 ): Promise<void> => {
-  const entry = SYNC_TABLE_MAP[change.tableName];
+  const entry = getSyncCatalogEntry(change.tableName);
   if (!entry) {
     console.warn(`Sync-down: unknown table "${change.tableName}", skipping`);
     return;

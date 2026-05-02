@@ -1,55 +1,15 @@
-import * as schema from "./schema";
+import {
+  SYNC_CATALOG,
+  SYNC_TABLE_ORDER,
+  getSyncCatalogEntry,
+  getSyncTableNames,
+  getSyncTablesForScope,
+  type SyncScope,
+  type SyncTableName,
+} from "@stockify/db-schema/sync-catalog";
 
-type SyncScope = "user" | "organization";
+export { SYNC_TABLE_ORDER, getSyncCatalogEntry, getSyncTableNames, type SyncScope, type SyncTableName };
 
-interface SyncTableEntry {
-  table: typeof schema.users | typeof schema.organizations | typeof schema.userMemberships
-    | typeof schema.invitationCodes | typeof schema.joinRequests | typeof schema.onboardingSessions
-    | typeof schema.appSettings | typeof schema.units | typeof schema.productCategories
-    | typeof schema.customers | typeof schema.suppliers | typeof schema.supplierProductCategories
-    | typeof schema.products | typeof schema.productVariants | typeof schema.orders
-    | typeof schema.orderItems | typeof schema.inboundOrders | typeof schema.inboundOrderItems
-    | typeof schema.inboundOrderPayments | typeof schema.supplierBills | typeof schema.installmentPayments;
-  scope: SyncScope;
-}
+export const SYNC_TABLE_MAP = SYNC_CATALOG;
 
-/**
- * Maps SQLite table names (as used in sync_queue.tableName and sqliteTable() first arg)
- * to their Drizzle schema objects and sync scope classification.
- *
- * All entries use the Drizzle `id` field for primary key (which maps to
- * the actual SQLite column name like "users_id", "products_id", etc.).
- */
-export const SYNC_TABLE_MAP: Record<string, SyncTableEntry> = {
-  // User-scoped
-  users:                        { table: schema.users,                      scope: "user" },
-  app_settings:                 { table: schema.appSettings,                scope: "user" },
-  onboarding_sessions:          { table: schema.onboardingSessions,         scope: "user" },
-
-  // Org-scoped
-  organizations:                { table: schema.organizations,              scope: "organization" },
-  user_memberships:             { table: schema.userMemberships,            scope: "organization" },
-  invitation_codes:             { table: schema.invitationCodes,            scope: "organization" },
-  join_requests:                { table: schema.joinRequests,               scope: "organization" },
-  units:                        { table: schema.units,                      scope: "organization" },
-  product_categories:           { table: schema.productCategories,          scope: "organization" },
-  customers:                    { table: schema.customers,                  scope: "organization" },
-  suppliers:                    { table: schema.suppliers,                  scope: "organization" },
-  supplier_product_categories:  { table: schema.supplierProductCategories,  scope: "organization" },
-  products:                     { table: schema.products,                   scope: "organization" },
-  product_variants:             { table: schema.productVariants,            scope: "organization" },
-  orders:                       { table: schema.orders,                     scope: "organization" },
-  order_items:                  { table: schema.orderItems,                 scope: "organization" },
-  inbound_order:                { table: schema.inboundOrders,              scope: "organization" },
-  inbound_order_items:          { table: schema.inboundOrderItems,          scope: "organization" },
-  inbound_order_payments:       { table: schema.inboundOrderPayments,       scope: "organization" },
-  supplier_bills:               { table: schema.supplierBills,              scope: "organization" },
-  installment_payments:         { table: schema.installmentPayments,        scope: "organization" },
-};
-
-export const getSyncTableNames = (): string[] => Object.keys(SYNC_TABLE_MAP);
-
-export const getTablesForScope = (scope: SyncScope): string[] =>
-  Object.entries(SYNC_TABLE_MAP)
-    .filter(([, entry]) => entry.scope === scope)
-    .map(([name]) => name);
+export const getTablesForScope = getSyncTablesForScope;

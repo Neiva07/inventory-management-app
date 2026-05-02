@@ -29,6 +29,7 @@ export const CreateModeToggle: React.FC<CreateModeToggleProps> = ({
             <Switch
               checked={isCreateMode}
               onCheckedChange={onToggle}
+              data-form-navigation="skip"
               aria-label="Alternar modo de criação"
             />
             <span className="whitespace-nowrap text-sm text-muted-foreground">

@@ -71,12 +71,12 @@ const actionConfigs: ActionConfig[] = [
   {
     id: 'wipeOrgData',
     icon: <Trash2 className="h-4 w-4 text-red-600" />,
-    label: 'Limpar dados da organização',
-    description: 'Apaga produtos, clientes, pedidos, etc. (mantém a organização)',
+    label: 'Limpar organização via sync',
+    description: 'Dev-only: enfileira deletes para produtos, clientes, pedidos, etc.',
     destructive: true,
-    confirmTitle: 'Limpar dados da organização?',
+    confirmTitle: 'Limpar organização via sync?',
     confirmDescription:
-      'Esta ação vai apagar produtos, clientes, fornecedores, pedidos, entradas, contas e unidades/categorias da organização atual. A organização e seu acesso são mantidos. Esta ação não pode ser desfeita.',
+      'Esta ação de desenvolvimento apaga produtos, clientes, fornecedores, pedidos, entradas, contas e unidades/categorias da organização atual usando deletes sincronizados. A organização e seu acesso são mantidos.',
   },
   {
     id: 'seedSmallBakery',

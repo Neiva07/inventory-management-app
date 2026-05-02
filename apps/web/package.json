@@ -5,11 +5,14 @@
   "scripts": {
     "dev": "next dev -p 3111",
     "build": "next build",
-    "vercel-build": "if [ \"$VERCEL_ENV\" = \"production\" ]; then drizzle-kit migrate; fi && next build",
+    "build:with-migrations": "node scripts/run-build-migrations.mjs && next build",
+    "build:with-local-migrations": "STOCKIFY_ALLOW_LOCAL_BUILD_MIGRATE=1 TURSO_DATABASE_URL=file:./data/stockify-web.db node scripts/run-build-migrations.mjs && next build",
+    "vercel-build": "node scripts/run-build-migrations.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:local": "STOCKIFY_ALLOW_LOCAL_BUILD_MIGRATE=1 TURSO_DATABASE_URL=file:./data/stockify-web.db node scripts/run-build-migrations.mjs",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },

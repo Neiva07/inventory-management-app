@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { userMemberships } from "../db/schema";
+import { trackPendingSyncChange } from "../db/syncTracking";
 
 export type UserRole = "admin" | "manager" | "operator" | "viewer";
 
@@ -92,15 +93,26 @@ export const createUserMembership = async (data: CreateMembershipData): Promise<
   const db = createAppDb();
   const membershipId = uuidv4();
   const now = Date.now();
-
-  await db.insert(userMemberships).values({
+  const row = {
     id: membershipId,
     userId: data.userID,
     organizationId: data.organizationId,
     role: data.role,
     status: "active",
+  };
+
+  await db.insert(userMemberships).values({
+    ...row,
     createdAt: now,
     updatedAt: now,
+  });
+
+  await trackPendingSyncChange({
+    organizationId: data.organizationId,
+    tableName: "user_memberships",
+    recordId: membershipId,
+    operation: "create",
+    payload: row,
   });
 
   return {
@@ -182,12 +194,42 @@ export const updateUserMembership = async (
     throw new Error("Membership not found");
   }
 
-  return mapRow(rows[0]);
+  const row = rows[0];
+
+  await trackPendingSyncChange({
+    organizationId: row.organizationId,
+    tableName: "user_memberships",
+    recordId: row.id,
+    operation: "update",
+    payload: {
+      id: row.id,
+      userId: row.userId,
+      organizationId: row.organizationId,
+      role: row.role,
+      status: row.status,
+    },
+  });
+
+  return mapRow(row);
 };
 
 export const deleteUserMembership = async (membershipId: string): Promise<void> => {
   const db = createAppDb();
+  const rows = await db
+    .select({ organizationId: userMemberships.organizationId })
+    .from(userMemberships)
+    .where(eq(userMemberships.id, membershipId))
+    .limit(1);
+
   await db.delete(userMemberships).where(eq(userMemberships.id, membershipId));
+
+  await trackPendingSyncChange({
+    organizationId: rows[0]?.organizationId,
+    tableName: "user_memberships",
+    recordId: membershipId,
+    operation: "delete",
+    payload: { id: membershipId },
+  });
 };
 
 export const getOrganizationMembers = async (organizationId: string): Promise<UserMembership[]> => {

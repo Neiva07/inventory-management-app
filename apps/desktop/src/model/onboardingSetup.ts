@@ -1,5 +1,7 @@
+import { inArray } from "drizzle-orm";
 import { createAppDb } from "../db/client";
 import { joinRequests, productCategories, units } from "../db/schema";
+import { trackPendingSyncChange } from "../db/syncTracking";
 import { UserRole } from "./userMembership";
 
 interface OnboardingInvitation {
@@ -64,6 +66,12 @@ export const persistOnboardingTeamInvitations = async (
     };
   });
 
+  const existingRows = await db
+    .select({ id: joinRequests.id })
+    .from(joinRequests)
+    .where(inArray(joinRequests.id, rows.map((row) => row.id)));
+  const existingIds = new Set(existingRows.map((row) => row.id));
+
   for (const row of rows) {
     await db
       .insert(joinRequests)
@@ -76,6 +84,20 @@ export const persistOnboardingTeamInvitations = async (
           updatedAt: now,
         },
       });
+
+    await trackPendingSyncChange({
+      organizationId,
+      tableName: "join_requests",
+      recordId: row.id,
+      operation: existingIds.has(row.id) ? "update" : "create",
+      payload: {
+        id: row.id,
+        organizationId: row.organizationId,
+        userId: row.userId,
+        message: row.message,
+        status: row.status,
+      },
+    });
   }
 };
 
@@ -117,7 +139,31 @@ export const seedCadastrosBasicos = async (
       };
     });
 
+    const existingUnitRows = await db
+      .select({ id: units.id })
+      .from(units)
+      .where(inArray(units.id, unitRows.map((row) => row.id)));
+    const existingUnitIds = new Set(existingUnitRows.map((row) => row.id));
+
     await db.insert(units).values(unitRows).onConflictDoNothing({ target: units.id });
+
+    for (const row of unitRows) {
+      await trackPendingSyncChange({
+        organizationId,
+        tableName: "units",
+        recordId: row.id,
+        operation: existingUnitIds.has(row.id) ? "update" : "create",
+        payload: {
+          id: row.id,
+          publicId: row.publicId,
+          userId: row.userId,
+          organizationId: row.organizationId,
+          name: row.name,
+          description: row.description,
+          status: row.status,
+        },
+      });
+    }
   }
 
   if (trimmedCategories.length > 0) {
@@ -136,9 +182,33 @@ export const seedCadastrosBasicos = async (
       };
     });
 
+    const existingCategoryRows = await db
+      .select({ id: productCategories.id })
+      .from(productCategories)
+      .where(inArray(productCategories.id, categoryRows.map((row) => row.id)));
+    const existingCategoryIds = new Set(existingCategoryRows.map((row) => row.id));
+
     await db
       .insert(productCategories)
       .values(categoryRows)
       .onConflictDoNothing({ target: productCategories.id });
+
+    for (const row of categoryRows) {
+      await trackPendingSyncChange({
+        organizationId,
+        tableName: "product_categories",
+        recordId: row.id,
+        operation: existingCategoryIds.has(row.id) ? "update" : "create",
+        payload: {
+          id: row.id,
+          publicId: row.publicId,
+          userId: row.userId,
+          organizationId: row.organizationId,
+          name: row.name,
+          description: row.description,
+          status: row.status,
+        },
+      });
+    }
   }
 };

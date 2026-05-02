@@ -43,7 +43,7 @@ interface OnboardingContextData {
 
 const OnboardingContext = createContext<OnboardingContextData | undefined>(undefined);
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 const getDefaultOnboardingData = (): OrganizationOnboardingData => ({
   organization: {

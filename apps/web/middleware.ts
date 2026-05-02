@@ -6,6 +6,7 @@ const corsAllowedHeaders = [
   'authorization',
   'content-type',
   'x-client-id',
+  'x-desktop-session-id',
   'x-internal-api-key',
   'x-local-user-id',
 ].join(', ')
@@ -17,13 +18,14 @@ const isPublicRoute = createRouteMatcher([
   '/landing(.*)',
   '/api/v1/health',
   '/api/v1/organizations(.*)',
+  '/api/v1/dev-admin(.*)',
   '/api/v1/runtime-logs(.*)',
   '/api/v1/sync(.*)',
 ])
 
 const isApiRoute = createRouteMatcher(['/api/(.*)'])
 const isCorsApiRoute = createRouteMatcher(['/api/v1(.*)'])
-const isRuntimeLogDevPage = createRouteMatcher(['/dev/logs(.*)'])
+const isDevPage = createRouteMatcher(['/dev/logs(.*)', '/dev/admin(.*)'])
 
 const getConfiguredCorsOrigins = (): string[] => {
   return (process.env.API_CORS_ALLOWED_ORIGINS ?? '')
@@ -80,7 +82,7 @@ export default clerkMiddleware(
       return withCorsHeaders(new NextResponse(null, { status: 204 }), request)
     }
 
-    if (process.env.NODE_ENV !== 'production' && isRuntimeLogDevPage(request)) {
+    if (process.env.NODE_ENV !== 'production' && isDevPage(request)) {
       return NextResponse.next()
     }
 

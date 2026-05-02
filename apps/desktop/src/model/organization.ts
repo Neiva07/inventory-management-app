@@ -2,6 +2,7 @@ import { eq, like } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { organizations } from "../db/schema";
+import { trackPendingSyncChange } from "../db/syncTracking";
 
 export interface Organization {
   id: string;
@@ -107,15 +108,27 @@ export const createOrganization = async (data: CreateOrganizationData): Promise<
   const organizationId = uuidv4();
   const now = Date.now();
   const mergedSettings: Organization["settings"] = { ...DEFAULT_SETTINGS, ...(data.settings ?? {}) };
-
-  await db.insert(organizations).values({
+  const settingsJson = JSON.stringify(mergedSettings);
+  const row = {
     id: organizationId,
     name: data.name,
     createdBy: data.createdBy,
     status: "active",
-    settingsJson: JSON.stringify(mergedSettings),
+    settingsJson,
+  };
+
+  await db.insert(organizations).values({
+    ...row,
     createdAt: now,
     updatedAt: now,
+  });
+
+  await trackPendingSyncChange({
+    organizationId,
+    tableName: "organizations",
+    recordId: organizationId,
+    operation: "create",
+    payload: row,
   });
 
   return {
@@ -174,17 +187,52 @@ export const updateOrganization = async (
     .set(updates)
     .where(eq(organizations.id, orgId));
 
-  const updatedOrg = await getOrganization(orgId);
-  if (!updatedOrg) {
+  const rows = await db
+    .select()
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+    .limit(1);
+
+  if (rows.length === 0) {
     throw new Error("Organization not found");
   }
 
-  return updatedOrg;
+  const row = rows[0];
+
+  await trackPendingSyncChange({
+    organizationId: row.id,
+    tableName: "organizations",
+    recordId: row.id,
+    operation: "update",
+    payload: {
+      id: row.id,
+      name: row.name,
+      createdBy: row.createdBy,
+      status: row.status,
+      settingsJson: row.settingsJson,
+    },
+  });
+
+  return mapRow(row);
 };
 
 export const deleteOrganization = async (orgId: string): Promise<void> => {
   const db = createAppDb();
+  const rows = await db
+    .select({ id: organizations.id })
+    .from(organizations)
+    .where(eq(organizations.id, orgId))
+    .limit(1);
+
   await db.delete(organizations).where(eq(organizations.id, orgId));
+
+  await trackPendingSyncChange({
+    organizationId: rows[0]?.id,
+    tableName: "organizations",
+    recordId: orgId,
+    operation: "delete",
+    payload: { id: orgId },
+  });
 };
 
 export const getOrganizationsByUser = async (clerkUserId: string): Promise<Organization[]> => {

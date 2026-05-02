@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createAppDb } from "../db/client";
 import { onboardingSessions } from "../db/schema";
+import { trackUserScopedSyncChange } from "../db/syncTracking";
 
 export type OnboardingStatus = "in_progress" | "completed";
 
@@ -101,6 +102,28 @@ const mapSession = (
   };
 };
 
+const buildSessionRow = (args: {
+  id: string;
+  userId: string;
+  status: OnboardingStatus;
+  step: number;
+  payloadJson: string;
+}): {
+  id: string;
+  userId: string;
+  organizationId: string | null;
+  status: OnboardingStatus;
+  step: number;
+  payloadJson: string;
+} => ({
+  id: args.id,
+  userId: args.userId,
+  organizationId: null,
+  status: args.status,
+  step: args.step,
+  payloadJson: args.payloadJson,
+});
+
 /** Create a new onboarding session for a user. */
 export async function createOnboardingSession(
   userID: string
@@ -114,15 +137,27 @@ export async function createOnboardingSession(
     progress: {},
     lastActivityAt: now,
   };
-
-  await db.insert(onboardingSessions).values({
+  const payloadJson = JSON.stringify(payload);
+  const row = buildSessionRow({
     id,
     userId: userID,
     status: "in_progress",
     step: 1,
-    payloadJson: JSON.stringify(payload),
+    payloadJson,
+  });
+
+  await db.insert(onboardingSessions).values({
+    ...row,
     createdAt: now,
     updatedAt: now,
+  });
+
+  await trackUserScopedSyncChange({
+    userId: userID,
+    tableName: "onboarding_sessions",
+    recordId: id,
+    operation: "create",
+    payload: row,
   });
 
   return {
@@ -180,16 +215,32 @@ export async function updateOnboardingSession(
     completedAt,
     lastActivityAt,
   };
+  const payloadJson = JSON.stringify(payload);
+  const row = buildSessionRow({
+    id: sessionId,
+    userId: existing.userID,
+    status: updates.status ?? existing.status,
+    step: updates.currentStep ?? existing.currentStep,
+    payloadJson,
+  });
 
   await db
     .update(onboardingSessions)
     .set({
-      step: updates.currentStep ?? existing.currentStep,
-      status: updates.status ?? existing.status,
-      payloadJson: JSON.stringify(payload),
+      step: row.step,
+      status: row.status,
+      payloadJson,
       updatedAt: now,
     })
     .where(eq(onboardingSessions.id, sessionId));
+
+  await trackUserScopedSyncChange({
+    userId: existing.userID,
+    tableName: "onboarding_sessions",
+    recordId: sessionId,
+    operation: "update",
+    payload: row,
+  });
 
   return {
     ...existing,
@@ -241,10 +292,26 @@ export async function deleteOnboardingSession(
   sessionId: string
 ): Promise<void> {
   const db = createAppDb();
+  const rows = await db
+    .select({ userId: onboardingSessions.userId })
+    .from(onboardingSessions)
+    .where(eq(onboardingSessions.id, sessionId))
+    .limit(1);
 
   await db
     .delete(onboardingSessions)
     .where(eq(onboardingSessions.id, sessionId));
+
+  await trackUserScopedSyncChange({
+    userId: rows[0]?.userId,
+    tableName: "onboarding_sessions",
+    recordId: sessionId,
+    operation: "delete",
+    payload: {
+      id: sessionId,
+      userId: rows[0]?.userId,
+    },
+  });
 }
 
 /** Update the step of an onboarding session and record step progress. */

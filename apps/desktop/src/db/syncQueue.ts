@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, lte } from "drizzle-orm";
+import { and, asc, eq, inArray, lte, or } from "drizzle-orm";
 import { createAppDb } from "./client";
 import { syncQueue } from "./schema";
 
@@ -17,6 +17,7 @@ export interface PendingSyncRecord {
 }
 
 const now = () => Date.now();
+const STALE_SYNCING_AFTER_MS = 2 * 60 * 1000;
 
 const makeId = () => `${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
 
@@ -51,14 +52,21 @@ export const enqueueSyncChange = async (args: {
 export const getPendingSyncChanges = async (limit = 100): Promise<PendingSyncRecord[]> => {
   const db = createAppDb();
   const timestamp = now();
+  const staleSyncingCutoff = timestamp - STALE_SYNCING_AFTER_MS;
 
   const rows = await db
     .select()
     .from(syncQueue)
     .where(
-      and(
-        inArray(syncQueue.status, ["pending", "failed"]),
-        lte(syncQueue.nextAttemptAt, timestamp)
+      or(
+        and(
+          inArray(syncQueue.status, ["pending", "failed"]),
+          lte(syncQueue.nextAttemptAt, timestamp)
+        ),
+        and(
+          eq(syncQueue.status, "syncing"),
+          lte(syncQueue.updatedAt, staleSyncingCutoff)
+        )
       )
     )
     .orderBy(asc(syncQueue.createdAt))
@@ -121,4 +129,3 @@ export const markSyncChangeAsFailed = async (id: string, errorMessage: string): 
     })
     .where(eq(syncQueue.id, id));
 };
-

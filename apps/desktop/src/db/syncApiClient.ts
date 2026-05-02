@@ -16,6 +16,7 @@ export interface SyncPushChange {
 
 export interface SyncPushRequest {
   clientId: string;
+  clientResetGeneration: number;
   changes: SyncPushChange[];
 }
 
@@ -41,6 +42,7 @@ export interface SyncPullScope {
 }
 
 export interface SyncPullRequest {
+  clientResetGeneration: number;
   scopes: SyncPullScope[];
   limit?: number;
 }
@@ -95,6 +97,21 @@ export interface HealthCheckResult {
   serverTimestamp: number;
 }
 
+export interface ResetGenerationResult {
+  resetGeneration: number;
+  resetInProgress: boolean;
+}
+
+export class SyncResetRequiredError extends Error {
+  readonly resetGeneration: number;
+
+  constructor(resetGeneration: number) {
+    super("reset_required");
+    this.name = "SyncResetRequiredError";
+    this.resetGeneration = resetGeneration;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Client config
 // ---------------------------------------------------------------------------
@@ -113,9 +130,11 @@ export interface SyncApiClientConfig {
 export class SyncApiClient {
   private readonly client: AxiosInstance;
   private readonly clientId: string;
+  private readonly userId?: string;
 
   constructor(config: SyncApiClientConfig) {
     this.clientId = config.clientId;
+    this.userId = config.userId;
 
     this.client = axios.create({
       baseURL: config.baseUrl,
@@ -126,7 +145,7 @@ export class SyncApiClient {
     this.client.interceptors.request.use((req) => {
       const token = config.getSessionToken();
       if (token) {
-        req.headers.Authorization = `Bearer ${token}`;
+        req.headers["X-Desktop-Session-Id"] = token;
       }
       if (config.userId) {
         req.headers["X-Local-User-Id"] = config.userId;
@@ -140,16 +159,43 @@ export class SyncApiClient {
     return this.clientId;
   }
 
+  getUserId(): string | undefined {
+    return this.userId;
+  }
+
+  private throwNormalizedError(error: unknown): never {
+    if (axios.isAxiosError(error) && error.response?.status === 409) {
+      const data = error.response.data as { code?: unknown; resetGeneration?: unknown } | undefined;
+      if (data?.code === "reset_required") {
+        const resetGeneration =
+          typeof data.resetGeneration === "number" && Number.isFinite(data.resetGeneration)
+            ? data.resetGeneration
+            : 0;
+        throw new SyncResetRequiredError(resetGeneration);
+      }
+    }
+
+    throw error;
+  }
+
   // -- Sync endpoints ------------------------------------------------------
 
   async pushChanges(request: SyncPushRequest): Promise<SyncPushResponse> {
-    const { data } = await this.client.post<SyncPushResponse>("/api/v1/sync/push", request);
-    return data;
+    try {
+      const { data } = await this.client.post<SyncPushResponse>("/api/v1/sync/push", request);
+      return data;
+    } catch (error) {
+      this.throwNormalizedError(error);
+    }
   }
 
   async pullChanges(request: SyncPullRequest): Promise<SyncPullResponse> {
-    const { data } = await this.client.post<SyncPullResponse>("/api/v1/sync/pull", request);
-    return data;
+    try {
+      const { data } = await this.client.post<SyncPullResponse>("/api/v1/sync/pull", request);
+      return data;
+    } catch (error) {
+      this.throwNormalizedError(error);
+    }
   }
 
   // -- Cloud-only operations -----------------------------------------------
@@ -182,6 +228,11 @@ export class SyncApiClient {
 
   async healthCheck(): Promise<HealthCheckResult> {
     const { data } = await this.client.get<HealthCheckResult>("/api/v1/health");
+    return data;
+  }
+
+  async getResetGeneration(): Promise<ResetGenerationResult> {
+    const { data } = await this.client.get<ResetGenerationResult>("/api/v1/dev-admin/reset-generation");
     return data;
   }
 }

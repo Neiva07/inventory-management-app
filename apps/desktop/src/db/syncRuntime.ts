@@ -1,10 +1,70 @@
 import { SyncEngine } from "./syncEngine";
 import { replicatePendingChangesToCloud } from "./syncTransport";
-import { initSyncApiClient, clearSyncApiClient } from "./syncApiClient";
+import { initSyncApiClient, clearSyncApiClient, SyncApiClient, getSyncApiClient } from "./syncApiClient";
 import { performInitialSync } from "./syncDown";
-import { isInitialSyncComplete, getOrCreateClientId } from "./syncMeta";
+import {
+  getOrCreateClientId,
+  getSeenResetGeneration,
+  hasLocalSyncData,
+  isInitialSyncComplete,
+  setSeenResetGeneration,
+} from "./syncMeta";
 
 let runtimeEngine: SyncEngine | null = null;
+
+export const resetLocalDeviceForServerReset = async (): Promise<void> => {
+  await window.electron.resetLocalDeviceData();
+};
+
+export const ensureServerResetGenerationCurrent = async (apiClient: SyncApiClient): Promise<boolean> => {
+  const serverState = await apiClient.getResetGeneration();
+  const seenGeneration = await getSeenResetGeneration();
+
+  if (serverState.resetInProgress) {
+    return false;
+  }
+
+  if (seenGeneration === null) {
+    if (await hasLocalSyncData()) {
+      await resetLocalDeviceForServerReset();
+      return false;
+    }
+
+    await setSeenResetGeneration(serverState.resetGeneration);
+    return true;
+  }
+
+  if (serverState.resetGeneration > seenGeneration) {
+    await resetLocalDeviceForServerReset();
+    return false;
+  }
+
+  return true;
+};
+
+const ensureActiveServerResetGenerationCurrent = async (): Promise<boolean> => {
+  const apiClient = getSyncApiClient();
+  if (!apiClient) {
+    return true;
+  }
+
+  return ensureServerResetGenerationCurrent(apiClient);
+};
+
+export const checkServerResetOnStartup = async (): Promise<void> => {
+  const baseUrl = window.env?.SYNC_API_URL;
+  if (!baseUrl) {
+    return;
+  }
+
+  try {
+    const clientId = await getOrCreateClientId();
+    const apiClient = new SyncApiClient({ baseUrl, getSessionToken: () => null, clientId });
+    await ensureServerResetGenerationCurrent(apiClient);
+  } catch (error) {
+    console.warn("Unable to check server reset state on startup:", error);
+  }
+};
 
 export const startSyncRuntime = (): SyncEngine => {
   if (runtimeEngine) {
@@ -13,6 +73,8 @@ export const startSyncRuntime = (): SyncEngine => {
 
   runtimeEngine = new SyncEngine({
     transport: replicatePendingChangesToCloud,
+    beforeSync: ensureActiveServerResetGenerationCurrent,
+    onResetRequired: resetLocalDeviceForServerReset,
   });
   runtimeEngine.start();
   return runtimeEngine;
@@ -37,10 +99,14 @@ export const configureSyncScope = async (
   const clientId = await getOrCreateClientId();
   void window.electron?.setRuntimeLogContext({ syncClientId: clientId });
 
-  initSyncApiClient({ baseUrl, getSessionToken, clientId, userId });
+  const apiClient = initSyncApiClient({ baseUrl, getSessionToken, clientId, userId });
 
   if (runtimeEngine) {
     runtimeEngine.setScope({ userId, organizationIds });
+  }
+
+  if (!(await ensureServerResetGenerationCurrent(apiClient))) {
+    return;
   }
 
   // Run initial sync for any scope that hasn't been fully synced yet

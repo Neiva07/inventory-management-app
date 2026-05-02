@@ -39,8 +39,9 @@ import { useGlobalKeyboardShortcuts } from "./hooks/useGlobalKeyboardShortcuts";
 import { GlobalKeyboardHelp } from "./components/GlobalKeyboardHelp";
 import { OnboardingRouter } from "./pages/onboarding/OnboardingRouter";
 import { bootstrapDatabase } from "./db/bootstrap";
-import { startSyncRuntime, stopSyncRuntime } from "./db/syncRuntime";
+import { checkServerResetOnStartup, startSyncRuntime, stopSyncRuntime } from "./db/syncRuntime";
 import { ShortcutHintsProvider } from "./context/shortcutHints";
+import { NavigationModeProvider } from "./context/navigationMode";
 
 const initialOverdueChecksStarted = new Set<string>();
 
@@ -190,13 +191,15 @@ function render() {
     <React.StrictMode>
       <AuthContextProvider>
         <UIContextProvider>
-          <ShortcutHintsProvider>
-            <OnboardingProvider>
-              <OnboardingRouter>
-                <AppRouter />
-              </OnboardingRouter>
-            </OnboardingProvider>
-          </ShortcutHintsProvider>
+          <NavigationModeProvider>
+            <ShortcutHintsProvider>
+              <OnboardingProvider>
+                <OnboardingRouter>
+                  <AppRouter />
+                </OnboardingRouter>
+              </OnboardingProvider>
+            </ShortcutHintsProvider>
+          </NavigationModeProvider>
         </UIContextProvider>
       </AuthContextProvider>
     </React.StrictMode>
@@ -204,7 +207,10 @@ function render() {
 }
 
 bootstrapDatabase()
-  .then(() => render())
+  .then(async () => {
+    await checkServerResetOnStartup();
+    render();
+  })
   .catch((error) => {
     console.error("Failed to bootstrap database:", error);
     render();
